@@ -1,0 +1,12 @@
+{
+  "name": "@vasakgroup/vue-libvasak",
+  "version": "0.0.1",
+  "description": "Vue componenets for VSK Applications",
+  "main": "src/index.ts",
+  "repository": "https://github.com/vasak-os/vue-libvasak",
+  "author": "Vasak Group",
+  "license": "GPLv3",
+  "dependencies": {
+    "vue": "^3.3.13"
+  }
+}
