@@ -4,7 +4,11 @@
   "description": "Vue componenets for VSK Applications",
   "main": "src/index.ts",
   "repository": "https://github.com/vasak-os/vue-libvasak",
-  "author": "Vasak Group",
+  "author": {
+    "name": "Joaquin (Pato) Decima",
+    "email": "jdecima@vasak.net.ar",
+    "url": "https://joaquindecima.gitlab.io/"
+  },
   "license": "GPLv3",
   "dependencies": {
     "vue": "^3.3.13"
