@@ -43,22 +43,3 @@ export default defineComponent({
   </div>
 </template>
 
-<style>
-.window-topbar {
-  width: 100vw;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--system-color);
-  border-radius: var(--system-border) var(--system-border) 0 0;
-  -webkit-app-region: drag;
-  padding: 2px 10px;
-}
-
-.win-button {
-  color: var(--system-text);
-  text-decoration: none;
-  padding: 0 5px;
-}
-</style>
