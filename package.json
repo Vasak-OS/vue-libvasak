@@ -32,6 +32,7 @@
   },
   "license": "GPLv3",
   "dependencies": {
-    "vue": "^3.3.13"
+    "vue": "^3.3.13",
+    "vue-router": "^4.2.5"
   }
 }
