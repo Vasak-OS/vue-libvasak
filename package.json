@@ -19,7 +19,10 @@
     "vasakgroup",
     "linux"
   ],
-  "repository": "https://github.com/vasak-os/vue-libvasak",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vasak-os/vue-libvasak.git"
+  },
   "homepage": "https://github.com/vasak-os/vue-libvasak#readme",
   "bugs": {
     "url": "https://github.com/vasak-os/vue-libvasak/issues",
