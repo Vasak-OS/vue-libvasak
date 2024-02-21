@@ -1,55 +1,81 @@
-<script lang="ts">
-import { defineComponent } from "vue";
+<script lang="ts" setup>
 import TopBar from "./TopBar.vue";
+import { defineProps, ref, inject, onMounted } from "vue";
 
-export default defineComponent({
-  name: "WindowFrame",
-  props: {
-    title: {
-      type: String,
-      default: "Vasak",
-    },
+const $vsk: any = inject("vsk");
+
+const top = ref(null);
+const left = ref(null);
+const right = ref(null);
+const bottom = ref(null);
+const topleft = ref(null);
+const bottomleft = ref(null);
+const topright = ref(null);
+const bottomright = ref(null);
+
+defineProps({
+  title: {
+    type: String,
+    default: "Vasak",
   },
-  methods: {
-    rezise(dir: string) {
-      (this as any).$vsk.startResize(dir);
-    },
+  image: {
+    type: String,
+    default: "",
   },
-  components: {
-    TopBar,
-  },
-  mounted() {
-    (this.$refs.top as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("top");
+});
+
+const resize = (dir: string) => {
+  $vsk.startResize(dir);
+};
+
+onMounted(() => {
+  if (top.value) {
+    (top.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("top");
     });
-    (this.$refs.bottom as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("bottom");
+  }
+  if (bottom.value) {
+    (bottom.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("bottom");
     });
-    (this.$refs.left as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("left");
+  }
+  if (left.value) {
+    (left.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("left");
     });
-    (this.$refs.right as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("right");
+  }
+  if (right.value) {
+    (right.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("right");
     });
-    (this.$refs.topleft as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("topleft");
+  }
+  if (topleft.value) {
+    (topleft.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("topleft");
     });
-    (this.$refs.bottomleft as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("bottomleft");
+  }
+  if (bottomleft.value) {
+    (bottomleft.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("bottomleft");
     });
-    (this.$refs.topright as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("topright");
+  }
+  if (topright.value) {
+    (topright.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("topright");
     });
-    (this.$refs.bottomright as any).addEventListener("mousedown", (e: any) => {
-      this.rezise("bottomright");
+  }
+  if (bottomright.value) {
+    (bottomright.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      resize("bottomright");
     });
-  },
+  }
 });
 </script>
 
 <template>
-  <TopBar :title="title" />
+  <TopBar :title="title" :image="image" />
   <div class="window">
+    <slot />
     <div ref="top" class="win-edge win-edge-top"></div>
     <div ref="left" class="win-edge win-edge-left"></div>
     <div ref="right" class="win-edge win-edge-right"></div>
@@ -58,6 +84,5 @@ export default defineComponent({
     <div ref="bottomleft" class="win-edge win-edge-bottomleft"></div>
     <div ref="topright" class="win-edge win-edge-topright"></div>
     <div ref="bottomright" class="win-edge win-edge-bottomright"></div>
-    <slot />
   </div>
 </template>
