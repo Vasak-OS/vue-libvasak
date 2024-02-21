@@ -1,31 +1,34 @@
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script lang="ts" setup>
+import { defineProps, inject, onMounted, ref } from "vue";
 
-export default defineComponent({
-  name: 'TopBar',
-  props: {
-    title: {
-      type: String,
-      default: 'Vasak'
-    }
-  },
-  methods: {
-    move() {
-      (this as any).$vsk.startMove();
-    },
-    close() {
-      (this as any).$vsk.exit();
-    },
-    minimize() {
-      (this as any).$vsk.minimize();
-    },
-    toggleMaximize() {
-      (this as any).$vsk.toggleMaximize();
-    }
-  },
-  mounted() {
-    (this.$refs.bar as any).addEventListener('mousedown', (e: any) => {
-      this.move();
+const $vsk: any = inject("vsk");
+const bar = ref(null);
+
+defineProps({
+  title: String,
+  image: String,
+});
+
+const move = () => {
+  $vsk.startMove();
+};
+
+const close = () => {
+  $vsk.exit();
+};
+
+const minimize = () => {
+  $vsk.minimize();
+};
+
+const toggleMaximize = () => {
+  $vsk.toggleMaximize();
+};
+
+onMounted(() => {
+  if (bar.value) {
+    (bar.value as HTMLElement).addEventListener("mousedown", (e: any) => {
+      move();
     });
   }
 });
@@ -33,7 +36,7 @@ export default defineComponent({
 
 <template>
   <div class="window-topbar" ref="bar" @click="move()">
-    <div></div>
+    <div><img :src="image" class="img-fluid win-icon" /></div>
     <div>{{ title }}</div>
     <div>
       <a class="win-button" href="#" @click="minimize()">_</a>
@@ -43,3 +46,10 @@ export default defineComponent({
   </div>
 </template>
 
+<style scoped>
+.win-icon{
+  width: 32px;
+  height: 32px;
+  margin-right: 5px;
+}
+</style>
