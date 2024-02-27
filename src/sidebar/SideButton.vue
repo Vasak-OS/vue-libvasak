@@ -1,26 +1,20 @@
-<script lang="ts">
+<script lang="ts" setup>
 import { defineComponent } from "vue";
 
-export default defineComponent({
-  name: "SideButton",
-  props: {
-    title: {
-      type: String,
-      default: "Link",
-    },
-    image: {
-      type: String,
-      default: "",
-    }
+const props = defineProps({
+  title: {
+    type: String,
+    default: "Link",
+  },
+  image: {
+    type: String,
+    default: "",
   },
 });
 </script>
 
 <template>
-  <li class="nav-item py-2 py-sm-0">
-    <a href="#" class="nav-link">
-      <span class="fs-5"><img :src="image" class="img-fluid" /></span>
-      <span class="fs-4 ms-4 d-none d-sm-inline">{{ title }}</span>
-    </a>
-  </li>
+  <a href="#" class="sidebar-button">
+    <img :src="image" class="img-fluid" />
+  </a>
 </template>

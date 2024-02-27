@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TopBar from "./TopBar.vue";
-import { defineProps, ref, inject, onMounted } from "vue";
+import { defineProps, ref, inject, onMounted, computed } from 'vue';
 
 const $vsk: any = inject("vsk");
 
@@ -13,7 +13,7 @@ const bottomleft = ref(null);
 const topright = ref(null);
 const bottomright = ref(null);
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: "Vasak",
@@ -22,6 +22,10 @@ defineProps({
     type: String,
     default: "",
   },
+  customColor: {
+    type: String,
+    default: null,
+  }
 });
 
 const resize = (dir: string) => {
@@ -73,7 +77,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <TopBar :title="title" :image="image" />
+  <TopBar :title :image :customColor />
   <div class="window">
     <slot />
     <div ref="top" class="win-edge win-edge-top"></div>

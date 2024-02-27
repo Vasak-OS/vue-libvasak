@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-import { defineProps, inject, onMounted, ref } from "vue";
+import { defineProps, inject, onMounted, ref, computed } from "vue";
 
 const $vsk: any = inject("vsk");
 const bar = ref(null);
 
-defineProps({
+const props = defineProps({
   title: String,
   image: String,
+  customColor: String,
 });
 
 const move = () => {
@@ -25,6 +26,11 @@ const toggleMaximize = () => {
   $vsk.toggleMaximize();
 };
 
+const isCustom = computed(() => {
+  console.log('customColor', props.customColor);
+  return props.customColor ? `custom`: '';
+});
+
 onMounted(() => {
   if (bar.value) {
     (bar.value as HTMLElement).addEventListener("mousedown", (e: any) => {
@@ -35,7 +41,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="window-topbar" ref="bar" @click="move()">
+  <div class="window-topbar" :class="isCustom" ref="bar" @click="move()">
     <div><img :src="image" class="img-fluid win-icon" /></div>
     <div>{{ title }}</div>
     <div>
@@ -47,9 +53,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.win-icon{
-  width: 32px;
-  height: 32px;
-  margin-right: 5px;
+.custom{
+  background-color: v-bind(props.customColor);
 }
 </style>
