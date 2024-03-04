@@ -1,6 +1,6 @@
 {
   "name": "@vasakgroup/vue-libvasak",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Vue componenets for VSK Applications",
   "main": "src/index.ts",
   "module": "src/index.ts",
