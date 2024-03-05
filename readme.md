@@ -1,6 +1,6 @@
 # vue-libvasak
 
-A simple vue components for VSK Applications used in VasakOS. This library is used in [application-template](https://github.com/Vasak-OS/application-template). Don't work in browser.
+A simple vue components for VSK Applications used in VasakOS. This library is used in [application-template](https://github.com/Vasak-OS/application-template). **Don't work in browser.**
 
 ## Installation
 
@@ -21,7 +21,7 @@ import { WindowFrame } from "@vasakgroup/vue-libvasak";
 </script>
 
 <template>
-  <WindowFrame title="Hello World">
+  <WindowFrame title="Hello World" img="file:///home/pato/image.svg">
     <p>Hello World</p>
   </WindowFrame>
 </template>
@@ -35,28 +35,15 @@ import { defineComponent } from "vue";
 import {
   SideBar,
   WindowFrame,
-  SideA,
-  SideRouterLink,
-  SideSection,
+  SideButton,
 } from "@vasakgroup/vue-libvasak";
 </script>
 
 <template>
   <WindowFrame title="Hello World">
-    <SideBar title="My Sidebar">
-      <SideSection>
-        <SideA>
-          <SideRouterLink url="/" title="Home" image="./home.webp" />
-          <SideRouterLink url="/about" title="About" image="./about.webp" />
-        </SideA>
-      </SideSection>
-      <SideSection>
-        <SideA
-          url="http://vasak.net.ar/"
-          title="Vasak Group"
-          image="./vasak.webp"
-        />
-      </SideSection>
+    <SideBar>
+      <SideButton url="/" title="Home" image="./home.webp" />
+      <SideButton url="/about" title="About" image="./about.webp" />
     </SideBar>
   </WindowFrame>
 </template>
