@@ -11,13 +11,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  customColor: {
-    type: String,
-    default: null,
-  },
 });
 </script>
 
 <template>
-  <TopBar :title :image :customColor />
+  <TopBar :title="props.title" :image="props.image" />
+  <slot />
 </template>

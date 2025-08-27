@@ -9,6 +9,12 @@
     "dist",
     "src"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/vue-libvasak.es.js",
+      "require": "./dist/vue-libvasak.umd.js"
+    }
+  },
   "keywords": [
     "vue",
     "vsk",
@@ -37,14 +43,9 @@
   "license": "GPLv3",
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
+    "@vasakgroup/plugin-vicons": "^2.0.0",
     "vue": "^3.5.20",
     "vue-router": "^4.5.1"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/vue-libvasak.es.js",
-      "require": "./dist/vue-libvasak.umd.js"
-    }
   },
   "peerDependencies": {
     "vue": "^3.0.0"
