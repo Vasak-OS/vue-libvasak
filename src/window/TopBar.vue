@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { defineProps, inject, onMounted, ref, computed } from "vue";
+import { defineProps, ref, computed } from "vue";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
-const $vsk: any = inject("vsk");
 const bar = ref(null);
+const appWindow = getCurrentWindow();
 
 const props = defineProps({
   title: String,
@@ -10,50 +11,21 @@ const props = defineProps({
   customColor: String,
 });
 
-const move = () => {
-  $vsk.startMove();
-};
-
-const close = () => {
-  $vsk.exit();
-};
-
-const minimize = () => {
-  $vsk.minimize();
-};
-
-const toggleMaximize = () => {
-  $vsk.toggleMaximize();
-};
-
 const isCustom = computed(() => {
-  console.log('customColor', props.customColor);
-  return props.customColor ? `custom`: '';
-});
-
-onMounted(() => {
-  if (bar.value) {
-    (bar.value as HTMLElement).addEventListener("mousedown", (e: any) => {
-      move();
-    });
-  }
+  console.log("customColor", props.customColor);
+  return props.customColor ? `custom` : "bg-vsk-primary";
 });
 </script>
 
 <template>
-  <div class="window-topbar" :class="isCustom" ref="bar" @click="move()">
+  <div data-tauri-drag-region class="window-topbar" :class="isCustom" ref="bar">
     <div><img :src="image" class="img-fluid win-icon" /></div>
     <div>{{ title }}</div>
     <div>
-      <a class="win-button" href="#" @click="minimize()">_</a>
-      <a class="win-button" href="#" @click="toggleMaximize()">[]</a>
-      <a class="win-button" href="#" @click="close()">X</a>
+      <a class="win-button" href="#" @click="appWindow.minimize()">_</a>
+      <a class="win-button" href="#" @click="appWindow.toggleMaximize()">[]</a>
+      <a class="win-button" href="#" @click="appWindow.close()">X</a>
     </div>
   </div>
 </template>
 
-<style scoped>
-.custom{
-  background-color: v-bind(props.customColor);
-}
-</style>
