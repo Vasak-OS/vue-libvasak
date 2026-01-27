@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { defineComponent } from "vue";
-
 const props = defineProps({
   title: {
     type: String,
@@ -15,6 +13,6 @@ const props = defineProps({
 
 <template>
   <a href="#" class="sidebar-button">
-    <img :src="image" class="img-fluid" />
+    <img :src="image" :alt="title" class="img-fluid" />
   </a>
 </template>

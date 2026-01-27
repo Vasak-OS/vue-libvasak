@@ -1,9 +1,31 @@
 import SideBar from "./sidebar/SideBar.vue";
 import SideButton from "./sidebar/SideButton.vue";
 import WindowFrame from "./window/WindowFrame.vue";
+import ActionButton from "./controls/ActionButton.vue";
+import ConfigSection from "./layout/ConfigSection.vue";
+import DeviceCard from "./cards/DeviceCard.vue";
+import FormGroup from "./forms/FormGroup.vue";
+import ListCard from "./cards/ListCard.vue";
+import SliderControl from "./forms/SliderControl.vue";
+import SwitchToggle from "./forms/SwitchToggle.vue";
+import ToggleControl from "./controls/ToggleControl.vue";
+import TrayIconButton from "./tray/TrayIconButton.vue";
 import type { App } from "vue";
 
-const components = [SideBar, SideButton, WindowFrame];
+const components = [
+  SideBar,
+  SideButton,
+  WindowFrame,
+  ActionButton,
+  ConfigSection,
+  DeviceCard,
+  FormGroup,
+  ListCard,
+  SliderControl,
+  SwitchToggle,
+  ToggleControl,
+  TrayIconButton,
+];
 
 export default {
   install(app: App) {
@@ -13,4 +35,17 @@ export default {
   },
 };
 
-export { SideBar, SideButton, WindowFrame };
+export {
+  SideBar,
+  SideButton,
+  WindowFrame,
+  ActionButton,
+  ConfigSection,
+  DeviceCard,
+  FormGroup,
+  ListCard,
+  SliderControl,
+  SwitchToggle,
+  ToggleControl,
+  TrayIconButton,
+};
