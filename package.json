@@ -1,10 +1,10 @@
 {
   "name": "@vasakgroup/vue-libvasak",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vue componenets for VSK Applications",
   "main": "./dist/vue-libvasak.umd.js",
   "module": "./dist/vue-libvasak.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "src/types/vue-libvasak.d.ts",
   "files": [
     "dist",
     "src"
