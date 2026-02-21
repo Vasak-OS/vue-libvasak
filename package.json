@@ -1,6 +1,6 @@
 {
   "name": "@vasakgroup/vue-libvasak",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Vue componenets for VSK Applications",
   "main": "./dist/vue-libvasak.umd.js",
   "module": "./dist/vue-libvasak.es.js",
@@ -11,9 +11,13 @@
   ],
   "exports": {
     ".": {
+      "types": "./src/types/vue-libvasak.d.ts",
       "import": "./dist/vue-libvasak.es.js",
-      "require": "./dist/vue-libvasak.umd.js"
-    }
+      "require": "./dist/vue-libvasak.umd.js",
+      "default": "./dist/vue-libvasak.es.js"
+    },
+    "./style.css": "./dist/vue-libvasak.css",
+    "./package.json": "./package.json"
   },
   "keywords": [
     "vue",
@@ -56,7 +60,8 @@
     "@vitejs/plugin-vue": "^6.0.4"
   },
   "scripts": {
-    "build": "vite build",
-    "dev": "vite"
+    "build": "bunx --bun vite build",
+    "dev": "bunx --bun vite",
+    "prepare": "bun run build"
   }
 }
