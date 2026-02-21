@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-1 rounded-vsk relative hover:bg-vsk-primary/30 group transition-all duration-300"
+    class="p-1 rounded-corner relative hover:bg-primary dark:hover:bg-primary-dark group transition-all duration-300"
     :class="customClass"
     :title="tooltip"
     @click="handleClick"
@@ -17,7 +17,7 @@
     <!-- Badge/Counter -->
     <div
       v-if="badge !== null && badge > 0"
-      class="absolute bottom-1 right-1 bg-vsk-primary text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce"
+      class="absolute bottom-1 right-1 bg-primary dark:bg-primary-dark text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce"
     >
       {{ badge }}
     </div>
@@ -25,7 +25,7 @@
     <!-- Tooltip personalizado -->
     <div 
       v-if="showCustomTooltip && customTooltipText"
-      class="absolute top-1 left-1/2 transform -translate-x-1/2 text-xs font-semibold p-1 rounded-vsk transition-all duration-300 pointer-events-none background"
+      class="absolute top-1 left-1/2 transform -translate-x-1/2 text-xs font-semibold p-1 rounded-corner transition-all duration-300 pointer-events-none background"
       :class="[
         tooltipClass,
         {

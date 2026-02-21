@@ -34,7 +34,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   size: 'small',
-  activeClass: 'bg-vsk-primary',
+  activeClass: 'bg-primary dark:bg-primary-dark',
   inactiveClass: 'background',
   customClass: '',
 });

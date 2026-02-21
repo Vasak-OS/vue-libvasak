@@ -13,10 +13,10 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <div
-    class="flex flex-col gap-4 p-4 background rounded-vsk"
+    class="flex flex-col gap-4 p-4 background rounded-corner"
     :class="customClass"
   >
-    <h3 class="text-base font-semibold m-0 text-vsk-primary">
+    <h3 class="text-base font-semibold m-0 text-primary dark:text-primary-dark">
       {{ icon ? `${icon} ${title}` : title }}
     </h3>
     <slot />

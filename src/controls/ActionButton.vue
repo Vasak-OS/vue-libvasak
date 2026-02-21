@@ -35,9 +35,9 @@ const emit = defineEmits<{
 }>();
 
 const variantClasses: Record<string, string> = {
-  primary: 'bg-vsk-primary text-white hover:bg-vsk-primary/90',
-  secondary: 'bg-vsk-border text-vsk-text hover:bg-vsk-border/80',
-  danger: 'bg-red-600 text-white hover:bg-red-700',
+  primary: 'bg-primary dark:bg-primary-dark text-tx-on-primary dark:text-tx-on-primary-dark hover:bg-primary/90 dark:hover:bg-primary-dark/90',
+  secondary: 'bg-secondary dark:bg-secondary-dark text-tx-on-primary dark:text-tx-on-primary-dark hover:bg-secondary/80 dark:hover:bg-secondary-dark/80',
+  danger: 'bg-status-error dark:bg-status-error-dark text-tx-on-primary dark:text-tx-on-primary-dark hover:bg-status-error/90 dark:hover:bg-status-error-dark/90',
 };
 
 const sizeClasses: Record<'sm' | 'md' | 'lg', string> = {
@@ -59,7 +59,7 @@ const handleClick = (event: Event) => {
   <button
     :type="props.type"
     @click="handleClick"
-    class="rounded-vsk transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    class="rounded-corner transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     :class="[
       variantClasses[props.variant],
       sizeClasses[props.size],

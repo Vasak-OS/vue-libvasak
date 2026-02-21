@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { defineProps, ref, Ref, onMounted } from "vue";
+import { ref, Ref, onMounted } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getIconSource } from "@vasakgroup/plugin-vicons";
 
@@ -24,11 +24,11 @@ onMounted(async () => {
 <template>
   <div
     data-tauri-drag-region
-    class="flex h-8 px-4 py-1 bg-vsk-primary rounded-t-window justify-between align-center"
+    class="flex h-8 px-4 py-1 bg-primary dark:bg-primary-dark rounded-t-corner-window justify-between align-center"
     ref="bar"
   >
     <div data-tauri-drag-region>
-      <img :src="props.image" data-tauri-drag-region class="h-6 w-auto" />
+      <img :src="props.image" data-tauri-drag-region class="h-6 w-auto" :alt="props.title" />
     </div>
     <div data-tauri-drag-region>{{ props.title }}</div>
     <div data-tauri-drag-region>
