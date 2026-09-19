@@ -37,8 +37,15 @@ export async function getIconSource(nombre: string) {
 	return typeof puesto === 'function' ? await puesto() : puesto;
 }
 
-export async function getSymbolSource(_nombre: string) {
-	return '';
+/**
+ * La variante simbólica sale del mismo tema.
+ *
+ * Devolvía siempre cadena vacía, así que todo lo que pide un símbolo —el botón
+ * de plegar, la flecha de los grupos— no dibujaba nada y ninguna prueba se
+ * enteraba.
+ */
+export async function getSymbolSource(nombre: string) {
+	return await getIconSource(nombre);
 }
 
 /** Deja el próximo `listen` colgado. Lo que devuelve lo suelta. */

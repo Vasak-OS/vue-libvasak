@@ -414,3 +414,31 @@ describe('el contenedor, que tiene que dejar empujar al pie', () => {
 		expect(clases.some((c) => c.startsWith('space-y'))).toBe(false);
 	});
 });
+
+describe('los grupos', () => {
+	test('el título se pliega y despliega', async () => {
+		const barra = mount(SideBar, { props: { categories: CATEGORIAS, title: 'Monitor' } });
+		const grupo = barra.findAllComponents(SideGroup)[0];
+		const titulo = grupo?.get('button');
+		expect(titulo?.attributes('aria-expanded')).toBe('true');
+		expect(grupo?.findAllComponents(SideButton)).toHaveLength(2);
+
+		await titulo?.trigger('click');
+
+		expect(titulo?.attributes('aria-expanded')).toBe('false');
+		expect(grupo?.findAllComponents(SideButton)).toHaveLength(0);
+	});
+
+	test('la flecha es un icono del tema y no un carácter', async () => {
+		// Una `v` suelta se dibuja con la tipografía de la interfaz: queda de
+		// otro tamaño que el resto de los símbolos de la ventana y no sigue al
+		// tema. Es el mismo defecto que tenía el botón de plegar.
+		ponerEnElTema('pan-down-symbolic', 'data:image/png;base64,FLECHA');
+		const barra = mount(SideBar, { props: { categories: CATEGORIAS, title: 'Monitor' } });
+		await asentar();
+
+		const titulo = barra.findAllComponents(SideGroup)[0]?.get('button');
+		expect(titulo?.find('img').exists()).toBe(true);
+		expect(titulo?.text()).toBe('Sistema');
+	});
+});
