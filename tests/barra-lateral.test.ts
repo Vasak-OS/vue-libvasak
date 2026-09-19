@@ -468,16 +468,31 @@ describe('el ancho de la ventana', () => {
 		});
 	}
 
-	/** Pone el ancho de la ventana y avisa, como hace el compositor. */
-	async function ponerElAncho(pixeles: number) {
+	/**
+	 * Fija el ancho de la caja de la página.
+	 *
+	 * Es de donde la barra lee el ancho: `clientWidth` del elemento raíz es la
+	 * caja contra la que se resuelven las consultas de medios. En happy-dom es
+	 * una propiedad de sólo lectura, así que se redefine.
+	 */
+	function anchoDeLaRaiz(pixeles: number) {
+		Object.defineProperty(document.documentElement, 'clientWidth', {
+			value: pixeles,
+			configurable: true,
+		});
 		(window as unknown as { innerWidth: number }).innerWidth = pixeles;
+	}
+
+	/** Pone el ancho y avisa, como haría un navegador de verdad. */
+	async function ponerElAncho(pixeles: number) {
+		anchoDeLaRaiz(pixeles);
 		window.dispatchEvent(new Event('resize'));
 		await nextTick();
 	}
 
 	beforeEach(() => {
 		(window as unknown as { matchMedia: unknown }).matchMedia = matchMediaDeVerdad;
-		(window as unknown as { innerWidth: number }).innerWidth = 1280;
+		anchoDeLaRaiz(1280);
 	});
 
 	test('una ventana angosta la pliega sola', async () => {
@@ -495,7 +510,7 @@ describe('el ancho de la ventana', () => {
 		// barra le cree a la consulta, abre plegada y se queda así para
 		// siempre, sin que nadie la haya plegado. Pasó.
 		congelarLaConsulta(true);
-		(window as unknown as { innerWidth: number }).innerWidth = 1280;
+		anchoDeLaRaiz(1280);
 
 		const vista = mount(SideBar, { props: { title: 'Ventana' } });
 		await nextTick();
@@ -508,7 +523,7 @@ describe('el ancho de la ventana', () => {
 		// crece al terminar de abrirse. El `change` no llega nunca; el `resize`
 		// sí, y es el que vuelve a mirar el ancho.
 		congelarLaConsulta(true);
-		(window as unknown as { innerWidth: number }).innerWidth = 600;
+		anchoDeLaRaiz(600);
 
 		const vista = mount(SideBar, { props: { title: 'Ventana' } });
 		await nextTick();
@@ -528,6 +543,92 @@ describe('el ancho de la ventana', () => {
 		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
 	});
 
+	test('mide la caja de la página y no la ventana', async () => {
+		// `clientWidth` del elemento raíz es la caja contra la que se resuelven
+		// las consultas de medios, y es la que cambia cuando el WebView recibe
+		// su tamaño. `innerWidth` puede decir otra cosa —la ventana del
+		// compositor, con sus decoraciones— y es la que dejaba la barra
+		// plegada en una ventana ancha.
+		Object.defineProperty(document.documentElement, 'clientWidth', {
+			value: 600,
+			configurable: true,
+		});
+		(window as unknown as { innerWidth: number }).innerWidth = 1280;
+
+		const vista = mount(SideBar, { props: { title: 'Ventana' } });
+		await nextTick();
+
+		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
+	});
+
+	test('el observador de tamaño es el que la despliega', async () => {
+		// Ni el `change` de `matchMedia` ni el `resize` de la ventana llegan en
+		// WebKitGTK cuando la ventana pasa de angosta a ancha al terminar de
+		// abrirse: se comprobó redimensionando el instalador dos veces desde el
+		// compositor y la barra se quedó plegada las dos. El que sí avisa es un
+		// `ResizeObserver` sobre el elemento raíz.
+		const observadores: Array<{ callback: () => void; observado: unknown }> = [];
+		const original = globalThis.ResizeObserver;
+		(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
+			callback: () => void;
+			constructor(callback: () => void) {
+				this.callback = callback;
+				observadores.push({ callback, observado: null });
+			}
+			observe(elemento: unknown) {
+				const mio = observadores.find((uno) => uno.callback === this.callback);
+				if (mio) mio.observado = elemento;
+			}
+			disconnect() {}
+			unobserve() {}
+		};
+
+		try {
+			congelarLaConsulta(true);
+			anchoDeLaRaiz(600);
+			const vista = mount(SideBar, { props: { title: 'Ventana' } });
+			await nextTick();
+			expect(vista.find('aside').classes()).toContain('md:w-[84px]');
+
+			// El WebView recibe su tamaño: no hay evento de ventana, sólo el
+			// observador.
+			expect(observadores).toHaveLength(1);
+			expect(observadores[0].observado).toBe(document.documentElement);
+			anchoDeLaRaiz(1280);
+			observadores[0].callback();
+			await nextTick();
+
+			expect(vista.find('aside').classes()).toContain('md:w-72');
+		} finally {
+			(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = original;
+		}
+	});
+
+	test('y lo desconecta al desmontarse', async () => {
+		// Un observador por cada ventana que se abrió y se cerró es una fuga
+		// que además dibuja componentes muertos.
+		let desconectados = 0;
+		const original = globalThis.ResizeObserver;
+		(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
+			constructor(_callback: () => void) {}
+			observe() {}
+			disconnect() {
+				desconectados++;
+			}
+			unobserve() {}
+		};
+
+		try {
+			const vista = mount(SideBar, { props: { title: 'Ventana' } });
+			await nextTick();
+			vista.unmount();
+
+			expect(desconectados).toBe(1);
+		} finally {
+			(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = original;
+		}
+	});
+
 	test('deja de escuchar al desmontarse', async () => {
 		// Un oyente de `resize` por cada ventana que se abrió y se cerró es una
 		// fuga que además dibuja componentes muertos.
@@ -536,7 +637,7 @@ describe('el ancho de la ventana', () => {
 		vista.unmount();
 
 		expect(() => {
-			(window as unknown as { innerWidth: number }).innerWidth = 600;
+			anchoDeLaRaiz(600);
 			window.dispatchEvent(new Event('resize'));
 		}).not.toThrow();
 	});
