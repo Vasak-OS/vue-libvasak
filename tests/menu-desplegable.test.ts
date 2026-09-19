@@ -95,6 +95,43 @@ function losItems(): HTMLElement[] {
 	return Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
 }
 
+/**
+ * El rectángulo del disparador, que en `happy-dom` es todo ceros.
+ *
+ * Sin esto no hay dónde ubicar nada: el menú se mediría contra un punto en la
+ * esquina y cualquier prueba de «entra o no entra» daría siempre lo mismo.
+ */
+function fingirElRectangulo(elemento: HTMLElement, rectangulo: Partial<DOMRect>) {
+	const lleno = {
+		x: 0,
+		y: 0,
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		width: 0,
+		height: 0,
+		...rectangulo,
+	};
+	elemento.getBoundingClientRect = () => ({ ...lleno, toJSON: () => lleno }) as DOMRect;
+}
+
+/** Lo que el menú **querría** ocupar, que es lo que se mide para decidir. */
+function fingirElTamano(elemento: HTMLElement, alto: number, ancho: number) {
+	Object.defineProperty(elemento, 'scrollHeight', { value: alto, configurable: true });
+	Object.defineProperty(elemento, 'offsetWidth', { value: ancho, configurable: true });
+}
+
+/**
+ * Rehacer la cuenta con los tamaños puestos.
+ *
+ * El menú recalcula al cambiar el tamaño de la ventana, y eso es síncrono: no
+ * hay que esperar al cuadro de animación del que cuelga el cálculo de abrir.
+ */
+function recalcular() {
+	window.dispatchEvent(new Event('resize'));
+}
+
 function teclear(elemento: Element, key: string) {
 	elemento.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
 }
@@ -387,6 +424,85 @@ describe('atado desde afuera', () => {
 		await abrirConElRaton();
 
 		expect(elMenu().hasAttribute('inert')).toBe(false);
+	});
+});
+
+describe('dónde entra', () => {
+	test('si entra del lado que le pidieron, se queda ahí', async () => {
+		montarElMenu();
+		await abrirConElRaton();
+
+		fingirElRectangulo(elDisparador(), { top: 20, bottom: 50, left: 100, right: 160, width: 60, height: 30 });
+		fingirElTamano(elMenu(), 200, 180);
+		recalcular();
+		await nextTick();
+
+		// `side` por omisión es «bottom»: justo debajo del disparador.
+		expect(elMenu().style.top).toBe('54px');
+	});
+
+	test('si no entra abajo y arriba hay más lugar, se da vuelta', async () => {
+		// Es la decisión de fondo: `side` es una preferencia y no una orden.
+		// Sin esto, un menú abierto contra el borde de abajo se corta aunque
+		// arriba hubiera pantalla de sobra.
+		montarElMenu();
+		await abrirConElRaton();
+
+		const alto = window.innerHeight;
+		fingirElRectangulo(elDisparador(), {
+			top: alto - 60,
+			bottom: alto - 30,
+			left: 100,
+			right: 160,
+			width: 60,
+			height: 30,
+		});
+		fingirElTamano(elMenu(), 400, 180);
+		recalcular();
+		await nextTick();
+
+		// Arriba del disparador y no debajo: el borde de abajo del menú queda
+		// pegado a él.
+		expect(Number.parseInt(elMenu().style.top, 10)).toBe(alto - 60 - 4 - 400);
+	});
+
+	test('más alto que la pantalla: se topa contra el lugar que hay y se desplaza', async () => {
+		// Lo que estaba roto: sin techo el menú se pasaba del borde y lo que
+		// quedaba abajo era inalcanzable, sin barra ni rueda que valiera.
+		montarElMenu();
+		await abrirConElRaton();
+
+		fingirElRectangulo(elDisparador(), { top: 20, bottom: 50, left: 100, right: 160, width: 60, height: 30 });
+		fingirElTamano(elMenu(), 5000, 180);
+		recalcular();
+		await nextTick();
+
+		const techo = Number.parseInt(elMenu().style.maxHeight, 10);
+		// El que queda de verdad entre el disparador y el borde, no un número
+		// fijo: 54 de arriba más 8 de aire abajo.
+		expect(techo).toBe(window.innerHeight - 54 - 8);
+		expect(elMenu().style.overflowY).toBe('auto');
+	});
+
+	test('y no se va por el costado aunque el disparador esté contra el borde', async () => {
+		montarElMenu();
+		await abrirConElRaton();
+
+		const ancho = window.innerWidth;
+		fingirElRectangulo(elDisparador(), {
+			top: 20,
+			bottom: 50,
+			left: ancho - 40,
+			right: ancho,
+			width: 40,
+			height: 30,
+		});
+		fingirElTamano(elMenu(), 200, 300);
+		recalcular();
+		await nextTick();
+
+		// Alineado al disparador se iría a `ancho - 40`, con 260 px afuera.
+		expect(Number.parseInt(elMenu().style.left, 10)).toBe(ancho - 300 - 8);
 	});
 });
 

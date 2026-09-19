@@ -87,6 +87,11 @@ decide when to open it.
 A disabled item stays focusable and keeps its place in the arrow rotation, with
 `aria-disabled`: an option that vanishes cannot be discovered.
 
+`side` is a **preference**, not an order: if the menu does not fit on the side
+you asked for and there is more room on the opposite one, it flips. Whatever is
+left over after that is capped to the space actually available and scrolls
+inside — so a menu taller than the window never runs off the edge.
+
 ## Contributors
 
 <center>

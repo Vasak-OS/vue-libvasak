@@ -19,6 +19,19 @@
  * Los ítems se buscan en el DOM por su `role` en vez de llevar un registro:
  * un menú se arma con `v-for`, con `v-if` y con ítems que vienen de otro
  * componente, y el documento es el único que sabe cuáles hay y en qué orden.
+ *
+ * # Dónde entra
+ *
+ * `side` es una **preferencia**, no una orden: si por el lado pedido no entra y
+ * por el de enfrente hay más lugar, el menú se da vuelta. Y lo que sobra
+ * después de eso se corta con un techo calculado contra el espacio que queda de
+ * verdad —no un número fijo, que se equivoca en los dos sentidos: de más contra
+ * el borde de abajo, de menos cuando hay pantalla de sobra— y se desplaza
+ * adentro.
+ *
+ * Sin esto, un menú más alto que la pantalla se cortaba en el borde y lo que
+ * quedaba abajo era inalcanzable: no había barra de desplazamiento, y la rueda
+ * tampoco hacía nada porque no había nada que desplazar.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usarElMenu } from './tipos';
@@ -44,53 +57,121 @@ const disparador = computed(() => menu.disparador.value);
 const abierto = computed(() => menu.abierto.value);
 
 const contenido = ref<HTMLElement | null>(null);
-const posicion = ref({ top: 0, left: 0 });
+/** Dónde va y hasta dónde puede crecer. Sin techo mientras no haga falta. */
+const posicion = ref<{ top: number; left: number; techo: number | null }>({
+	top: 0,
+	left: 0,
+	techo: null,
+});
+
+/** El aire que se le deja al borde de la ventana. */
+const MARGEN = 8;
+
+type Lado = 'top' | 'bottom' | 'left' | 'right';
+
+const DE_ENFRENTE: Record<Lado, Lado> = {
+	top: 'bottom',
+	bottom: 'top',
+	left: 'right',
+	right: 'left',
+};
+
+/** Lo que hay entre el disparador y el borde de la ventana, de ese lado. */
+function espacioDe(lado: Lado, desde: DOMRect): number {
+	const aire = props.sideOffset + MARGEN;
+	switch (lado) {
+		case 'bottom':
+			return window.innerHeight - desde.bottom - aire;
+		case 'top':
+			return desde.top - aire;
+		case 'right':
+			return window.innerWidth - desde.right - aire;
+		case 'left':
+			return desde.left - aire;
+	}
+}
+
+function acotar(valor: number, minimo: number, maximo: number): number {
+	if (maximo < minimo) return minimo;
+	return Math.min(Math.max(valor, minimo), maximo);
+}
 
 function calcularPosicion() {
 	if (!disparador.value || !contenido.value) return;
 
 	const desde = disparador.value.getBoundingClientRect();
-	const propio = contenido.value.getBoundingClientRect();
+	// `scrollHeight` y no el rectángulo: el rectángulo ya viene con el techo de
+	// la vez anterior puesto, así que un menú topado se creería de ese tamaño y
+	// no volvería a crecer nunca aunque le sobrara lugar.
+	const altoQueQuiere = contenido.value.scrollHeight;
+	const anchoQueQuiere = contenido.value.offsetWidth;
+
+	// `side` es una preferencia: si no entra de ese lado y del otro hay más
+	// lugar, se da vuelta. Con «más» y no con «entra» alcanza: si no entra en
+	// ninguno de los dos, va al que menos lo corta.
+	const vertical = props.side === 'top' || props.side === 'bottom';
+	const queNecesita = vertical ? altoQueQuiere : anchoQueQuiere;
+
+	let lado: Lado = props.side;
+	const deEsteLado = espacioDe(lado, desde);
+	if (deEsteLado < queNecesita) {
+		const deEnfrente = espacioDe(DE_ENFRENTE[lado], desde);
+		if (deEnfrente > deEsteLado) lado = DE_ENFRENTE[lado];
+	}
 
 	let top = 0;
 	let left = 0;
+	let techo: number | null = null;
 
-	switch (props.side) {
-		case 'bottom':
+	switch (lado) {
+		case 'bottom': {
 			top = desde.bottom + props.sideOffset;
+			techo = Math.max(window.innerHeight - top - MARGEN, 0);
 			break;
-		case 'top':
-			top = desde.top - propio.height - props.sideOffset;
+		}
+		case 'top': {
+			// Crece para arriba: el borde de abajo queda clavado contra el
+			// disparador, así que lo que se mueve al toparlo es el `top`.
+			techo = Math.max(espacioDe('top', desde), 0);
+			top = desde.top - props.sideOffset - Math.min(altoQueQuiere, techo);
 			break;
+		}
 		case 'left':
-			left = desde.left - propio.width - props.sideOffset;
-			top = desde.top;
+		case 'right': {
+			left =
+				lado === 'right'
+					? desde.right + props.sideOffset
+					: desde.left - anchoQueQuiere - props.sideOffset;
+			// A un costado el alto no lo limita el costado sino la ventana. El
+			// menú arranca a la altura del disparador, y si desde ahí no entra
+			// se sube lo que haga falta antes de toparlo.
+			const enLaVentana = window.innerHeight - 2 * MARGEN;
+			top = acotar(desde.top, MARGEN, window.innerHeight - Math.min(altoQueQuiere, enLaVentana) - MARGEN);
+			techo = Math.max(window.innerHeight - top - MARGEN, 0);
 			break;
-		case 'right':
-			left = desde.right + props.sideOffset;
-			top = desde.top;
-			break;
+		}
 	}
 
-	switch (props.align) {
-		case 'start':
-			if (props.side === 'bottom' || props.side === 'top') {
+	if (vertical) {
+		switch (props.align) {
+			case 'start':
 				left = desde.left;
-			}
-			break;
-		case 'center':
-			if (props.side === 'bottom' || props.side === 'top') {
-				left = desde.left + desde.width / 2 - propio.width / 2;
-			}
-			break;
-		case 'end':
-			if (props.side === 'bottom' || props.side === 'top') {
-				left = desde.right - propio.width;
-			}
-			break;
+				break;
+			case 'center':
+				left = desde.left + desde.width / 2 - anchoQueQuiere / 2;
+				break;
+			case 'end':
+				left = desde.right - anchoQueQuiere;
+				break;
+		}
 	}
 
-	posicion.value = { top, left };
+	// Y que no se vaya por el costado. Alinear contra el disparador es lo que se
+	// pidió, pero un disparador pegado al borde derecho manda medio menú afuera
+	// de la ventana, donde no hay forma de leerlo.
+	left = acotar(left, MARGEN, window.innerWidth - anchoQueQuiere - MARGEN);
+
+	posicion.value = { top, left, techo };
 }
 
 /** Los ítems que hay ahora mismo, en el orden en que se leen. */
@@ -177,10 +258,14 @@ watch(abierto, async (esta) => {
 	}
 });
 
-function recalcularSiEstaAbierto() {
-	if (abierto.value) {
-		calcularPosicion();
-	}
+function recalcularSiEstaAbierto(evento?: Event) {
+	if (!abierto.value) return;
+	// Desplazarse **adentro** del menú no lo mueve: el disparador sigue donde
+	// estaba. El oyente de `scroll` es de captura y con el techo puesto el menú
+	// pasó a ser él mismo un contenedor desplazable, así que ahora sus propios
+	// desplazamientos también llegan hasta acá.
+	if (evento && contenido.value?.contains(evento.target as Node)) return;
+	calcularPosicion();
 }
 
 function alHacerClicAfuera(evento: MouseEvent) {
@@ -227,7 +312,15 @@ onBeforeUnmount(() => {
         aria-orientation="vertical"
         :aria-labelledby="idDeLaEtiqueta ?? undefined"
         :inert="!abierto"
-        :style="{ position: 'fixed', top: `${posicion.top}px`, left: `${posicion.left}px`, zIndex: 50 }"
+        :style="{
+          position: 'fixed',
+          top: `${posicion.top}px`,
+          left: `${posicion.left}px`,
+          maxHeight: posicion.techo === null ? undefined : `${posicion.techo}px`,
+          overflowY: 'auto',
+          overscrollBehavior: 'contain',
+          zIndex: 50,
+        }"
         dropdown-content
         class="min-w-30 rounded-corner border border-primary bg-ui-bg/80 shadow-lg focus:outline-none"
         @click="(e) => e.stopPropagation()"
