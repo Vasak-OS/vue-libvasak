@@ -28,23 +28,47 @@ defineEmits<{ click: [] }>();
 const fuente = ref('');
 const icono = toRef(props, 'icon');
 let soltar: UnlistenFn | null = null;
+let desmontado = false;
+
+/** Cuántas resoluciones se pidieron. De las que estén en vuelo, sólo vale la última. */
+let ultimoPedido = 0;
 
 async function resolver() {
-	if (!icono.value) {
+	const mio = ++ultimoPedido;
+	const nombre = icono.value;
+	if (!nombre) {
 		fuente.value = '';
 		return;
 	}
-	fuente.value = await getIconSource(icono.value);
+	const resuelto = await getIconSource(nombre);
+	// Cambiar de icono y cambiar de tema resuelven en paralelo, y el tema tarda
+	// lo que tarde el backend. Sin el testigo, la respuesta vieja llega última y
+	// deja puesto el icono anterior — que es el mismo síntoma que se venía a
+	// evitar, pero intermitente y según cuál tarde más.
+	if (mio === ultimoPedido) {
+		fuente.value = resuelto;
+	}
 }
 
 onMounted(async () => {
 	await resolver();
 	// El tema de iconos cambia en caliente: sin esto, la barra se queda con los
 	// del tema anterior hasta que se reabre la ventana.
-	soltar = await listen('vicons:theme-changed', resolver);
+	const dejarDeEscuchar = await listen('vicons:theme-changed', resolver);
+	// Registrarse tarda, y en una lista que se desplaza un botón puede irse
+	// antes de que termine. Ahí `onUnmounted` ya pasó y no vio nada que soltar:
+	// el oyente quedaba registrado para siempre sobre un componente muerto.
+	if (desmontado) {
+		dejarDeEscuchar();
+		return;
+	}
+	soltar = dejarDeEscuchar;
 });
 
-onUnmounted(() => soltar?.());
+onUnmounted(() => {
+	desmontado = true;
+	soltar?.();
+});
 
 watch(icono, resolver);
 </script>
@@ -53,6 +77,7 @@ watch(icono, resolver);
   <button
     type="button"
     :title="collapsed ? label : undefined"
+    :aria-label="collapsed ? label : undefined"
     :disabled="disabled"
     :aria-current="active ? 'page' : undefined"
     class="group relative flex w-full items-center gap-3 rounded-corner border px-3 py-2 text-left text-sm transition-all duration-200"

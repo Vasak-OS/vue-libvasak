@@ -1,16 +1,28 @@
 /**
  * Los dobles de lo que sólo existe adentro de una ventana de Tauri.
  *
- * Una prueba montada corre en `happy-dom`: no hay backend que resuelva un
- * icono ni quien emita el cambio de tema. Sin esto, importar la barra falla en
- * la primera línea.
+ * Una prueba montada corre en `happy-dom`: no hay backend que resuelva un icono
+ * ni quien emita el cambio de tema. Sin esto, importar la barra falla en la
+ * primera línea.
+ *
+ * No son mudos: dejan contestar tarde. Las dos carreras que el botón tiene que
+ * aguantar —una resolución vieja que llega última, y un registro de oyente que
+ * termina después de que el componente se fue— sólo se pueden comprobar
+ * decidiendo desde la prueba cuándo contesta cada cosa.
  */
 
-const temaDeIconos = new Map<string, string>();
+const temaDeIconos = new Map<string, string | (() => Promise<string>)>();
 const oyentes = new Map<string, Set<() => unknown>>();
 
-/** Pone un nombre en el tema de iconos. */
-export function ponerEnElTema(nombre: string, fuente: string) {
+/** Lo que deja colgado al próximo `listen`, si la prueba lo pidió. */
+let esperaDelRegistro: Promise<void> | null = null;
+
+/**
+ * Pone un nombre en el tema de iconos.
+ *
+ * Se puede pasar una función para quedarse con el control de cuándo contesta.
+ */
+export function ponerEnElTema(nombre: string, fuente: string | (() => Promise<string>)) {
 	temaDeIconos.set(nombre, fuente);
 }
 
@@ -21,20 +33,40 @@ export function ponerEnElTema(nombre: string, fuente: string) {
  * consola y devuelve `''`.
  */
 export async function getIconSource(nombre: string) {
-	return temaDeIconos.get(nombre) ?? '';
+	const puesto = temaDeIconos.get(nombre) ?? '';
+	return typeof puesto === 'function' ? await puesto() : puesto;
 }
 
 export async function getSymbolSource(_nombre: string) {
 	return '';
 }
 
+/** Deja el próximo `listen` colgado. Lo que devuelve lo suelta. */
+export function demorarElProximoRegistro() {
+	let soltar = () => {};
+	esperaDelRegistro = new Promise<void>((listo) => {
+		soltar = listo;
+	});
+	return soltar;
+}
+
 export async function listen(nombre: string, manejador: () => unknown) {
-	const suyos = oyentes.get(nombre) ?? new Set();
+	if (esperaDelRegistro) {
+		const espera = esperaDelRegistro;
+		esperaDelRegistro = null;
+		await espera;
+	}
+	const suyos = oyentes.get(nombre) ?? new Set<() => unknown>();
 	suyos.add(manejador);
 	oyentes.set(nombre, suyos);
 	return () => {
 		suyos.delete(manejador);
 	};
+}
+
+/** Cuántos oyentes quedaron puestos. */
+export function cuantosOyentes(nombre: string) {
+	return oyentes.get(nombre)?.size ?? 0;
 }
 
 /** Emite un evento del escritorio y espera a que lo atiendan. */
@@ -48,4 +80,5 @@ export async function emitir(nombre: string) {
 export function olvidarTodo() {
 	temaDeIconos.clear();
 	oyentes.clear();
+	esperaDelRegistro = null;
 }

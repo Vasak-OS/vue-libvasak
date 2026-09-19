@@ -14,7 +14,13 @@ import { nextTick } from 'vue';
 import SideBar from '../src/sidebar/SideBar.vue';
 import SideButton from '../src/sidebar/SideButton.vue';
 import SideGroup from '../src/sidebar/SideGroup.vue';
-import { emitir, olvidarTodo, ponerEnElTema } from './dobles';
+import {
+	cuantosOyentes,
+	demorarElProximoRegistro,
+	emitir,
+	olvidarTodo,
+	ponerEnElTema,
+} from './dobles';
 
 const CATEGORIAS = [
 	{
@@ -248,6 +254,33 @@ describe('los iconos', () => {
 		expect(barra.get('img').attributes('src')).toBe('data:image/png;base64,OSCURO');
 	});
 
+	test('la resolución vieja no pisa a la nueva cuando llega tarde', async () => {
+		// Cambiar de icono y cambiar de tema resuelven en paralelo, y el tema
+		// tarda lo que tarde el backend. Sin el testigo, la vieja contesta última
+		// y deja puesto el icono anterior: en una lista que se desplaza, la fila
+		// nueva se queda con el dibujo de la que ocupaba ese lugar antes.
+		let soltarLaVieja: (fuente: string) => void = () => {};
+		ponerEnElTema(
+			'system-run',
+			() =>
+				new Promise<string>((listo) => {
+					soltarLaVieja = listo;
+				})
+		);
+		ponerEnElTema('user-trash', 'data:image/png;base64,NUEVO');
+
+		const boton = mount(SideButton, { props: { label: 'Servicios', icon: 'system-run' } });
+		await nextTick();
+		await boton.setProps({ icon: 'user-trash' });
+		await asentar();
+		expect(boton.get('img').attributes('src')).toBe('data:image/png;base64,NUEVO');
+
+		soltarLaVieja('data:image/png;base64,VIEJO');
+		await asentar();
+
+		expect(boton.get('img').attributes('src')).toBe('data:image/png;base64,NUEVO');
+	});
+
 	test('sin icono queda la inicial y no un hueco', async () => {
 		// Un hueco vacío del mismo tamaño deja la fila desalineada contra las
 		// que sí lo tienen.
@@ -257,5 +290,55 @@ describe('los iconos', () => {
 
 		expect(barra.find('img').exists()).toBe(false);
 		expect(barra.text()).toContain('R');
+	});
+});
+
+describe('lo que el botón tiene que soltar', () => {
+	test('el oyente del tema se va al desmontar', async () => {
+		const boton = mount(SideButton, { props: { label: 'Recursos', icon: 'system-run' } });
+		await asentar();
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(1);
+
+		boton.unmount();
+
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(0);
+	});
+
+	test('y también si termina de registrarse después de que el botón se fue', async () => {
+		// Registrarse tarda, y en una lista que se desplaza un botón puede irse
+		// antes de que termine. Ahí `onUnmounted` ya pasó y no vio nada que
+		// soltar: el oyente quedaba puesto para siempre sobre un componente
+		// muerto, resolviendo iconos que nadie dibuja.
+		const soltarElRegistro = demorarElProximoRegistro();
+		const boton = mount(SideButton, { props: { label: 'Recursos', icon: 'system-run' } });
+		await nextTick();
+
+		boton.unmount();
+		soltarElRegistro();
+		await asentar();
+
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(0);
+	});
+});
+
+describe('el nombre accesible', () => {
+	test('plegado, el botón lo lleva encima', async () => {
+		// Plegado queda sólo el icono, y el icono está marcado como decorativo.
+		// El `title` es un globo del ratón, no un nombre accesible: sin
+		// `aria-label`, un lector de pantalla anuncia un botón sin nombre.
+		const boton = mount(SideButton, {
+			props: { label: 'Servicios', icon: 'system-run', collapsed: true },
+		});
+
+		expect(boton.get('button').attributes('aria-label')).toBe('Servicios');
+		expect(boton.get('button').attributes('title')).toBe('Servicios');
+	});
+
+	test('y desplegado no, que el nombre ya está escrito', async () => {
+		// Con `aria-label` puesto igual, el lector diría el nombre dos veces.
+		const boton = mount(SideButton, { props: { label: 'Servicios', icon: 'system-run' } });
+
+		expect(boton.get('button').attributes('aria-label')).toBeUndefined();
+		expect(boton.text()).toContain('Servicios');
 	});
 });
