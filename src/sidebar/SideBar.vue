@@ -99,6 +99,7 @@ const ANCHO_MINIMO = 767;
 const plegadaAMano = ref(props.collapsed ?? false);
 const esAngosta = ref(false);
 let consulta: MediaQueryList | null = null;
+let observador: ResizeObserver | null = null;
 
 /**
  * Plegada por decisión o por ancho.
@@ -111,15 +112,20 @@ const plegada = computed(() => esAngosta.value || plegadaAMano.value);
 const hayTitulo = computed(() => Boolean(props.title || props.subtitle));
 const hayCategorias = computed(() => props.categories.length > 0);
 
+/**
+ * El ancho que de verdad tiene la página.
+ *
+ * `clientWidth` del elemento raíz y no `innerWidth`: es el ancho de la caja
+ * contra la que se resuelven las consultas de medios, y es el que cambia —y
+ * avisa— cuando el WebView recibe su tamaño. `innerWidth` queda de respaldo
+ * para un documento que todavía no tenga raíz.
+ */
+function anchoDeLaPagina() {
+	return document.documentElement?.clientWidth || window.innerWidth;
+}
+
 function revisar() {
-	// El ancho de la ventana y no el `matches` de la consulta: en WebKitGTK el
-	// `change` de `matchMedia` no llega cuando la ventana pasa de angosta a
-	// ancha al terminar de abrirse. La barra se montaba con el WebView todavía
-	// sin tamaño —o sea, angosto— y se quedaba plegada para siempre en una
-	// ventana de 1280 que nadie había plegado. `innerWidth` se lee en el
-	// momento y no depende de que llegue ningún aviso; la consulta queda sólo
-	// como una de las dos cosas que disparan esta relectura.
-	esAngosta.value = window.innerWidth <= ANCHO_MINIMO;
+	esAngosta.value = anchoDeLaPagina() <= ANCHO_MINIMO;
 }
 
 function alternar() {
@@ -143,19 +149,38 @@ watch(
 	}
 );
 
+/**
+ * Tres avisos para lo mismo, y el que manda es el tercero.
+ *
+ * En WebKitGTK —el WebView de todas estas ventanas— ni el `change` de
+ * `matchMedia` ni el `resize` de la ventana llegan cuando la ventana pasa de
+ * angosta a ancha al terminar de abrirse. Se comprobó redimensionando la
+ * ventana del instalador dos veces desde el compositor: la barra se quedó
+ * plegada las dos.
+ *
+ * Lo que sí avisa es un `ResizeObserver` sobre el elemento raíz, que además
+ * dispara con la primera medición, así que arregla también el caso de montarse
+ * antes de que el WebView tenga tamaño —que era el fallo original—. Los otros
+ * dos quedan porque no cuestan nada y en un navegador de verdad son los que
+ * llegan primero.
+ */
 onMounted(() => {
 	consulta = window.matchMedia(`(max-width: ${ANCHO_MINIMO}px)`);
 	revisar();
 	consulta.addEventListener('change', revisar);
-	// Y el `resize` además del `change`, que es el que sí llega siempre. Cuesta
-	// una comparación por evento y es lo que evita que la ventana abra con la
-	// barra plegada sin que nadie la haya plegado.
 	window.addEventListener('resize', revisar);
+
+	if (typeof ResizeObserver !== 'undefined' && document.documentElement) {
+		observador = new ResizeObserver(revisar);
+		observador.observe(document.documentElement);
+	}
 });
 
 onBeforeUnmount(() => {
 	consulta?.removeEventListener('change', revisar);
 	window.removeEventListener('resize', revisar);
+	observador?.disconnect();
+	observador = null;
 });
 
 defineExpose({ collapsed: plegada });
