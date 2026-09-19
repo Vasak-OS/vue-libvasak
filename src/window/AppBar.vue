@@ -12,6 +12,7 @@
  * `titulo` es el nombre de la ventana, que no todas muestran.
  * La ranura por omisión es el contenido —pestañas, selectores, lo que sea— y es
  * la única que crece.
+ * `centro` va **encima** de la barra, centrado respecto de la ventana entera.
  * `acciones` es lo de la aplicación que va junto a los controles de ventana.
  *
  * Los controles van siempre y al final, que es donde la gente los busca.
@@ -69,7 +70,7 @@ provide(CLAVE_DE_LA_BARRA, {
 
 <template>
   <div
-    class="flex shrink-0 items-center gap-2 p-1 font-title"
+    class="relative flex shrink-0 items-center gap-2 p-1 font-title"
     :class="vertical ? 'h-full flex-col' : 'w-full'"
     data-tauri-drag-region>
     <div v-if="$slots.identidad" class="flex shrink-0 items-center" data-tauri-drag-region>
@@ -105,5 +106,24 @@ provide(CLAVE_DE_LA_BARRA, {
       :minimize-label="minimizeLabel"
       :maximize-label="maximizeLabel"
       :close-label="closeLabel" />
+
+    <!-- `centro` va **encima** de la barra y no como una columna más.
+         Centrado entre dos columnas queda centrado respecto de lo que sobra a
+         los costados, no de la ventana: con el icono de un lado y tres
+         controles del otro, eso lo corre visiblemente. Absoluto y al 50% queda
+         donde la gente espera.
+
+         `pointer-events-none` en el envoltorio para no tapar la zona de
+         arrastre; lo que va adentro lo vuelve a encender. -->
+    <div
+      v-if="$slots.centro"
+      class="pointer-events-none absolute flex items-center justify-center"
+      :class="vertical
+        ? 'inset-x-0 top-1/2 -translate-y-1/2 flex-col'
+        : 'inset-y-0 left-1/2 -translate-x-1/2'">
+      <div class="pointer-events-auto flex items-center gap-2" :class="vertical ? 'flex-col' : ''">
+        <slot name="centro" />
+      </div>
+    </div>
   </div>
 </template>

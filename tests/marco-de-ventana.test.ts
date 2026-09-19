@@ -124,6 +124,57 @@ describe('la barra', () => {
 		expect(vista.text()).toContain('Ventana');
 	});
 
+	test('`centro` va absoluto y al medio de la ventana entera', async () => {
+		// Centrado entre columnas queda centrado respecto de lo que sobra entre
+		// el icono y los tres controles, que lo corre visiblemente. Es el mes
+		// del calendario, el buscador de la agenda y la carpeta del correo.
+		const vista = mount(WindowFrame, {
+			props: { position: 'top' },
+			slots: { centro: () => h('span', { class: 'medio' }, 'Septiembre') },
+		});
+		await nextTick();
+
+		const medio = vista.find('.medio');
+		expect(medio.exists()).toBe(true);
+		const envoltorio = medio.element.parentElement?.parentElement as HTMLElement;
+		expect(envoltorio.className).toContain('absolute');
+		expect(envoltorio.className).toContain('left-1/2');
+		expect(envoltorio.className).toContain('-translate-x-1/2');
+	});
+
+	test('con la barra al costado, `centro` se centra en el otro sentido', async () => {
+		// Vertical, el medio de la barra es el medio de su alto. `left-1/2` ahí
+		// la sacaría de la barra.
+		const vista = mount(WindowFrame, {
+			props: { position: 'left' },
+			slots: { centro: () => h('span', { class: 'medio' }, 'Septiembre') },
+		});
+		await nextTick();
+
+		const envoltorio = vista.find('.medio').element.parentElement?.parentElement as HTMLElement;
+		expect(envoltorio.className).toContain('top-1/2');
+		expect(envoltorio.className).toContain('-translate-y-1/2');
+		expect(envoltorio.className).not.toContain('left-1/2');
+	});
+
+	test('sin `centro` no se dibuja el envoltorio', () => {
+		// Un absoluto con `pointer-events-none` vacío no se ve, pero sí tapa: se
+		// come el `data-tauri-drag-region` de media barra si alguien le saca el
+		// `pointer-events-none` sin mirar.
+		const vista = abrirLaVentana('top');
+
+		expect(vista.findAll('.pointer-events-none').length).toBe(0);
+	});
+
+	test('la barra queda `relative`, que es de lo que cuelga `centro`', () => {
+		// Sin esto el absoluto se cuelga de la ventana entera y el centrado se
+		// mantiene por casualidad, hasta que la barra deja de ocupar todo el
+		// ancho.
+		const vista = abrirLaVentana('top');
+
+		expect(vista.findComponent(AppBar).classes()).toContain('relative');
+	});
+
 	test('se puede arrastrar la ventana desde ella', () => {
 		// Sin decoración del compositor, `data-tauri-drag-region` es lo único
 		// que deja mover la ventana. Se perdió una vez al reacomodar la barra.

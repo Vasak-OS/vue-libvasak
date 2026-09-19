@@ -18,6 +18,13 @@
  * barra siempre es el primer hijo y lo que cambia es de qué lado empieza a
  * contarse, que es lo que evita cuatro plantillas distintas.
  *
+ * # Las ranuras
+ *
+ * `identidad`, `titulo`, `barra`, `centro` y `acciones` van a la barra; el
+ * resto, al contenido. `centro` queda centrado respecto de **la ventana** y no
+ * de lo que sobra entre el icono y los controles, que es lo que hacía falta
+ * para el mes del calendario, el buscador de la agenda y la carpeta del correo.
+ *
  * # El fondo
  *
  * `bg-ui-bg/80` acá y sólo acá: `--ui-background` es el token de **la ventana**.
@@ -82,6 +89,7 @@ const DIRECCION: Record<PosicionDeLaBarra, string> = {
       :hide-controls="hideControls">
       <template v-if="$slots.identidad" #identidad><slot name="identidad" /></template>
       <template v-if="$slots.titulo" #titulo><slot name="titulo" /></template>
+      <template v-if="$slots.centro" #centro><slot name="centro" /></template>
       <template v-if="$slots.acciones" #acciones><slot name="acciones" /></template>
       <slot name="barra" />
     </AppBar>
