@@ -98,8 +98,16 @@ export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
 export type { AccionDePestana, ElementoDePestana } from "./tabs/tipos";
 export type {
   ContextoDeLaBarra,
+  ControlDeVentana,
   OrientacionDeLaBarra,
   PosicionDeLaBarra,
 } from "./window/tipos";
-export { CLAVE_DE_LA_BARRA, esPosicion, orientacionDe, POSICIONES, usarLaBarra } from "./window/tipos";
+export {
+  CLAVE_DE_LA_BARRA,
+  esPosicion,
+  LOS_TRES_CONTROLES,
+  orientacionDe,
+  POSICIONES,
+  usarLaBarra,
+} from "./window/tipos";
 export { posicionDe, usarLaPosicionDeLaBarra } from "./window/preferencia";

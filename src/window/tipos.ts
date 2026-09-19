@@ -69,3 +69,9 @@ export function usarLaBarra(): ContextoDeLaBarra {
 		vertical: computed(() => orientacionDe(posicion.value) === 'vertical'),
 	};
 }
+
+/** Los tres botones de la ventana, por nombre. */
+export type ControlDeVentana = 'minimize' | 'maximize' | 'close';
+
+/** Los tres, que es lo que lleva una ventana normal. */
+export const LOS_TRES_CONTROLES: ControlDeVentana[] = ['minimize', 'maximize', 'close'];

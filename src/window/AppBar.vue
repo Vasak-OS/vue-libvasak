@@ -12,6 +12,7 @@
  * `titulo` es el nombre de la ventana, que no todas muestran.
  * La ranura por omisión es el contenido —pestañas, selectores, lo que sea— y es
  * la única que crece.
+ * `centro` va **encima** de la barra, centrado respecto de la ventana entera.
  * `acciones` es lo de la aplicación que va junto a los controles de ventana.
  *
  * Los controles van siempre y al final, que es donde la gente los busca.
@@ -23,7 +24,14 @@
  * no en los botones, que tienen que poder apretarse.
  */
 import { computed, provide } from 'vue';
-import { CLAVE_DE_LA_BARRA, type PosicionDeLaBarra, usarLaBarra } from './tipos';
+import {
+	CLAVE_DE_LA_BARRA,
+	type ControlDeVentana,
+	LOS_TRES_CONTROLES,
+	type PosicionDeLaBarra,
+	usarLaBarra,
+} from './tipos';
+import { reenviarSiEscuchan } from './reenvio';
 import WindowControls from './WindowControls.vue';
 
 const props = withDefaults(
@@ -35,8 +43,13 @@ const props = withDefaults(
 		minimizeLabel?: string;
 		maximizeLabel?: string;
 		closeLabel?: string;
-		/** Para una ventana sin botones propios: un diálogo, un asistente. */
-		hideControls?: boolean;
+		/**
+		 * Cuáles de los tres botones de ventana lleva.
+		 *
+		 * Vacío en un cuadro de diálogo y en el instalador; sólo `close` en el
+		 * mini-reproductor. Ver `WindowControls`.
+		 */
+		controls?: ControlDeVentana[];
 	}>(),
 	{
 		position: null,
@@ -44,9 +57,15 @@ const props = withDefaults(
 		minimizeLabel: 'Minimize',
 		maximizeLabel: 'Maximize',
 		closeLabel: 'Close',
-		hideControls: false,
+		controls: () => LOS_TRES_CONTROLES,
 	}
 );
+
+defineEmits<{
+	minimize: [];
+	maximize: [];
+	close: [];
+}>();
 
 const delMarco = usarLaBarra();
 const posicion = computed<PosicionDeLaBarra>(() => props.position ?? delMarco.posicion.value);
@@ -69,7 +88,7 @@ provide(CLAVE_DE_LA_BARRA, {
 
 <template>
   <div
-    class="flex shrink-0 items-center gap-2 p-1 font-title"
+    class="relative flex shrink-0 items-center gap-2 p-1 font-title"
     :class="vertical ? 'h-full flex-col' : 'w-full'"
     data-tauri-drag-region>
     <div v-if="$slots.identidad" class="flex shrink-0 items-center" data-tauri-drag-region>
@@ -101,9 +120,29 @@ provide(CLAVE_DE_LA_BARRA, {
     </div>
 
     <WindowControls
-      v-if="!hideControls"
+      :controls="controls"
       :minimize-label="minimizeLabel"
       :maximize-label="maximizeLabel"
-      :close-label="closeLabel" />
+      :close-label="closeLabel"
+      v-on="reenviarSiEscuchan(['minimize', 'maximize', 'close'])" />
+
+    <!-- `centro` va **encima** de la barra y no como una columna más.
+         Centrado entre dos columnas queda centrado respecto de lo que sobra a
+         los costados, no de la ventana: con el icono de un lado y tres
+         controles del otro, eso lo corre visiblemente. Absoluto y al 50% queda
+         donde la gente espera.
+
+         `pointer-events-none` en el envoltorio para no tapar la zona de
+         arrastre; lo que va adentro lo vuelve a encender. -->
+    <div
+      v-if="$slots.centro"
+      class="pointer-events-none absolute flex items-center justify-center"
+      :class="vertical
+        ? 'inset-x-0 top-1/2 -translate-y-1/2 flex-col'
+        : 'inset-y-0 left-1/2 -translate-x-1/2'">
+      <div class="pointer-events-auto flex items-center gap-2" :class="vertical ? 'flex-col' : ''">
+        <slot name="centro" />
+      </div>
+    </div>
   </div>
 </template>
