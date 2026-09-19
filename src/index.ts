@@ -12,6 +12,12 @@ import BarSearch from "./bar/BarSearch.vue";
 import ActionButton from "./controls/ActionButton.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
 import DeviceCard from "./cards/DeviceCard.vue";
+import DropdownMenu from "./dropdown/DropdownMenu.vue";
+import DropdownMenuContent from "./dropdown/DropdownMenuContent.vue";
+import DropdownMenuItem from "./dropdown/DropdownMenuItem.vue";
+import DropdownMenuLabel from "./dropdown/DropdownMenuLabel.vue";
+import DropdownMenuSeparator from "./dropdown/DropdownMenuSeparator.vue";
+import DropdownMenuTrigger from "./dropdown/DropdownMenuTrigger.vue";
 import FormGroup from "./forms/FormGroup.vue";
 import ListCard from "./cards/ListCard.vue";
 import SliderControl from "./forms/SliderControl.vue";
@@ -35,6 +41,12 @@ const components = [
   ActionButton,
   ConfigSection,
   DeviceCard,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   FormGroup,
   ListCard,
   SliderControl,
@@ -66,6 +78,12 @@ export {
   ActionButton,
   ConfigSection,
   DeviceCard,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   FormGroup,
   ListCard,
   SliderControl,
@@ -74,6 +92,8 @@ export {
   TrayIconButton,
 };
 
+export type { ContextoDelMenu, FocoAlAbrir } from "./dropdown/tipos";
+export { CLAVE_DEL_MENU, usarElMenu } from "./dropdown/tipos";
 export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
 export type { AccionDePestana, ElementoDePestana } from "./tabs/tipos";
 export type {
