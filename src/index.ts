@@ -1,6 +1,8 @@
 import SideBar from "./sidebar/SideBar.vue";
 import SideButton from "./sidebar/SideButton.vue";
 import SideGroup from "./sidebar/SideGroup.vue";
+import SelectField from "./forms/SelectField.vue";
+import ThemeIcon from "./icons/ThemeIcon.vue";
 import WindowFrame from "./window/WindowFrame.vue";
 import ActionButton from "./controls/ActionButton.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
@@ -17,6 +19,8 @@ const components = [
   SideBar,
   SideButton,
   SideGroup,
+  SelectField,
+  ThemeIcon,
   WindowFrame,
   ActionButton,
   ConfigSection,
@@ -41,6 +45,8 @@ export {
   SideBar,
   SideButton,
   SideGroup,
+  SelectField,
+  ThemeIcon,
   WindowFrame,
   ActionButton,
   ConfigSection,

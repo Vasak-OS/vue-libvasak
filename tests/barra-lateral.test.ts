@@ -56,9 +56,32 @@ describe('la forma, que es el punto de compartirla', () => {
 		const barra = mount(SideBar, { props: { title: 'Monitor' } });
 
 		const clases = barra.get('aside').classes().join(' ');
-		for (const clase of ['rounded-corner', 'border-ui-border', 'bg-ui-bg/80', 'w-[84px]']) {
+		for (const clase of ['rounded-corner', 'border-ui-border', 'w-[84px]']) {
 			expect(clases).toContain(clase);
 		}
+	});
+
+	test('el fondo es de superficie y no el de la ventana', async () => {
+		// `--ui-background` es el token de **la ventana**; lo que se apoya
+		// encima va en superficie. Con el fondo de ventana, la barra se lee como
+		// un rectángulo apenas más claro en vez de un panel, que es como venía
+		// de la copia de Configuración.
+		const barra = mount(SideBar, { props: { title: 'Monitor' } });
+
+		const clases = barra.get('aside').classes().join(' ');
+		expect(clases).toContain('bg-ui-surface');
+		expect(clases).not.toContain('bg-ui-bg');
+	});
+
+	test('y un elemento en reposo no pinta fondo propio', async () => {
+		// Sobre un panel de superficie, un botón con su propio fondo oscuro se
+		// lee como apagado. El color aparece al pasar por encima y al estar
+		// activo, que es cuando significa algo.
+		const boton = mount(SideButton, { props: { label: 'Recursos' } });
+
+		const clases = boton.get('button').classes().join(' ');
+		expect(clases).toContain('bg-transparent');
+		expect(clases).toContain('hover:bg-ui-surface');
 	});
 
 	test('desplegada mide 72 y plegada 84 píxeles', async () => {
@@ -369,5 +392,22 @@ describe('el nombre accesible', () => {
 
 		expect(boton.get('button').attributes('aria-label')).toBeUndefined();
 		expect(boton.text()).toContain('Servicios');
+	});
+});
+
+describe('el contenedor, que tiene que dejar empujar al pie', () => {
+	test('es una columna, no una pila de márgenes', async () => {
+		// Con `space-y` el contenido no es un contenedor flexible, y entonces un
+		// `mt-auto` no empuja nada: el selector de intervalo del monitor quedaba
+		// pegado a los botones en vez de irse al fondo de la barra. Es de las
+		// cosas que sólo se ven con la ventana abierta.
+		const barra = mount(SideBar, { props: { title: 'Monitor' } });
+
+		const contenedor = barra.get('aside > div:last-child');
+		const clases = contenedor.classes();
+		expect(clases).toContain('flex');
+		expect(clases).toContain('flex-col');
+		expect(clases).toContain('flex-1');
+		expect(clases.some((c) => c.startsWith('space-y'))).toBe(false);
 	});
 });
