@@ -1,6 +1,6 @@
 {
   "name": "@vasakgroup/vue-libvasak",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Vue componenets for VSK Applications",
   "main": "./dist/vue-libvasak.umd.js",
   "module": "./dist/vue-libvasak.es.js",
@@ -45,23 +45,30 @@
     "url": "https://joaquindecima.gitlab.io/"
   },
   "license": "GPLv3",
-  "dependencies": {
-    "@tauri-apps/api": "^2.10.1",
-    "@vasakgroup/plugin-vicons": "^2.0.0",
-    "vue": "^3.5.28",
-    "vue-router": "^5.0.3"
-  },
   "peerDependencies": {
-    "vue": "^3.0.0"
+    "vue": "^3.0.0",
+    "@tauri-apps/api": "^2.0.0",
+    "@vasakgroup/plugin-vicons": "^2.0.0"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^20.14.5",
+    "@tauri-apps/api": "^2.10.1",
+    "@types/bun": "^1.4.2",
+    "@vasakgroup/plugin-vicons": "^2.0.0",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^20.14.5",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "@vitejs/plugin-vue": "^6.0.4"
+    "vue": "^3.5.28",
+    "vue-router": "^5.0.3",
+    "vue-tsc": "^3.3.11"
   },
   "scripts": {
-    "build": "bunx --bun vite build",
+    "build": "bunx vue-tsc --noEmit && bunx --bun vite build",
     "dev": "bunx --bun vite",
-    "prepare": "bun run build"
+    "prepare": "bun run build",
+    "typecheck": "bunx vue-tsc --noEmit",
+    "test": "bun test"
   }
 }

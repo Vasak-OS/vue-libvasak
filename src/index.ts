@@ -1,5 +1,6 @@
 import SideBar from "./sidebar/SideBar.vue";
 import SideButton from "./sidebar/SideButton.vue";
+import SideGroup from "./sidebar/SideGroup.vue";
 import WindowFrame from "./window/WindowFrame.vue";
 import ActionButton from "./controls/ActionButton.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
@@ -15,6 +16,7 @@ import type { App } from "vue";
 const components = [
   SideBar,
   SideButton,
+  SideGroup,
   WindowFrame,
   ActionButton,
   ConfigSection,
@@ -38,6 +40,7 @@ export default {
 export {
   SideBar,
   SideButton,
+  SideGroup,
   WindowFrame,
   ActionButton,
   ConfigSection,
@@ -49,3 +52,5 @@ export {
   ToggleControl,
   TrayIconButton,
 };
+
+export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
