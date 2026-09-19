@@ -17,6 +17,10 @@
  *
  * Con Escape y al perder el foco. Un campo abierto encima del contenido que no
  * se cierra tapa justo lo que se está buscando.
+ *
+ * El `mousedown.prevent` de la lupa es lo que la deja cerrar: sin eso, apretarla
+ * con el campo enfocado disparaba primero el `blur` —que cierra— y después el
+ * clic —que vuelve a abrir—, así que el botón no podía plegar nunca.
  */
 import { computed, nextTick, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -95,6 +99,7 @@ function buscar() {
       :title="label"
       :aria-label="label"
       :aria-expanded="abierto"
+      @mousedown.prevent
       @click="abierto ? cerrar() : abrir()">
       <ThemeIcon name="system-search" type="symbol" :size="14" />
     </button>

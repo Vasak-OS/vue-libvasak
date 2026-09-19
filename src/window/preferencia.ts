@@ -56,8 +56,10 @@ export function usarLaPosicionDeLaBarra(porOmision: PosicionDeLaBarra = 'top'): 
 		try {
 			const { readConfig } = await import('@vasakgroup/plugin-config-manager');
 			const configuracion = await readConfig();
-			const leida = posicionDe(configuracion);
-			if (leida) posicion.value = leida;
+			// Y si deja de decir algo válido, se vuelve a la de por omisión en
+			// lugar de quedarse con la anterior: borrar la clave a mano tiene
+			// que devolver la barra a donde estaba, no dejarla donde quedó.
+			posicion.value = posicionDe(configuracion) ?? porOmision;
 		} catch {
 			// Sin configuración —fuera de Tauri, o el archivo ilegible— se queda
 			// la de por omisión. Una ventana sin barra no es una opción.

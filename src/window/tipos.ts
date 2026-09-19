@@ -12,7 +12,7 @@
  * sin que nadie la toque.
  */
 
-import { inject, type InjectionKey, type Ref } from 'vue';
+import { computed, inject, type InjectionKey, ref, type Ref } from 'vue';
 
 /** Dónde queda la barra dentro de la ventana. */
 export type PosicionDeLaBarra = 'top' | 'bottom' | 'left' | 'right';
@@ -51,13 +51,21 @@ export function esPosicion(valor: unknown): valor is PosicionDeLaBarra {
  *
  * Fuera de un marco devuelve horizontal: un componente de barra montado suelto
  * —en una prueba, en una vista previa— tiene que dibujarse igual, no reventar.
+ *
+ * Los tres son `ref` de verdad y no objetos con una propiedad `value`. Vue
+ * desenvuelve en la plantilla lo que **es** una ref; un objeto que se le
+ * parece llega entero, y un objeto siempre es verdadero: con el respaldo
+ * falsificado, `vertical` daba verdadero y todo lo que se montara fuera de un
+ * marco se dibujaba de costado. Lo encontró una prueba de `aria-orientation`.
  */
 export function usarLaBarra(): ContextoDeLaBarra {
 	const contexto = inject(CLAVE_DE_LA_BARRA, null);
 	if (contexto) return contexto;
 
-	const posicion = { value: 'top' } as Ref<PosicionDeLaBarra>;
-	const orientacion = { value: 'horizontal' } as Ref<OrientacionDeLaBarra>;
-	const vertical = { value: false } as Ref<boolean>;
-	return { posicion, orientacion, vertical };
+	const posicion = ref<PosicionDeLaBarra>('top');
+	return {
+		posicion,
+		orientacion: computed(() => orientacionDe(posicion.value)),
+		vertical: computed(() => orientacionDe(posicion.value) === 'vertical'),
+	};
 }

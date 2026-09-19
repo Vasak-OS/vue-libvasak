@@ -80,10 +80,10 @@ provide(CLAVE_DE_LA_BARRA, {
          escrito de costado sin volverse ilegible, así que ahí no se dibuja: lo
          dice el gestor de ventanas igual. -->
     <p
-      v-if="title && !vertical"
+      v-if="($slots.titulo || title) && !vertical"
       class="min-w-0 shrink truncate text-sm"
       data-tauri-drag-region>
-      {{ title }}
+      <slot name="titulo">{{ title }}</slot>
     </p>
 
     <!-- El contenido: lo único que crece, y lo que se desborda scrollea en el

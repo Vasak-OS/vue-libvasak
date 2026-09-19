@@ -81,6 +81,31 @@ describe('con la barra a un costado', () => {
 		}
 	});
 
+	test('la lupa también lo cierra, con el foco adentro', async () => {
+		// La carrera: al apretar la lupa con el campo enfocado, el navegador
+		// mueve el foco en el `mousedown` —lo que dispara el `blur`, que
+		// cierra— y recién después llega el `click`, que volvía a abrir. El
+		// botón no podía plegar nunca.
+		//
+		// Se reproduce a mano porque el foco no se mueve solo en las pruebas:
+		// si el `mousedown` no viene cancelado, el navegador lo movería, así
+		// que se dispara el `blur`.
+		const vista = enLaVentana('left');
+		await nextTick();
+		const lupa = vista.find('button[aria-label="Buscar"]');
+		await lupa.trigger('click');
+		expect(vista.find('input[type="search"]').exists()).toBe(true);
+
+		const apretar = new MouseEvent('mousedown', { cancelable: true, bubbles: true });
+		lupa.element.dispatchEvent(apretar);
+		if (!apretar.defaultPrevented) {
+			await vista.find('input[type="search"]').trigger('blur');
+		}
+		await lupa.trigger('click');
+
+		expect(vista.find('input[type="search"]').exists()).toBe(false);
+	});
+
 	test('Escape lo cierra', async () => {
 		// Un campo abierto encima del contenido tapa justo lo que se busca.
 		const vista = enLaVentana('left');

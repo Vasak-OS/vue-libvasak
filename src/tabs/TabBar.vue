@@ -18,7 +18,7 @@
  * se emite es la lista nueva, no un par de índices: así quien la recibe no
  * tiene que reimplementar el movimiento.
  */
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import { usarLaBarra } from '../window/tipos';
 import TabItem from './TabItem.vue';
@@ -32,10 +32,18 @@ const props = withDefaults(
 		/** Sin esto no se dibuja el botón de pestaña nueva. */
 		newLabel?: string;
 		closeLabel?: string;
+		/** Lo que se oye en una pestaña con cambios sin guardar. */
+		dirtyLabel?: string;
 		/** Para una barra que no deja reordenar. */
 		fixedOrder?: boolean;
 	}>(),
-	{ modelValue: '', newLabel: '', closeLabel: 'Close', fixedOrder: false }
+	{
+		modelValue: '',
+		newLabel: '',
+		closeLabel: 'Close',
+		dirtyLabel: 'Unsaved changes',
+		fixedOrder: false,
+	}
 );
 
 const emit = defineEmits<{
@@ -50,12 +58,62 @@ const emit = defineEmits<{
 const { vertical } = usarLaBarra();
 
 const carril = ref<HTMLElement | null>(null);
+/**
+ * Cuál pestaña entra en el orden de tabulación.
+ *
+ * El patrón de una lista de pestañas es «foco itinerante»: una sola es
+ * alcanzable con Tab y adentro se navega con las flechas. Con todas en el orden
+ * de tabulación, salir de una barra de nueve pestañas cuesta nueve pulsaciones.
+ */
+const enfocada = ref(0);
 const arrastrada = ref<number | null>(null);
 const encimaDe = ref<number | null>(null);
 
 function elegir(id: string) {
 	emit('update:modelValue', id);
 	emit('select', id);
+}
+
+/** Mueve el foco con las flechas, dando la vuelta en los extremos. */
+async function navegar(desde: number, a: 'anterior' | 'siguiente' | 'primera' | 'ultima') {
+	const ultima = props.tabs.length - 1;
+	if (ultima < 0) return;
+
+	const destino =
+		a === 'primera'
+			? 0
+			: a === 'ultima'
+				? ultima
+				: a === 'anterior'
+					? (desde - 1 + props.tabs.length) % props.tabs.length
+					: (desde + 1) % props.tabs.length;
+
+	enfocada.value = destino;
+	await nextTick();
+	// El nodo y no el componente: lo que recibe el foco es el `div` con
+	// `tabindex`, y buscarlo por posición es lo que deja que esto no dependa de
+	// una referencia por pestaña.
+	const nodos = carril.value?.querySelectorAll<HTMLElement>('[role="tab"]');
+	nodos?.[destino]?.focus();
+}
+
+/**
+ * Mueve una pestaña de lugar con el teclado.
+ *
+ * El arrastre nativo es de puntero y nada más: sin esto, reordenar no se puede
+ * hacer sin mouse.
+ */
+function mover(desde: number, cuanto: -1 | 1) {
+	if (props.fixedOrder) return;
+	const hasta = desde + cuanto;
+	if (hasta < 0 || hasta >= props.tabs.length) return;
+
+	const lista = [...props.tabs];
+	const [movida] = lista.splice(desde, 1);
+	if (!movida) return;
+	lista.splice(hasta, 0, movida);
+	enfocada.value = hasta;
+	emit('reorder', lista);
 }
 
 /**
@@ -69,12 +127,19 @@ function rueda(evento: WheelEvent) {
 	const nodo = carril.value;
 	if (!nodo) return;
 	const cuanto = evento.deltaY || evento.deltaX || 0;
+	const antes = vertical.value ? nodo.scrollTop : nodo.scrollLeft;
+
 	if (vertical.value) {
 		nodo.scrollTop += cuanto;
 	} else {
 		nodo.scrollLeft += cuanto;
 	}
-	evento.preventDefault();
+
+	// Sólo se queda el evento si el carril de verdad se movió. Sin esto, una
+	// barra con dos pestañas —o una ya en el tope— se comía el desplazamiento
+	// de lo que hubiera debajo.
+	const despues = vertical.value ? nodo.scrollTop : nodo.scrollLeft;
+	if (despues !== antes) evento.preventDefault();
 }
 
 function comenzar(indice: number, evento: DragEvent) {
@@ -119,7 +184,8 @@ const clasesDelCarril = computed(() =>
   <div
     class="flex min-h-0 min-w-0 items-center gap-1"
     :class="vertical ? 'w-full flex-col' : 'h-full'"
-    role="tablist">
+    role="tablist"
+    :aria-orientation="vertical ? 'vertical' : 'horizontal'">
     <div ref="carril" :class="clasesDelCarril" @wheel="rueda">
       <div
         v-for="(tab, indice) in tabs"
@@ -138,9 +204,13 @@ const clasesDelCarril = computed(() =>
           :tab="tab"
           :active="tab.id === modelValue"
           :close-label="closeLabel"
+          :dirty-label="dirtyLabel"
+          :tabindex="indice === enfocada ? 0 : -1"
           @select="elegir(tab.id)"
           @close="emit('close', tab.id)"
-          @menu="(posicion) => emit('menu', { id: tab.id, ...posicion })" />
+          @menu="(posicion) => emit('menu', { id: tab.id, ...posicion })"
+          @navegar="(a) => navegar(indice, a)"
+          @mover="(cuanto) => mover(indice, cuanto)" />
       </div>
     </div>
 

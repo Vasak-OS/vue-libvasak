@@ -81,6 +81,7 @@ const DIRECCION: Record<PosicionDeLaBarra, string> = {
       :close-label="closeLabel"
       :hide-controls="hideControls">
       <template v-if="$slots.identidad" #identidad><slot name="identidad" /></template>
+      <template v-if="$slots.titulo" #titulo><slot name="titulo" /></template>
       <template v-if="$slots.acciones" #acciones><slot name="acciones" /></template>
       <slot name="barra" />
     </AppBar>

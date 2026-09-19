@@ -155,3 +155,141 @@ describe('con la barra a un costado', () => {
 		expect(clases).not.toContain('w-34');
 	});
 });
+
+describe('el teclado', () => {
+	test('sólo una pestaña entra en el orden de tabulación', () => {
+		// El patrón de una lista de pestañas es «foco itinerante». Con las nueve
+		// alcanzables con Tab, salir de la barra cuesta nueve pulsaciones.
+		const vista = montarLaBarra();
+
+		const indices = vista.findAll('[role="tab"]').map((uno) => uno.attributes('tabindex'));
+		expect(indices).toEqual(['0', '-1', '-1']);
+	});
+
+	test('las flechas mueven el foco y dan la vuelta', async () => {
+		const vista = montarLaBarra();
+		const pestanas = () => vista.findAll('[role="tab"]');
+
+		await pestanas()[0].trigger('keydown', { key: 'ArrowRight' });
+		expect(pestanas().map((uno) => uno.attributes('tabindex'))).toEqual(['-1', '0', '-1']);
+
+		// Y desde la primera hacia atrás se va a la última.
+		await pestanas()[1].trigger('keydown', { key: 'ArrowLeft' });
+		await pestanas()[0].trigger('keydown', { key: 'ArrowLeft' });
+		expect(pestanas().map((uno) => uno.attributes('tabindex'))).toEqual(['-1', '-1', '0']);
+	});
+
+	test('Inicio y Fin van a los extremos', async () => {
+		const vista = montarLaBarra();
+
+		await vista.findAll('[role="tab"]')[0].trigger('keydown', { key: 'End' });
+		expect(vista.findAll('[role="tab"]')[2].attributes('tabindex')).toBe('0');
+
+		await vista.findAll('[role="tab"]')[2].trigger('keydown', { key: 'Home' });
+		expect(vista.findAll('[role="tab"]')[0].attributes('tabindex')).toBe('0');
+	});
+
+	test('Alt y una flecha reordenan sin mouse', async () => {
+		// El arrastre nativo es de puntero y nada más: sin esto, reordenar no se
+		// puede hacer con teclado.
+		const vista = montarLaBarra();
+
+		await vista.findAll('[role="tab"]')[0].trigger('keydown', { key: 'ArrowRight', altKey: true });
+
+		expect(vista.emitted('reorder')?.[0]?.[0]).toEqual([PESTANAS[1], PESTANAS[0], PESTANAS[2]]);
+	});
+
+	test('y no en una barra de orden fijo', async () => {
+		const vista = montarLaBarra({ fixedOrder: true });
+
+		await vista.findAll('[role="tab"]')[0].trigger('keydown', { key: 'ArrowRight', altKey: true });
+
+		expect(vista.emitted('reorder')).toBeUndefined();
+	});
+
+	test('la lista dice para qué lado va', async () => {
+		expect(montarLaBarra().find('[role="tablist"]').attributes('aria-orientation')).toBe(
+			'horizontal'
+		);
+
+		const vertical = montarEnVertical();
+		await nextTick();
+		expect(vertical.find('[role="tablist"]').attributes('aria-orientation')).toBe('vertical');
+	});
+});
+
+describe('lo que se oye', () => {
+	test('una pestaña con cambios lo dice, y no sólo con el punto', () => {
+		// El punto va `aria-hidden`: sin esto, quien usa un lector de pantalla
+		// podía cerrar una pestaña modificada sin enterarse.
+		const vista = montarLaBarra({ dirtyLabel: 'sin guardar' });
+
+		expect(vista.findAll('[role="tab"]')[1].attributes('aria-label')).toBe(
+			'Segunda · sin guardar'
+		);
+		expect(vista.findAll('[role="tab"]')[0].attributes('aria-label')).toBe('Primera');
+	});
+
+	test('y el botón de cerrar dice cuál cierra', () => {
+		// «Cerrar» tres veces seguidas no distingue nada.
+		const vista = montarLaBarra();
+
+		expect(vista.findAllComponents(TabItem)[0].find('button').attributes('aria-label')).toBe(
+			'Cerrar: Primera'
+		);
+	});
+
+	test('el texto de ayuda sale de `tooltip` cuando la pestaña lo trae', () => {
+		// Está en el contrato desde el primer día y se ignoraba: lo que se
+		// mostraba era siempre el `label`.
+		const vista = mount(TabBar, {
+			props: {
+				tabs: [{ id: 'a', label: 'ruta.txt', tooltip: '/home/pato/ruta.txt' }],
+				modelValue: 'a',
+			},
+		});
+
+		expect(vista.find('[role="tab"]').attributes('title')).toBe('/home/pato/ruta.txt');
+	});
+});
+
+describe('la rueda', () => {
+	/**
+	 * Un carril que se comporta como el de un navegador.
+	 *
+	 * `happy-dom` guarda el `scrollLeft` que se le asigne aunque no haya nada
+	 * que desplazar; un navegador lo acota al desbordamiento. Sin acotarlo acá,
+	 * la prueba no distingue el caso que importa —una barra corta que se comía
+	 * el desplazamiento de lo que hay debajo—.
+	 */
+	function acotarElCarril(nodo: HTMLElement, desbordamiento: number) {
+		let valor = 0;
+		Object.defineProperty(nodo, 'scrollLeft', {
+			configurable: true,
+			get: () => valor,
+			set: (nuevo: number) => {
+				valor = Math.max(0, Math.min(nuevo, desbordamiento));
+			},
+		});
+	}
+
+	function rodar(vista: ReturnType<typeof montarLaBarra>, desbordamiento: number) {
+		const carril = vista.findAll('div')[1].element as HTMLElement;
+		acotarElCarril(carril, desbordamiento);
+		const evento = new WheelEvent('wheel', { deltaY: 120, cancelable: true, bubbles: true });
+		carril.dispatchEvent(evento);
+		return evento;
+	}
+
+	test('no se queda el evento cuando el carril no se movió', () => {
+		// Una barra con dos pestañas no tiene nada que desplazar: comerse la
+		// rueda ahí deja sin desplazar a lo que haya debajo.
+		expect(rodar(montarLaBarra(), 0).defaultPrevented).toBe(false);
+	});
+
+	test('y sí cuando lo desplazó', () => {
+		// Con pestañas de más, la rueda es lo único que las alcanza sin un mouse
+		// con rueda horizontal.
+		expect(rodar(montarLaBarra(), 400).defaultPrevented).toBe(true);
+	});
+});
