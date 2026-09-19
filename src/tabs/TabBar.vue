@@ -175,7 +175,10 @@ function terminar() {
 
 const clasesDelCarril = computed(() =>
 	vertical.value
-		? 'flex h-full w-full flex-col items-stretch gap-1 overflow-y-auto overflow-x-hidden'
+		// `items-center` y no `items-stretch`: con la barra a un costado las
+		// pestañas son del tamaño de un botón y el nombre aparece encima del
+		// contenido, no ensanchando la columna.
+		? 'flex h-full flex-col items-center gap-1 overflow-y-auto overflow-x-hidden'
 		: 'flex items-center gap-1 overflow-x-auto overflow-y-hidden'
 );
 </script>
