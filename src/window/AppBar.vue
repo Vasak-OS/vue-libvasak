@@ -24,7 +24,14 @@
  * no en los botones, que tienen que poder apretarse.
  */
 import { computed, provide } from 'vue';
-import { CLAVE_DE_LA_BARRA, type PosicionDeLaBarra, usarLaBarra } from './tipos';
+import {
+	CLAVE_DE_LA_BARRA,
+	type ControlDeVentana,
+	LOS_TRES_CONTROLES,
+	type PosicionDeLaBarra,
+	usarLaBarra,
+} from './tipos';
+import { reenviarSiEscuchan } from './reenvio';
 import WindowControls from './WindowControls.vue';
 
 const props = withDefaults(
@@ -36,8 +43,13 @@ const props = withDefaults(
 		minimizeLabel?: string;
 		maximizeLabel?: string;
 		closeLabel?: string;
-		/** Para una ventana sin botones propios: un diálogo, un asistente. */
-		hideControls?: boolean;
+		/**
+		 * Cuáles de los tres botones de ventana lleva.
+		 *
+		 * Vacío en un cuadro de diálogo y en el instalador; sólo `close` en el
+		 * mini-reproductor. Ver `WindowControls`.
+		 */
+		controls?: ControlDeVentana[];
 	}>(),
 	{
 		position: null,
@@ -45,9 +57,15 @@ const props = withDefaults(
 		minimizeLabel: 'Minimize',
 		maximizeLabel: 'Maximize',
 		closeLabel: 'Close',
-		hideControls: false,
+		controls: () => LOS_TRES_CONTROLES,
 	}
 );
+
+defineEmits<{
+	minimize: [];
+	maximize: [];
+	close: [];
+}>();
 
 const delMarco = usarLaBarra();
 const posicion = computed<PosicionDeLaBarra>(() => props.position ?? delMarco.posicion.value);
@@ -102,10 +120,11 @@ provide(CLAVE_DE_LA_BARRA, {
     </div>
 
     <WindowControls
-      v-if="!hideControls"
+      :controls="controls"
       :minimize-label="minimizeLabel"
       :maximize-label="maximizeLabel"
-      :close-label="closeLabel" />
+      :close-label="closeLabel"
+      v-on="reenviarSiEscuchan(['minimize', 'maximize', 'close'])" />
 
     <!-- `centro` va **encima** de la barra y no como una columna más.
          Centrado entre dos columnas queda centrado respecto de lo que sobra a

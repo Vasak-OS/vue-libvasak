@@ -25,6 +25,11 @@
  * de lo que sobra entre el icono y los controles, que es lo que hacía falta
  * para el mes del calendario, el buscador de la agenda y la carpeta del correo.
  *
+ * # Los botones de la ventana
+ *
+ * `controls` dice cuáles lleva, y escuchar `close` —o `minimize`, o
+ * `maximize`— reemplaza lo que hace el botón. Ver `WindowControls`.
+ *
  * # El fondo
  *
  * `bg-ui-bg/80` acá y sólo acá: `--ui-background` es el token de **la ventana**.
@@ -33,7 +38,14 @@
  */
 import { computed, provide } from 'vue';
 import { usarLaPosicionDeLaBarra } from './preferencia';
-import { CLAVE_DE_LA_BARRA, orientacionDe, type PosicionDeLaBarra } from './tipos';
+import { reenviarSiEscuchan } from './reenvio';
+import {
+	CLAVE_DE_LA_BARRA,
+	type ControlDeVentana,
+	LOS_TRES_CONTROLES,
+	orientacionDe,
+	type PosicionDeLaBarra,
+} from './tipos';
 import AppBar from './AppBar.vue';
 
 const props = withDefaults(
@@ -44,7 +56,11 @@ const props = withDefaults(
 		minimizeLabel?: string;
 		maximizeLabel?: string;
 		closeLabel?: string;
-		hideControls?: boolean;
+		/**
+		 * Cuáles de los tres botones de ventana lleva. Vacío en un cuadro de
+		 * diálogo y en el instalador; sólo `close` en el mini-reproductor.
+		 */
+		controls?: ControlDeVentana[];
 		/** Para una ventana que dibuja su propia barra o no lleva ninguna. */
 		hideBar?: boolean;
 	}>(),
@@ -54,10 +70,16 @@ const props = withDefaults(
 		minimizeLabel: 'Minimize',
 		maximizeLabel: 'Maximize',
 		closeLabel: 'Close',
-		hideControls: false,
+		controls: () => LOS_TRES_CONTROLES,
 		hideBar: false,
 	}
 );
+
+defineEmits<{
+	minimize: [];
+	maximize: [];
+	close: [];
+}>();
 
 const preferida = usarLaPosicionDeLaBarra();
 const posicion = computed<PosicionDeLaBarra>(() => props.position ?? preferida.value);
@@ -86,7 +108,8 @@ const DIRECCION: Record<PosicionDeLaBarra, string> = {
       :minimize-label="minimizeLabel"
       :maximize-label="maximizeLabel"
       :close-label="closeLabel"
-      :hide-controls="hideControls">
+      :controls="controls"
+      v-on="reenviarSiEscuchan(['minimize', 'maximize', 'close'])">
       <template v-if="$slots.identidad" #identidad><slot name="identidad" /></template>
       <template v-if="$slots.titulo" #titulo><slot name="titulo" /></template>
       <template v-if="$slots.centro" #centro><slot name="centro" /></template>

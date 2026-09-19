@@ -94,4 +94,27 @@ export function olvidarTodo() {
 	temaDeIconos.clear();
 	oyentes.clear();
 	esperaDelRegistro = null;
+	laVentanaRecibio.length = 0;
+}
+
+/**
+ * Lo que la ventana de Tauri recibió.
+ *
+ * `getCurrentWindow()` fuera de Tauri lanza, así que sin este doble la única
+ * forma de probar los botones de la ventana es no apretarlos. Y lo que hay que
+ * comprobar es justo eso: que sin nadie escuchando el botón **sí** cierra.
+ */
+export const laVentanaRecibio: string[] = [];
+
+export function getCurrentWindow() {
+	return {
+		minimize: async () => void laVentanaRecibio.push('minimize'),
+		toggleMaximize: async () => void laVentanaRecibio.push('toggleMaximize'),
+		close: async () => void laVentanaRecibio.push('close'),
+	};
+}
+
+/** Cuántas veces se le pidió cerrar a la ventana. */
+export function cerrosDeVentana() {
+	return laVentanaRecibio.filter((que) => que === 'close').length;
 }

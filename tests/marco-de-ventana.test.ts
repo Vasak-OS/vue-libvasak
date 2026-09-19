@@ -14,9 +14,10 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick } from 'vue';
 import AppBar from '../src/window/AppBar.vue';
+import WindowControls from '../src/window/WindowControls.vue';
 import WindowFrame from '../src/window/WindowFrame.vue';
 import { posicionDe, usarLaBarra } from '../src/index';
-import { olvidarTodo } from './dobles';
+import { cerrosDeVentana, olvidarTodo } from './dobles';
 
 /** Un testigo que dice qué orientación le llegó por inyección. */
 const Testigo = defineComponent({
@@ -181,6 +182,78 @@ describe('la barra', () => {
 		const vista = abrirLaVentana('top');
 
 		expect(vista.findComponent(AppBar).attributes('data-tauri-drag-region')).toBeDefined();
+	});
+});
+
+describe('los botones de la ventana', () => {
+	/** Los nombres accesibles de los botones que se dibujaron, en orden. */
+	function botones(vista: ReturnType<typeof mount>) {
+		return vista
+			.findComponent(WindowControls)
+			.findAll('button')
+			.map((boton) => boton.attributes('aria-label'));
+	}
+
+	test('por omisión van los tres', () => {
+		const vista = mount(WindowFrame, {
+			props: { position: 'top', minimizeLabel: 'min', maximizeLabel: 'max', closeLabel: 'cerrar' },
+		});
+
+		expect(botones(vista)).toEqual(['min', 'max', 'cerrar']);
+	});
+
+	test('un cuadro de diálogo no lleva ninguno', () => {
+		// El de polkit, el de permisos, el de mantener apretado: ahí la ventana
+		// se responde, no se cierra. Un botón de cerrar es una salida que deja
+		// al programa que preguntó esperando para siempre. El instalador
+		// tampoco los lleva: cerrarlo mientras particiona deja el equipo a
+		// medio instalar.
+		const vista = mount(WindowFrame, { props: { position: 'top', controls: [] } });
+
+		expect(botones(vista)).toEqual([]);
+	});
+
+	test('el mini-reproductor lleva sólo cerrar', () => {
+		// Minimizar y maximizar no significan nada en trescientos píxeles.
+		const vista = mount(WindowFrame, {
+			props: { position: 'top', controls: ['close'], closeLabel: 'cerrar' },
+		});
+
+		expect(botones(vista)).toEqual(['cerrar']);
+	});
+
+	test('sin ninguno, tampoco queda el envoltorio vacío', () => {
+		// Un `div` con `gap-1` y nada adentro igual mete separación entre lo que
+		// tiene al lado y el borde de la ventana.
+		const vista = mount(WindowFrame, { props: { position: 'top', controls: [] } });
+
+		expect(vista.findComponent(WindowControls).find('div').exists()).toBe(false);
+	});
+
+	test('quien escucha `close` se queda con el botón', async () => {
+		// El reproductor tiene que apagar el audio antes de irse, y el editor
+		// con cambios sin guardar quiere preguntar primero.
+		const cerrados: number[] = [];
+		const vista = mount(WindowFrame, {
+			props: { position: 'top', closeLabel: 'cerrar', onClose: () => cerrados.push(1) },
+		});
+
+		await vista.findComponent(WindowControls).find('button[aria-label="cerrar"]').trigger('click');
+
+		expect(cerrados.length).toBe(1);
+	});
+
+	test('y sin nadie escuchando, el botón cierra la ventana', async () => {
+		// Lo contrario también importa: si el marco reenviara los tres eventos
+		// siempre, el botón vería un oyente puesto aunque la aplicación no haya
+		// escuchado nada y ninguna ventana se cerraría nunca. No da ningún
+		// error: el clic emite hacia arriba y se pierde.
+		const vista = mount(WindowFrame, { props: { position: 'top', closeLabel: 'cerrar' } });
+
+		const boton = vista.findComponent(WindowControls).find('button[aria-label="cerrar"]');
+		await boton.trigger('click');
+
+		expect(cerrosDeVentana()).toBe(1);
 	});
 });
 
