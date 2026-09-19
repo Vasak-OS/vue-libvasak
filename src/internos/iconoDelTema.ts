@@ -14,10 +14,7 @@ import { onMounted, onUnmounted, ref, type Ref, watch } from 'vue';
  * Interno a propósito: lo comparten `ThemeIcon` y `SideButton`, y lo que las
  * aplicaciones usan es el componente, no esto.
  */
-export function useIconoDelTema(
-	nombre: Ref<string>,
-	tipo: Ref<'icon' | 'symbol'> | { value: 'icon' | 'symbol' } = { value: 'icon' }
-) {
+export function useIconoDelTema(nombre: Ref<string>, tipo: Ref<'icon' | 'symbol'>) {
 	const fuente = ref('');
 	let soltar: UnlistenFn | null = null;
 	let desmontado = false;

@@ -71,6 +71,42 @@ describe('lo que se elige', () => {
 	});
 });
 
+describe('la etiqueta', () => {
+	test('con `label`, queda atada al control', async () => {
+		// Un `<label>` suelto al lado no está asociado a nada: un lector de
+		// pantalla anuncia un desplegable sin nombre, y hacer clic en el texto no
+		// abre la lista. Es lo que hacía quien lo usaba antes de que el
+		// componente trajera la suya.
+		const campo = mount(SelectField, {
+			props: { modelValue: 'a', label: 'Cada cuánto medir' },
+		});
+
+		const etiqueta = campo.get('label');
+		const select = campo.get('select');
+		expect(etiqueta.text()).toBe('Cada cuánto medir');
+		expect(etiqueta.attributes('for')).toBe(select.attributes('id'));
+		expect(select.attributes('id')).toBeTruthy();
+	});
+
+	test('sin `label` no dibuja ninguna', async () => {
+		// Envolverlo en un `<label>` de afuera también asocia, y ahí una etiqueta
+		// propia sería el nombre dos veces.
+		const campo = mount(SelectField, { props: { modelValue: 'a' } });
+
+		expect(campo.find('label').exists()).toBe(false);
+	});
+
+	test('y respeta el `id` que le pasen', async () => {
+		const campo = mount(SelectField, {
+			props: { modelValue: 'a', label: 'Cada cuánto medir' },
+			attrs: { id: 'intervalo' },
+		});
+
+		expect(campo.get('select').attributes('id')).toBe('intervalo');
+		expect(campo.get('label').attributes('for')).toBe('intervalo');
+	});
+});
+
 describe('los atributos', () => {
 	test('van al `select` y no al contenedor', async () => {
 		// Colgados de un `div`, un `@change` o un `aria-label` no hacen nada.
