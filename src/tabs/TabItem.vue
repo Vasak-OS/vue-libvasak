@@ -15,6 +15,9 @@
  * - se arrastra para reordenar;
  * - se mueve con Alt y una flecha, que es lo único que deja reordenar sin
  *   mouse: el arrastre nativo es de puntero y nada más;
+ * - se cierra con Suprimir, que con la barra a un costado es la única forma sin
+ *   mouse: el botón de cerrar vive en el desplegado, y el desplegado está
+ *   teletransportado al `body`, así que el tabulador no pasa por él;
  * - dice su nombre entero en el `title` cuando se corta, o lo que la pestaña
  *   ponga en `tooltip`.
  *
@@ -74,6 +77,7 @@ const TOLERANCIA = 8;
 const SEPARACION = 6;
 
 const raiz = ref<HTMLElement | null>(null);
+const desplegadoRef = ref<HTMLElement | null>(null);
 const encima = ref(false);
 const enfocada = ref(false);
 const enElDesplegado = ref(false);
@@ -128,6 +132,18 @@ function medir() {
 		left: rect.right,
 		right: window.innerWidth - rect.left,
 	};
+}
+
+/**
+ * El foco se fue del desplegado, ¿o sólo se movió adentro?
+ *
+ * `focusout` salta también al pasar de un hijo a otro. Sin mirar a dónde fue,
+ * el desplegado se cerraba al entrar en su propio botón de cerrar.
+ */
+function salioElFoco(evento: FocusEvent) {
+	const destino = evento.relatedTarget as Node | null;
+	if (destino && desplegadoRef.value?.contains(destino)) return;
+	enElDesplegado.value = false;
 }
 
 function entrar() {
@@ -206,6 +222,7 @@ onBeforeUnmount(cancelarLaPulsacion);
     @keydown.alt.up.prevent.stop="emit('mover', -1)"
     @keydown.alt.right.prevent.stop="emit('mover', 1)"
     @keydown.alt.down.prevent.stop="emit('mover', 1)"
+    @keydown.delete.prevent.stop="sePuedeCerrar && emit('close')"
     @auxclick.stop="alSoltarElMedio"
     @contextmenu="alMenu"
     @pointerdown="alApretar"
@@ -260,9 +277,12 @@ onBeforeUnmount(cancelarLaPulsacion);
           v-if="desplegado"
           class="flex items-center gap-2 rounded-corner border border-ui-border bg-ui-surface/95 px-3 py-1 text-sm shadow-lg"
           :class="active ? 'font-bold' : ''"
+          ref="desplegadoRef"
           :style="estiloDelDesplegado"
           @mouseenter="enElDesplegado = true"
-          @mouseleave="enElDesplegado = false">
+          @mouseleave="enElDesplegado = false"
+          @focusin="enElDesplegado = true"
+          @focusout="salioElFoco">
           <span class="whitespace-nowrap">{{ tab.label }}</span>
 
           <span v-if="tab.dirty" class="size-2 shrink-0 rounded-full bg-current" aria-hidden="true" />

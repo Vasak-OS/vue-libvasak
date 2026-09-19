@@ -226,6 +226,58 @@ describe('el nombre desplegado', () => {
 		expect(desplegados()).not.toContain('Primera');
 	});
 
+	test('el desplegado no se cierra al entrarle el foco', async () => {
+		// Al pasar el foco de la pestaña a su botón de cerrar, el `blur` de la
+		// pestaña cerraba el desplegado antes de que se pudiera activar.
+		const vista = montarEnVertical();
+		await nextTick();
+		const pestana = vista.findComponent(TabItem);
+		await pestana.trigger('focus');
+		expect(desplegados()).toContain('Primera');
+
+		const popup = document.body.querySelector<HTMLElement>('.whitespace-nowrap')?.parentElement;
+		popup?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		await pestana.trigger('blur');
+		await nextTick();
+
+		expect(desplegados()).toContain('Primera');
+	});
+
+	test('y sí cuando el foco se va afuera', async () => {
+		const vista = montarEnVertical();
+		await nextTick();
+		const pestana = vista.findComponent(TabItem);
+		await pestana.trigger('focus');
+		const popup = document.body.querySelector<HTMLElement>('.whitespace-nowrap')?.parentElement;
+		popup?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		await pestana.trigger('blur');
+
+		popup?.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
+		await nextTick();
+
+		expect(desplegados()).not.toContain('Primera');
+	});
+
+	test('Suprimir cierra la pestaña sin pasar por el desplegado', async () => {
+		// El desplegado está teletransportado al `body`, así que el tabulador no
+		// pasa por su botón: sin esto, con la barra a un costado no habría forma
+		// de cerrar una pestaña sin mouse.
+		const vista = montarEnVertical();
+		await nextTick();
+
+		await vista.findComponent(TabItem).trigger('keydown', { key: 'Delete' });
+
+		expect(vista.findComponent(TabBar).emitted('close')?.[0]).toEqual(['a']);
+	});
+
+	test('y no cierra una que no se puede cerrar', async () => {
+		const vista = montarLaBarra();
+
+		await vista.findAllComponents(TabItem)[2].trigger('keydown', { key: 'Delete' });
+
+		expect(vista.emitted('close')).toBeUndefined();
+	});
+
 	test('el botón de cerrar vive en el desplegado', async () => {
 		// Compacta no entra, y sin él no habría forma de cerrar una pestaña con
 		// la barra a un costado salvo el clic del medio.
