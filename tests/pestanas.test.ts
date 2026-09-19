@@ -7,7 +7,7 @@
  * se comporte igual en cualquier ventana del escritorio.
  */
 
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
 import { h, nextTick } from 'vue';
 import TabBar from '../src/tabs/TabBar.vue';
@@ -22,24 +22,42 @@ const PESTANAS: ElementoDePestana[] = [
 	{ id: 'c', label: 'Tercera', closable: false },
 ];
 
+/**
+ * Lo montado en la prueba en curso.
+ *
+ * El nombre desplegado de una pestaña se teletransporta al `body`, así que
+ * sobrevive al final de la prueba y lo ve la siguiente: una que afirma que
+ * **no** hay nada desplegado encontraba lo de la anterior.
+ */
+const montadas: Array<{ unmount: () => void }> = [];
+
 function montarLaBarra(props: Record<string, unknown> = {}) {
-	return mount(TabBar, {
+	const vista = mount(TabBar, {
 		props: { tabs: PESTANAS, modelValue: 'a', closeLabel: 'Cerrar', ...props },
 	});
+	montadas.push(vista);
+	return vista;
 }
 
 /** La misma barra, pero dentro de un marco con la barra a un costado. */
 function montarEnVertical() {
-	return mount(WindowFrame, {
+	const vista = mount(WindowFrame, {
 		props: { position: 'left' },
 		slots: {
 			barra: () => h(TabBar, { tabs: PESTANAS, modelValue: 'a', closeLabel: 'Cerrar' }),
 		},
 	});
+	montadas.push(vista);
+	return vista;
 }
 
 beforeEach(() => {
 	olvidarTodo();
+});
+
+afterEach(() => {
+	while (montadas.length) montadas.pop()?.unmount();
+	document.body.innerHTML = '';
 });
 
 describe('elegir y cerrar', () => {
@@ -146,13 +164,134 @@ describe('con la barra a un costado', () => {
 		expect(carril.classes()).toContain('overflow-y-auto');
 	});
 
-	test('y ocupan el ancho en vez de los ciento treinta y seis píxeles', async () => {
+	test('se encogen al tamaño de un botón', async () => {
+		// Ocupando el ancho de la columna, una barra vertical se come la
+		// ventana: con cuatro pestañas abiertas quedaba menos de la mitad para
+		// el contenido.
 		const vista = montarEnVertical();
 		await nextTick();
 
 		const clases = vista.findComponent(TabItem).find('div').classes();
-		expect(clases).toContain('w-full');
+		expect(clases).toContain('size-8');
 		expect(clases).not.toContain('w-34');
+		expect(clases).not.toContain('w-full');
+	});
+
+	test('y muestran la inicial, no un cuadrado vacío', async () => {
+		// Sin icono no hay con qué distinguir una de otra.
+		const vista = montarEnVertical();
+		await nextTick();
+
+		expect(vista.findComponent(TabItem).text()).toBe('P');
+	});
+});
+
+describe('el nombre desplegado', () => {
+	/** Lo desplegado vive en el `body`, no adentro del envoltorio. */
+	function desplegados() {
+		return [...document.body.querySelectorAll('.whitespace-nowrap')].map((uno) => uno.textContent);
+	}
+
+	test('aparece al pasar el puntero y se va al salir', async () => {
+		const vista = montarEnVertical();
+		await nextTick();
+		const pestana = vista.findComponent(TabItem);
+
+		await pestana.trigger('mouseenter');
+		expect(desplegados()).toContain('Primera');
+
+		await pestana.trigger('mouseleave');
+		await nextTick();
+		expect(desplegados()).not.toContain('Primera');
+	});
+
+	test('y también al enfocar, que si no el teclado queda a ciegas', async () => {
+		// Sólo con el puntero, quien navega con el tabulador tendría una
+		// columna de iniciales sin manera de saber qué son.
+		const vista = montarEnVertical();
+		await nextTick();
+
+		await vista.findComponent(TabItem).trigger('focus');
+
+		expect(desplegados()).toContain('Primera');
+	});
+
+	test('con la barra arriba no se despliega nada', async () => {
+		// Ahí el nombre ya está escrito en la pestaña.
+		const vista = montarLaBarra();
+
+		await vista.findAllComponents(TabItem)[0].trigger('mouseenter');
+		await nextTick();
+
+		expect(desplegados()).not.toContain('Primera');
+	});
+
+	test('el desplegado no se cierra al entrarle el foco', async () => {
+		// Al pasar el foco de la pestaña a su botón de cerrar, el `blur` de la
+		// pestaña cerraba el desplegado antes de que se pudiera activar.
+		const vista = montarEnVertical();
+		await nextTick();
+		const pestana = vista.findComponent(TabItem);
+		await pestana.trigger('focus');
+		expect(desplegados()).toContain('Primera');
+
+		const popup = document.body.querySelector<HTMLElement>('.whitespace-nowrap')?.parentElement;
+		popup?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		await pestana.trigger('blur');
+		await nextTick();
+
+		expect(desplegados()).toContain('Primera');
+	});
+
+	test('y sí cuando el foco se va afuera', async () => {
+		const vista = montarEnVertical();
+		await nextTick();
+		const pestana = vista.findComponent(TabItem);
+		await pestana.trigger('focus');
+		const popup = document.body.querySelector<HTMLElement>('.whitespace-nowrap')?.parentElement;
+		popup?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		await pestana.trigger('blur');
+
+		popup?.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
+		await nextTick();
+
+		expect(desplegados()).not.toContain('Primera');
+	});
+
+	test('Suprimir cierra la pestaña sin pasar por el desplegado', async () => {
+		// El desplegado está teletransportado al `body`, así que el tabulador no
+		// pasa por su botón: sin esto, con la barra a un costado no habría forma
+		// de cerrar una pestaña sin mouse.
+		const vista = montarEnVertical();
+		await nextTick();
+
+		await vista.findComponent(TabItem).trigger('keydown', { key: 'Delete' });
+
+		expect(vista.findComponent(TabBar).emitted('close')?.[0]).toEqual(['a']);
+	});
+
+	test('y no cierra una que no se puede cerrar', async () => {
+		const vista = montarLaBarra();
+
+		await vista.findAllComponents(TabItem)[2].trigger('keydown', { key: 'Delete' });
+
+		expect(vista.emitted('close')).toBeUndefined();
+	});
+
+	test('el botón de cerrar vive en el desplegado', async () => {
+		// Compacta no entra, y sin él no habría forma de cerrar una pestaña con
+		// la barra a un costado salvo el clic del medio.
+		const vista = montarEnVertical();
+		await nextTick();
+		await vista.findComponent(TabItem).trigger('mouseenter');
+
+		const boton = document.body.querySelector<HTMLElement>('button[aria-label*="Primera"]');
+		expect(boton).not.toBeNull();
+
+		boton?.click();
+		await nextTick();
+
+		expect(vista.findComponent(TabBar).emitted('close')?.[0]).toEqual(['a']);
 	});
 });
 
