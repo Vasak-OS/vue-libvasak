@@ -4,6 +4,11 @@ import SideGroup from "./sidebar/SideGroup.vue";
 import SelectField from "./forms/SelectField.vue";
 import ThemeIcon from "./icons/ThemeIcon.vue";
 import WindowFrame from "./window/WindowFrame.vue";
+import AppBar from "./window/AppBar.vue";
+import WindowControls from "./window/WindowControls.vue";
+import TabBar from "./tabs/TabBar.vue";
+import TabItem from "./tabs/TabItem.vue";
+import BarSearch from "./bar/BarSearch.vue";
 import ActionButton from "./controls/ActionButton.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
 import DeviceCard from "./cards/DeviceCard.vue";
@@ -22,6 +27,11 @@ const components = [
   SelectField,
   ThemeIcon,
   WindowFrame,
+  AppBar,
+  WindowControls,
+  TabBar,
+  TabItem,
+  BarSearch,
   ActionButton,
   ConfigSection,
   DeviceCard,
@@ -48,6 +58,11 @@ export {
   SelectField,
   ThemeIcon,
   WindowFrame,
+  AppBar,
+  WindowControls,
+  TabBar,
+  TabItem,
+  BarSearch,
   ActionButton,
   ConfigSection,
   DeviceCard,
@@ -60,3 +75,11 @@ export {
 };
 
 export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
+export type { AccionDePestana, ElementoDePestana } from "./tabs/tipos";
+export type {
+  ContextoDeLaBarra,
+  OrientacionDeLaBarra,
+  PosicionDeLaBarra,
+} from "./window/tipos";
+export { CLAVE_DE_LA_BARRA, esPosicion, orientacionDe, POSICIONES, usarLaBarra } from "./window/tipos";
+export { posicionDe, usarLaPosicionDeLaBarra } from "./window/preferencia";
