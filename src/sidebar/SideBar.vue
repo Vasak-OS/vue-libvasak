@@ -21,6 +21,20 @@
  *
  * Los dos caminos conviven: lo declarativo va primero y la ranura después.
  *
+ * # El fondo
+ *
+ * `bg-ui-surface`, no `bg-ui-bg`. El token de fondo es el de **la ventana**; lo
+ * que se apoya encima —esta barra, las tarjetas de contenido— va en superficie.
+ * Venía de la copia de Configuración con el fondo de ventana puesto, y sobre la
+ * ventana eso se lee como un rectángulo apenas más claro en vez de un panel.
+ *
+ * # Lo que tiene que poner quien la usa
+ *
+ * Aire alrededor. La barra es una tarjeta con borde y esquina redondeada, así
+ * que pegada al borde de la ventana se le come el redondeo: el contenedor que
+ * la envuelve lleva `p-1` y un `gap-1` contra el contenido, como en
+ * Configuración y en la tienda.
+ *
  * # Por qué no hay traducciones acá
  *
  * Una librería de componentes que traduce obliga a todas las aplicaciones a
@@ -28,6 +42,7 @@
  * botón de plegar también, que es el único que no se ve pero se oye.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
 import SideGroup from './SideGroup.vue';
 import SideButton from './SideButton.vue';
 import type { SidebarCategory } from './tipos';
@@ -56,6 +71,16 @@ const props = withDefaults(
 		expandLabel: 'Expand',
 	}
 );
+
+/**
+ * El botón de plegar, que aparece en dos lugares de la plantilla —con cabecera y
+ * sin ella— y tiene que verse igual en los dos.
+ *
+ * Escondido por debajo de 768: ahí la barra se pliega sola y ofrecer
+ * desplegarla sería ofrecer algo que no entra.
+ */
+const CLASES_DEL_BOTON =
+	'hidden h-8 w-8 shrink-0 items-center justify-center rounded-corner border border-ui-border bg-ui-surface/70 transition-colors hover:bg-ui-surface md:inline-flex';
 
 const emit = defineEmits<{
 	'update:modelValue': [value: string];
@@ -116,7 +141,7 @@ defineExpose({ collapsed: plegada });
 
 <template>
   <aside
-    class="relative z-30 flex h-full shrink-0 flex-col rounded-corner border border-ui-border bg-ui-bg/80 transition-all duration-300"
+    class="relative z-30 flex h-full shrink-0 flex-col rounded-corner border border-ui-border bg-ui-surface/70 transition-all duration-300"
     :class="['w-[84px]', plegada ? 'md:w-[84px]' : 'md:w-72']">
     <header
       v-if="hayTitulo || $slots.header"
@@ -124,11 +149,14 @@ defineExpose({ collapsed: plegada });
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="hidden h-10 w-10 items-center justify-center rounded-corner border border-ui-border bg-ui-surface/70 font-semibold text-sm md:inline-flex"
+          :class="CLASES_DEL_BOTON"
           :aria-label="plegada ? expandLabel : collapseLabel"
           :aria-expanded="!plegada"
           @click="alternar">
-          {{ plegada ? '&gt;' : '&lt;' }}
+          <ThemeIcon
+            :name="plegada ? 'pan-end-symbolic' : 'pan-start-symbolic'"
+            type="symbol"
+            :size="16" />
         </button>
         <!-- El área de título es opcional: hay ventanas donde el nombre ya está
              en la barra superior y repetirlo acá gasta la mitad del alto. -->
@@ -147,19 +175,24 @@ defineExpose({ collapsed: plegada });
     </header>
 
     <!-- Sin área de título el botón de plegar necesita su propio lugar, o la
-         barra deja de poder plegarse. -->
-    <div v-else class="flex justify-center border-ui-border border-b p-2">
+         barra deja de poder plegarse. Alineado a la izquierda y no centrado: es
+         donde queda cuando **sí** hay título, y así no se corre de lugar entre
+         una ventana y otra del escritorio. -->
+    <div v-else class="flex border-ui-border border-b p-2">
       <button
         type="button"
-        class="hidden h-10 w-10 items-center justify-center rounded-corner border border-ui-border bg-ui-surface/70 font-semibold text-sm md:inline-flex"
+        :class="CLASES_DEL_BOTON"
         :aria-label="plegada ? expandLabel : collapseLabel"
         :aria-expanded="!plegada"
         @click="alternar">
-        {{ plegada ? '&gt;' : '&lt;' }}
+        <ThemeIcon
+          :name="plegada ? 'pan-end-symbolic' : 'pan-start-symbolic'"
+          type="symbol"
+          :size="16" />
       </button>
     </div>
 
-    <div class="flex-1 space-y-3 overflow-y-auto p-2">
+    <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
       <SideGroup
         v-for="category in categories"
         :key="category.id"
