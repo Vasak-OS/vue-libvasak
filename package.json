@@ -1,17 +1,16 @@
 {
   "name": "@vasakgroup/vue-libvasak",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Vue componenets for VSK Applications",
   "main": "./dist/vue-libvasak.umd.js",
   "module": "./dist/vue-libvasak.es.js",
-  "types": "src/types/vue-libvasak.d.ts",
+  "types": "./dist/types/index.d.ts",
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "exports": {
     ".": {
-      "types": "./src/types/vue-libvasak.d.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/vue-libvasak.es.js",
       "require": "./dist/vue-libvasak.umd.js",
       "default": "./dist/vue-libvasak.es.js"
@@ -65,10 +64,11 @@
     "vue-tsc": "^3.3.11"
   },
   "scripts": {
-    "build": "bunx vue-tsc --noEmit && bunx --bun vite build",
+    "build": "bun run typecheck && bunx --bun vite build && bun run tipos",
     "dev": "bunx --bun vite",
     "prepare": "bun run build",
     "typecheck": "bunx vue-tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "tipos": "bunx vue-tsc --declaration --emitDeclarationOnly --noEmit false --outDir dist/types"
   }
 }
