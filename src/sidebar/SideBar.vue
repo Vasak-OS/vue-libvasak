@@ -23,10 +23,15 @@
  *
  * # El fondo
  *
- * `bg-ui-surface`, no `bg-ui-bg`. El token de fondo es el de **la ventana**; lo
- * que se apoya encima —esta barra, las tarjetas de contenido— va en superficie.
- * Venía de la copia de Configuración con el fondo de ventana puesto, y sobre la
- * ventana eso se lee como un rectángulo apenas más claro en vez de un panel.
+ * `bg-ui-surface/70`, no `bg-ui-bg`. El token de fondo es el de **la ventana**;
+ * lo que se apoya encima va en superficie. Venía de la copia de Configuración
+ * con el fondo de ventana puesto, y sobre la ventana eso se lee como un
+ * rectángulo apenas más claro en vez de un panel.
+ *
+ * `/70` es el valor del escritorio para un panel, y las tarjetas de contenido de
+ * las aplicaciones van al mismo: la barra y las tarjetas están apoyadas en la
+ * misma ventana y tienen que leerse como el mismo material. Las que todavía
+ * estén en `/40` son las que faltan corregir.
  *
  * # Lo que tiene que poner quien la usa
  *

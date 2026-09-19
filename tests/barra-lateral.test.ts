@@ -68,8 +68,11 @@ describe('la forma, que es el punto de compartirla', () => {
 		// de la copia de Configuración.
 		const barra = mount(SideBar, { props: { title: 'Monitor' } });
 
+		// Con la opacidad fijada y no sólo el token: con `bg-ui-surface` a secas
+		// cualquier valor pasaba, y el que vale es el mismo que el de las
+		// tarjetas de contenido.
 		const clases = barra.get('aside').classes().join(' ');
-		expect(clases).toContain('bg-ui-surface');
+		expect(clases).toContain('bg-ui-surface/70');
 		expect(clases).not.toContain('bg-ui-bg');
 	});
 
