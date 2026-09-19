@@ -1,6 +1,9 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
+# Publica el paquete en npm cuando se crea un release.
+#
+# Nunca había corrido: el único release del repositorio es el 0.0.1 de 2023, y
+# las publicaciones de la 0.1.0 a la 0.2.3 se hicieron a mano. Tal como estaba
+# tampoco habría funcionado — `setup-node` no instala bun, no se instalaban las
+# dependencias, y `npm publish` dispara el guion `prepare`, que compila con bun.
 name: npm Package Publish
 
 on:
@@ -10,13 +13,53 @@ on:
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      # Las acciones van clavadas al commit y no a la etiqueta. Una etiqueta se
+      # puede mover, y quien pueda moverla decide qué corre en un trabajo que
+      # tiene el token de publicación de npm a mano.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # El proyecto compila y prueba con bun; node está sólo para `npm publish`,
+      # que es quien sabe hablar con el registro y leer el token.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: npm adduser
-      - run: npm publish
+
+      # Sin los guiones de instalación de las dependencias: cualquiera de las
+      # 122 puede traer un `postinstall`, y acá correría en el mismo trabajo que
+      # sostiene el token. Lo nuestro se compila abajo, en su propio paso.
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # Una versión de npm no se puede volver a publicar: si sale rota, sale
+      # rota para siempre y hay que quemar un número. Por eso las pruebas y el
+      # typecheck son parte de publicar y no algo que se mira antes.
+      - name: Pruebas
+        run: bun test
+
+      - name: Compilar
+        run: bun run build
+
+      # El tag del release es lo que la gente ve; `package.json` es lo que npm
+      # publica. Si se separan, el release dice una versión y el registro recibe
+      # otra, y eso no se nota hasta que alguien instala la que no es.
+      - name: La etiqueta y el manifiesto tienen que coincidir
+        run: |
+          etiqueta="${GITHUB_REF_NAME#v}"
+          manifiesto=$(node -p "require('./package.json').version")
+          if [ "$etiqueta" != "$manifiesto" ]; then
+            echo "El release es $etiqueta y package.json dice $manifiesto." >&2
+            exit 1
+          fi
+
+      # `--ignore-scripts` porque `prepare` vuelve a compilar, y ya se compiló
+      # arriba. `--access public` porque un paquete con alcance sale privado por
+      # omisión y este no lo es.
+      - name: Publicar
+        run: npm publish --ignore-scripts --access public
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
