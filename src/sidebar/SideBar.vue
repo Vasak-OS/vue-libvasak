@@ -93,6 +93,9 @@ const emit = defineEmits<{
 	change: [value: string];
 }>();
 
+/** Por debajo de esto no entra el texto de los botones y la barra se pliega. */
+const ANCHO_MINIMO = 767;
+
 const plegadaAMano = ref(props.collapsed ?? false);
 const esAngosta = ref(false);
 let consulta: MediaQueryList | null = null;
@@ -109,7 +112,14 @@ const hayTitulo = computed(() => Boolean(props.title || props.subtitle));
 const hayCategorias = computed(() => props.categories.length > 0);
 
 function revisar() {
-	esAngosta.value = consulta?.matches ?? false;
+	// El ancho de la ventana y no el `matches` de la consulta: en WebKitGTK el
+	// `change` de `matchMedia` no llega cuando la ventana pasa de angosta a
+	// ancha al terminar de abrirse. La barra se montaba con el WebView todavía
+	// sin tamaño —o sea, angosto— y se quedaba plegada para siempre en una
+	// ventana de 1280 que nadie había plegado. `innerWidth` se lee en el
+	// momento y no depende de que llegue ningún aviso; la consulta queda sólo
+	// como una de las dos cosas que disparan esta relectura.
+	esAngosta.value = window.innerWidth <= ANCHO_MINIMO;
 }
 
 function alternar() {
@@ -134,12 +144,19 @@ watch(
 );
 
 onMounted(() => {
-	consulta = window.matchMedia('(max-width: 767px)');
+	consulta = window.matchMedia(`(max-width: ${ANCHO_MINIMO}px)`);
 	revisar();
 	consulta.addEventListener('change', revisar);
+	// Y el `resize` además del `change`, que es el que sí llega siempre. Cuesta
+	// una comparación por evento y es lo que evita que la ventana abra con la
+	// barra plegada sin que nadie la haya plegado.
+	window.addEventListener('resize', revisar);
 });
 
-onBeforeUnmount(() => consulta?.removeEventListener('change', revisar));
+onBeforeUnmount(() => {
+	consulta?.removeEventListener('change', revisar);
+	window.removeEventListener('resize', revisar);
+});
 
 defineExpose({ collapsed: plegada });
 </script>

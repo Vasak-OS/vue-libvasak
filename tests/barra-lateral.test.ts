@@ -442,3 +442,102 @@ describe('los grupos', () => {
 		expect(titulo?.text()).toBe('Sistema');
 	});
 });
+
+describe('el ancho de la ventana', () => {
+	const matchMediaDeVerdad = window.matchMedia;
+
+	/**
+	 * Una consulta congelada, como la de WebKitGTK.
+	 *
+	 * Ahí está el fallo que se vio: la ventana abre, el WebView todavía no
+	 * tiene tamaño, la consulta se evalúa angosta y **nunca** avisa que dejó de
+	 * serlo. En happy-dom `matchMedia` sí sigue a `innerWidth` y sí dispara su
+	 * `change`, así que sin congelarla a mano la prueba pasa con el fallo
+	 * puesto —pasó— y no comprueba nada.
+	 */
+	function congelarLaConsulta(matches: boolean) {
+		(window as unknown as { matchMedia: unknown }).matchMedia = () => ({
+			matches,
+			media: '',
+			onchange: null,
+			addEventListener() {},
+			removeEventListener() {},
+			addListener() {},
+			removeListener() {},
+			dispatchEvent: () => false,
+		});
+	}
+
+	/** Pone el ancho de la ventana y avisa, como hace el compositor. */
+	async function ponerElAncho(pixeles: number) {
+		(window as unknown as { innerWidth: number }).innerWidth = pixeles;
+		window.dispatchEvent(new Event('resize'));
+		await nextTick();
+	}
+
+	beforeEach(() => {
+		(window as unknown as { matchMedia: unknown }).matchMedia = matchMediaDeVerdad;
+		(window as unknown as { innerWidth: number }).innerWidth = 1280;
+	});
+
+	test('una ventana angosta la pliega sola', async () => {
+		// Por debajo de 768 no entra el texto de los botones: desplegada ahí
+		// sería una columna de etiquetas cortadas encima del contenido.
+		const vista = mount(SideBar, { props: { title: 'Ventana' } });
+		await ponerElAncho(600);
+
+		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
+	});
+
+	test('abre desplegada aunque la consulta diga que es angosta', async () => {
+		// El caso de verdad: se monta con la consulta congelada en «angosta»
+		// —el WebView sin tamaño todavía— pero la ventana ya mide 1280. Si la
+		// barra le cree a la consulta, abre plegada y se queda así para
+		// siempre, sin que nadie la haya plegado. Pasó.
+		congelarLaConsulta(true);
+		(window as unknown as { innerWidth: number }).innerWidth = 1280;
+
+		const vista = mount(SideBar, { props: { title: 'Ventana' } });
+		await nextTick();
+
+		expect(vista.find('aside').classes()).toContain('md:w-72');
+	});
+
+	test('y si la ventana crece después, se despliega igual', async () => {
+		// Misma consulta congelada, pero el WebView arranca angosto de verdad y
+		// crece al terminar de abrirse. El `change` no llega nunca; el `resize`
+		// sí, y es el que vuelve a mirar el ancho.
+		congelarLaConsulta(true);
+		(window as unknown as { innerWidth: number }).innerWidth = 600;
+
+		const vista = mount(SideBar, { props: { title: 'Ventana' } });
+		await nextTick();
+		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
+
+		await ponerElAncho(1280);
+
+		expect(vista.find('aside').classes()).toContain('md:w-72');
+	});
+
+	test('plegada a mano sigue plegada aunque la ventana sea ancha', async () => {
+		// Ensancharla no es desplegarla: lo que se plegó a propósito se queda
+		// como lo dejaron.
+		const vista = mount(SideBar, { props: { title: 'Ventana', collapsed: true } });
+		await ponerElAncho(1280);
+
+		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
+	});
+
+	test('deja de escuchar al desmontarse', async () => {
+		// Un oyente de `resize` por cada ventana que se abrió y se cerró es una
+		// fuga que además dibuja componentes muertos.
+		const vista = mount(SideBar, { props: { title: 'Ventana' } });
+		await ponerElAncho(1280);
+		vista.unmount();
+
+		expect(() => {
+			(window as unknown as { innerWidth: number }).innerWidth = 600;
+			window.dispatchEvent(new Event('resize'));
+		}).not.toThrow();
+	});
+});
