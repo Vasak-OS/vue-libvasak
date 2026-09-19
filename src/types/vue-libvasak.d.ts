@@ -10,15 +10,50 @@ declare module "@vasakgroup/vue-libvasak" {
   }
 
   /* Sidebar */
+  export interface SidebarItem {
+    id: string;
+    label: string;
+    /** Un nombre del tema de iconos del escritorio, no una ruta. */
+    icon?: string;
+    badge?: string | number;
+    disabled?: boolean;
+  }
+
+  export interface SidebarCategory {
+    id: string;
+    title: string;
+    items: SidebarItem[];
+  }
+
   export interface SideBarProps {
+    /** Sin `title` ni `subtitle` no se dibuja el área de título. */
+    title?: string;
+    subtitle?: string;
+    categories?: SidebarCategory[];
+    modelValue?: string;
+    collapsed?: boolean;
+    collapseLabel?: string;
+    expandLabel?: string;
     class?: string;
     [key: string]: any;
   }
 
   export interface SideButtonProps {
-    title?: string;
-    image?: string;
+    label: string;
+    /** Un nombre del tema de iconos, que se vuelve a resolver al cambiar de tema. */
+    icon?: string;
+    active?: boolean;
+    collapsed?: boolean;
+    disabled?: boolean;
+    badge?: string | number;
     class?: string;
+    [key: string]: any;
+  }
+
+  export interface SideGroupProps {
+    title: string;
+    collapsed?: boolean;
+    defaultOpen?: boolean;
     [key: string]: any;
   }
 
@@ -129,8 +164,9 @@ declare module "@vasakgroup/vue-libvasak" {
 
   /* Component exports */
   export const WindowFrame: DefineComponent<WindowFrameProps, any, any, {}, {}, {}, {}, {}, string>;
-  export const SideBar: DefineComponent<SideBarProps, any, any, {}, {}, {}, {}, {}, string>;
-  export const SideButton: DefineComponent<SideButtonProps, any, any, {}, {}, {}, {}, {}, string>;
+  export const SideBar: DefineComponent<SideBarProps, any, any, {}, {}, {}, {}, { 'update:modelValue': (value: string) => void; 'update:collapsed': (value: boolean) => void; change: (value: string) => void }, string>;
+  export const SideButton: DefineComponent<SideButtonProps, any, any, {}, {}, {}, {}, { click: () => void }, string>;
+  export const SideGroup: DefineComponent<SideGroupProps, any, any, {}, {}, {}, {}, {}, string>;
 
   export const ActionButton: DefineComponent<ActionButtonProps, any, any, {}, {}, {}, {}, { click: () => void }, string>;
   export const ToggleControl: DefineComponent<ToggleControlProps, any, any, {}, {}, {}, {}, { click: () => void }, string>;
