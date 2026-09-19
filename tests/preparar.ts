@@ -12,11 +12,15 @@
  */
 
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
+import * as eventos from '@tauri-apps/api/event';
 import { mock } from 'bun:test';
 import './complemento-vue';
 import { getIconSource, getSymbolSource, listen } from './dobles';
 
 GlobalRegistrator.register();
 
-mock.module('@tauri-apps/api/event', () => ({ listen }));
+// El doble **encima** del módulo de verdad, no en su lugar. Reemplazarlo entero
+// deja sin exportar lo que no se nombra acá, y ahí lo que falla es el import y
+// no la prueba: el marco de la ventana importa `@tauri-apps/api/event` entero.
+mock.module('@tauri-apps/api/event', () => ({ ...eventos, listen }));
 mock.module('@vasakgroup/plugin-vicons', () => ({ getIconSource, getSymbolSource }));
