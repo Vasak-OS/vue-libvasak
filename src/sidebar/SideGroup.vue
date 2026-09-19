@@ -7,6 +7,7 @@
  * detrás de nada.
  */
 import { ref, watch } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
 
 const props = withDefaults(
 	defineProps<{ title: string; collapsed?: boolean; defaultOpen?: boolean }>(),
@@ -34,9 +35,15 @@ watch(
       :aria-expanded="abierto"
       @click="abierto = !abierto">
       <span>{{ title }}</span>
-      <span class="text-[10px] transition-transform duration-200" :class="abierto ? 'rotate-180' : ''">
-        v
-      </span>
+      <!-- El icono del tema y no un carácter: una `v` suelta se dibuja con la
+           tipografía de la interfaz, queda de otro tamaño que el resto de los
+           símbolos de la ventana y no sigue al tema. -->
+      <ThemeIcon
+        name="pan-down-symbolic"
+        type="symbol"
+        :size="12"
+        class="transition-transform duration-200"
+        :class="abierto ? '' : '-rotate-90'" />
     </button>
 
     <div v-if="abierto || collapsed" class="flex flex-col gap-1">
