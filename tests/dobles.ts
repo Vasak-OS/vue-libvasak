@@ -69,7 +69,13 @@ export function cuantosOyentes(nombre: string) {
 	return oyentes.get(nombre)?.size ?? 0;
 }
 
-/** Emite un evento del escritorio y espera a que lo atiendan. */
+/**
+ * Emite un evento del escritorio y espera a que lo atiendan.
+ *
+ * Se recorre una copia y no el conjunto: un manejador puede soltarse a sí mismo
+ * mientras se lo atiende —es justo lo que hace el botón al desmontarse— y
+ * modificar el conjunto durante su propio recorrido se saltea al siguiente.
+ */
 export async function emitir(nombre: string) {
 	for (const manejador of [...(oyentes.get(nombre) ?? [])]) {
 		await manejador();

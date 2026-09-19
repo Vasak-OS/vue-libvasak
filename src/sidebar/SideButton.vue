@@ -51,9 +51,10 @@ async function resolver() {
 }
 
 onMounted(async () => {
-	await resolver();
-	// El tema de iconos cambia en caliente: sin esto, la barra se queda con los
-	// del tema anterior hasta que se reabre la ventana.
+	// El oyente **antes** de la primera resolución. El tema de iconos cambia en
+	// caliente, y resolver el primero tarda: un cambio de tema durante esa
+	// espera no lo escuchaba nadie, y el botón se quedaba con el icono del tema
+	// anterior hasta el cambio siguiente.
 	const dejarDeEscuchar = await listen('vicons:theme-changed', resolver);
 	// Registrarse tarda, y en una lista que se desplaza un botón puede irse
 	// antes de que termine. Ahí `onUnmounted` ya pasó y no vio nada que soltar:
@@ -63,6 +64,10 @@ onMounted(async () => {
 		return;
 	}
 	soltar = dejarDeEscuchar;
+
+	// Las dos resoluciones pueden cruzarse —ésta y la que dispare un cambio de
+	// tema—, y de eso se encarga el testigo de `resolver`.
+	await resolver();
 });
 
 onUnmounted(() => {

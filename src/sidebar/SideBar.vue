@@ -138,9 +138,9 @@ defineExpose({ collapsed: plegada });
         </div>
       </div>
 
-      <!-- Lo de arriba de todo: la búsqueda de la tienda, por ejemplo. Plegada
-           no entra un campo de texto —84 píxeles es el ancho del icono— así que
-           se esconde en vez de quedar ilegible. -->
+      <!-- Lo que va antes que cualquier categoría: la búsqueda de la tienda,
+           por ejemplo. Plegada no entra un campo de texto —84 píxeles es el
+           ancho del icono— así que se esconde en vez de quedar ilegible. -->
       <div v-if="$slots.header && !plegada">
         <slot name="header" :collapsed="plegada" />
       </div>

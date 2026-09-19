@@ -281,6 +281,35 @@ describe('los iconos', () => {
 		expect(boton.get('img').attributes('src')).toBe('data:image/png;base64,NUEVO');
 	});
 
+	test('un cambio de tema durante la primera resolución no se pierde', async () => {
+		// Resolver el primer icono tarda, y el oyente se registraba después. Un
+		// cambio de tema en esa ventana no lo escuchaba nadie: el botón se
+		// quedaba con el icono del tema anterior hasta el cambio siguiente, que
+		// puede no venir nunca.
+		let soltarLaPrimera: (fuente: string) => void = () => {};
+		ponerEnElTema(
+			'system-run',
+			() =>
+				new Promise<string>((listo) => {
+					soltarLaPrimera = listo;
+				})
+		);
+
+		const boton = mount(SideButton, { props: { label: 'Servicios', icon: 'system-run' } });
+		await nextTick();
+
+		// El tema cambia mientras la primera resolución sigue esperando.
+		ponerEnElTema('system-run', 'data:image/png;base64,OSCURO');
+		await emitir('vicons:theme-changed');
+		await asentar();
+
+		// Y recién ahí contesta la primera, con el icono del tema viejo.
+		soltarLaPrimera('data:image/png;base64,CLARO');
+		await asentar();
+
+		expect(boton.get('img').attributes('src')).toBe('data:image/png;base64,OSCURO');
+	});
+
 	test('sin icono queda la inicial y no un hueco', async () => {
 		// Un hueco vacío del mismo tamaño deja la fila desalineada contra las
 		// que sí lo tienen.
