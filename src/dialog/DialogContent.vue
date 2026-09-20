@@ -23,18 +23,25 @@ import { computed, nextTick, onUnmounted, ref, useAttrs, watch } from 'vue';
 import { usarElDialogo } from './tipos';
 
 /**
- * La clase de quien lo usa, leída del `attrs` y no de `props`.
+ * Los atributos de quien lo usa, puestos a mano sobre el panel.
  *
- * Vue no mete `class` en `props` aunque se declare: queda en `attrs` y cae sola
- * al nodo raíz. Acá la raíz es un `Teleport`, que no es un elemento, así que
- * caería en la nada — que es lo que le pasaba a la copia de la que salió esto.
+ * La raíz es un `Teleport`, que no es un elemento: lo que caería solo por
+ * `fallthrough` caería en la nada. Por eso se apaga y se reparte acá — la
+ * `class` con las del panel, y el resto (`aria-describedby`, `id`, `data-*`)
+ * tal cual, que es lo único que le deja a quien lo usa nombrar el diálogo
+ * cuando prefiere no poner un `DialogTitle` visible.
  */
 defineOptions({ inheritAttrs: false });
 const atributos = useAttrs();
 const claseDeQuienLoUsa = computed(() => (atributos.class as string | undefined) ?? '');
+const restoDeLosAtributos = computed(() => {
+	const { class: _clase, ...resto } = atributos;
+	return resto;
+});
 
 const dialogo = usarElDialogo();
 const abierto = computed(() => dialogo.abierto.value);
+const velo = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
 
 /** Lo que estaba enfocado antes de abrir, para devolvérselo al cerrar. */
@@ -83,28 +90,67 @@ function alVelo(evento: MouseEvent) {
 	if (evento.target === evento.currentTarget) dialogo.cerrar();
 }
 
-function soltarElTeclado() {
-	document.removeEventListener('keydown', alTeclear);
+/**
+ * La red de seguridad, para las teclas que el velo no llega a oír.
+ *
+ * Lo normal es que el foco esté adentro —se entra al panel al abrir y el Tab
+ * no sale—, y entonces la tecla la oye el velo, que es de quien cuelga todo.
+ * Pero el foco se puede escapar igual: un botón que se deshabilita a sí mismo
+ * deja el foco en el `body`, y desde ahí nada llega al velo. Sin esto, Escape
+ * dejaría de cerrar justo después de la acción que más suele deshabilitar algo.
+ *
+ * La guarda es lo que evita atender dos veces la misma tecla.
+ */
+function alTeclearSuelto(evento: KeyboardEvent) {
+	if (velo.value?.contains(evento.target as Node)) return;
+	alTeclear(evento);
 }
 
-watch(abierto, async (seAbrio) => {
-	if (seAbrio) {
-		enfocadoAntes = document.activeElement as HTMLElement | null;
-		document.addEventListener('keydown', alTeclear);
-		await nextTick();
-		// Al panel y no al primer botón: así un lector de pantalla lee el
-		// título y la descripción antes que la primera acción.
-		panel.value?.focus();
-		return;
-	}
-	soltarElTeclado();
-	enfocadoAntes?.focus();
+function soltarElTeclado() {
+	document.removeEventListener('keydown', alTeclearSuelto);
+}
+
+/**
+ * Devuelve el foco a lo que lo tenía antes de abrir.
+ *
+ * Sólo si sigue en el documento: el diálogo puede haberse abierto desde un
+ * botón de una lista que el propio diálogo terminó borrando, y enfocar algo
+ * desconectado no hace nada más que dejar el foco perdido en el `body`.
+ */
+function restaurarElFoco() {
+	const destino = enfocadoAntes;
 	enfocadoAntes = null;
-});
+	if (destino?.isConnected) destino.focus();
+}
+
+watch(
+	abierto,
+	async (seAbrio) => {
+		if (seAbrio) {
+			enfocadoAntes = document.activeElement as HTMLElement | null;
+			document.addEventListener('keydown', alTeclearSuelto);
+			await nextTick();
+			// Al panel y no al primer botón: así un lector de pantalla lee el
+			// título y la descripción antes que la primera acción.
+			panel.value?.focus();
+			return;
+		}
+		soltarElTeclado();
+		restaurarElFoco();
+	},
+	// `watch` no corre para el valor inicial, y un diálogo se puede montar ya
+	// abierto —una vista que arranca preguntando algo—. Sin esto, ése no recibe
+	// el foco y ni Escape ni el Tab hacen nada: el `aria-modal` queda en promesa.
+	{ immediate: true }
+);
 
 // Un diálogo abierto cuyo dueño se desmonta dejaría el oyente puesto para
-// siempre, cerrando diálogos ajenos con cada Escape.
-onUnmounted(soltarElTeclado);
+// siempre, cerrando diálogos ajenos con cada Escape. Y su panel se va con él,
+// así que el foco tiene que volver de donde salió o se queda en el `body`.
+onUnmounted(() => {
+	soltarElTeclado();
+	restaurarElFoco();
+});
 </script>
 
 <template>
@@ -116,8 +162,10 @@ onUnmounted(soltarElTeclado);
       leave-to-class="opacity-0">
       <div
         v-if="abierto"
+        ref="velo"
         class="fixed inset-0 z-50 flex items-center justify-center"
-        @click="alVelo">
+        @click="alVelo"
+        @keydown="alTeclear">
         <div class="absolute inset-0 bg-ui-border-dark/40"></div>
         <div
           ref="panel"
@@ -125,6 +173,7 @@ onUnmounted(soltarElTeclado);
           role="dialog"
           aria-modal="true"
           :aria-labelledby="dialogo.idDelTitulo.value ?? undefined"
+          v-bind="restoDeLosAtributos"
           :class="[
             claseDeQuienLoUsa,
             'relative z-10 w-full max-w-lg rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg',

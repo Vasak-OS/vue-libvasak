@@ -23,13 +23,27 @@ import DialogFooter from '../src/dialog/DialogFooter.vue';
 import DialogTitle from '../src/dialog/DialogTitle.vue';
 
 /**
+ * Las vistas montadas, para desmontarlas pase lo que pase.
+ *
+ * Si una aserción falla, lo que venga después en la prueba no corre: un
+ * `unmount` al final se saltea y la vista queda viva, con su oyente de teclado
+ * puesto. La siguiente prueba manda un Escape y cierra **el diálogo anterior**.
+ * Por eso la limpieza no vive al final de cada prueba sino acá.
+ */
+const vistas = new Set<{ unmount: () => void }>();
+
+/**
  * Un diálogo con un botón de afuera —el que lo abre— y dos adentro.
  *
  * El de afuera importa: es a lo que el foco tiene que volver al cerrar, y sin
  * él la prueba no podría distinguir «volvió» de «se quedó en el `body`».
  */
-function armar(opciones: { titulo?: boolean; clase?: string } = {}) {
-	const abierto = ref(false);
+function armar(
+	opciones: { titulo?: boolean; clase?: string; desdeAbierto?: boolean; extra?: Record<string, unknown> } = {}
+) {
+	const abierto = ref(opciones.desdeAbierto === true);
+	/** Cuántas veces se pidió cambiar `open`. Delata que una tecla se atienda dos veces. */
+	let cierres = 0;
 	const vista = mount(
 		defineComponent({
 			setup() {
@@ -37,9 +51,15 @@ function armar(opciones: { titulo?: boolean; clase?: string } = {}) {
 					h('button', { class: 'abridor', onClick: () => (abierto.value = true) }, 'Abrir'),
 					h(
 						Dialog,
-						{ open: abierto.value, 'onUpdate:open': (v: boolean) => (abierto.value = v) },
+						{
+							open: abierto.value,
+							'onUpdate:open': (v: boolean) => {
+								cierres += 1;
+								abierto.value = v;
+							},
+						},
 						() =>
-							h(DialogContent, { class: opciones.clase }, () => [
+							h(DialogContent, { class: opciones.clase, ...opciones.extra }, () => [
 								opciones.titulo === false ? null : h(DialogTitle, () => 'Borrar el archivo'),
 								h(DialogDescription, () => 'Esto no se puede deshacer'),
 								h(DialogFooter, () => [
@@ -53,7 +73,8 @@ function armar(opciones: { titulo?: boolean; clase?: string } = {}) {
 		}),
 		{ attachTo: document.body }
 	);
-	return { vista, abierto };
+	vistas.add(vista);
+	return { vista, abierto, cuantosCierres: () => cierres };
 }
 
 const elPanel = () => document.body.querySelector<HTMLElement>('[role="dialog"]');
@@ -68,8 +89,14 @@ const elPanel = () => document.body.querySelector<HTMLElement>('[role="dialog"]'
  * tres pruebas, y dos de las tres no tenían nada roto.
  */
 afterEach(() => {
+	for (const vista of vistas) vista.unmount();
+	vistas.clear();
+
 	for (const suelto of document.body.querySelectorAll('[role="dialog"]')) {
 		suelto.parentElement?.remove();
+	}
+	for (const suelto of document.body.querySelectorAll('.abridor-de-afuera')) {
+		suelto.remove();
 	}
 });
 
@@ -79,8 +106,14 @@ async function abrir(vista: ReturnType<typeof armar>['vista']) {
 	await nextTick();
 }
 
+/** Una tecla que nadie de adentro oye: llega por la red de seguridad. */
 function teclear(key: string, extra: Partial<KeyboardEventInit> = {}) {
 	document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...extra }));
+}
+
+/** Una tecla escrita con el foco adentro, que es el camino normal. */
+function teclearDentro(key: string, extra: Partial<KeyboardEventInit> = {}) {
+	elPanel()?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...extra }));
 }
 
 describe('el diálogo', () => {
@@ -90,8 +123,6 @@ describe('el diálogo', () => {
 		expect(elPanel()).toBeNull();
 		await abrir(vista);
 		expect(elPanel()).not.toBeNull();
-
-		vista.unmount();
 	});
 
 	test('el foco entra al panel, no al primer botón', async () => {
@@ -101,7 +132,6 @@ describe('el diálogo', () => {
 		await abrir(vista);
 
 		expect(document.activeElement).toBe(elPanel());
-		vista.unmount();
 	});
 
 	test('y al cerrar vuelve a lo que estaba enfocado antes', async () => {
@@ -119,7 +149,6 @@ describe('el diálogo', () => {
 		await nextTick();
 
 		expect(document.activeElement).toBe(abridor);
-		vista.unmount();
 	});
 
 	test('Escape lo cierra', async () => {
@@ -130,7 +159,6 @@ describe('el diálogo', () => {
 		await nextTick();
 
 		expect(abierto.value).toBe(false);
-		vista.unmount();
 	});
 
 	test('el clic en el velo lo cierra, y el de adentro no', async () => {
@@ -146,8 +174,22 @@ describe('el diálogo', () => {
 		velo.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		expect(abierto.value).toBe(false);
+	});
 
-		vista.unmount();
+	test('montado ya abierto también se enfoca y oye el teclado', async () => {
+		// `watch` no corre para el valor inicial: sin pedirle la primera pasada,
+		// un diálogo que arranca abierto —una vista que empieza preguntando
+		// algo— no recibía el foco y ni Escape ni el Tab hacían nada.
+		const { abierto } = armar({ desdeAbierto: true });
+		await nextTick();
+		await nextTick();
+
+		expect(elPanel()).not.toBeNull();
+		expect(document.activeElement).toBe(elPanel());
+
+		teclear('Escape');
+		await nextTick();
+		expect(abierto.value).toBe(false);
 	});
 });
 
@@ -162,11 +204,10 @@ describe('el teclado no se escapa del diálogo', () => {
 		const cancelar = document.body.querySelector<HTMLElement>('.cancelar');
 		borrar?.focus();
 
-		teclear('Tab');
+		teclearDentro('Tab');
 		await nextTick();
 
 		expect(document.activeElement).toBe(cancelar);
-		vista.unmount();
 	});
 
 	test('y Shift+Tab desde el primero va al último', async () => {
@@ -177,11 +218,37 @@ describe('el teclado no se escapa del diálogo', () => {
 		const cancelar = document.body.querySelector<HTMLElement>('.cancelar');
 		cancelar?.focus();
 
-		teclear('Tab', { shiftKey: true });
+		teclearDentro('Tab', { shiftKey: true });
 		await nextTick();
 
 		expect(document.activeElement).toBe(borrar);
-		vista.unmount();
+	});
+
+	test('una tecla de adentro se atiende una sola vez', async () => {
+		// El velo la oye por burbujeo y el documento también. La guarda de la
+		// red de seguridad es lo único que evita cerrar dos veces: sin ella
+		// `update:open` sale duplicado, que es el error de reenviar un evento
+		// sin darse cuenta de que ya lo oía alguien más.
+		const { vista, cuantosCierres } = armar();
+		await abrir(vista);
+
+		teclearDentro('Escape');
+		await nextTick();
+
+		expect(cuantosCierres()).toBe(1);
+	});
+
+	test('y si el foco se escapó, Escape sigue cerrando', async () => {
+		// Pasa de verdad: un botón que se deshabilita por lo que acaba de hacer
+		// deja el foco en el `body`, y desde ahí nada llega al velo.
+		const { vista, abierto } = armar();
+		await abrir(vista);
+		(document.body as HTMLElement).focus();
+
+		teclear('Escape');
+		await nextTick();
+
+		expect(abierto.value).toBe(false);
 	});
 });
 
@@ -195,8 +262,6 @@ describe('lo que un lector de pantalla oye', () => {
 		const id = elPanel()?.getAttribute('aria-labelledby');
 		expect(id).toBeTruthy();
 		expect(document.getElementById(id as string)?.textContent).toBe('Borrar el archivo');
-
-		vista.unmount();
 	});
 
 	test('y sin título no se inventa una referencia colgada', async () => {
@@ -206,7 +271,6 @@ describe('lo que un lector de pantalla oye', () => {
 		await abrir(vista);
 
 		expect(elPanel()?.hasAttribute('aria-labelledby')).toBe(false);
-		vista.unmount();
 	});
 
 	test('la descripción usa un token que existe', async () => {
@@ -220,18 +284,50 @@ describe('lo que un lector de pantalla oye', () => {
 
 		expect(descripcion?.className).toContain('text-tx-muted');
 		expect(descripcion?.className).not.toContain('muted-foreground');
-		vista.unmount();
 	});
 });
 
-describe('la clase de quien lo usa', () => {
-	test('llega al panel', async () => {
+describe('los atributos de quien lo usa', () => {
+	test('la clase llega al panel', async () => {
 		// Mismo detalle que en el tooltip: la raíz es un `Teleport`, así que
 		// `class` no puede caer sola.
 		const { vista } = armar({ clase: 'max-w-3xl' });
 		await abrir(vista);
 
 		expect(elPanel()?.className).toContain('max-w-3xl');
+	});
+
+	test('y los demás también, que es la otra forma de nombrarlo', async () => {
+		// Apagar el `fallthrough` para repartir la `class` a mano se lleva
+		// puesto todo lo demás. Un diálogo sin `DialogTitle` visible se queda
+		// entonces sin ninguna forma de tener nombre.
+		const { vista } = armar({ titulo: false, extra: { 'aria-label': 'Confirmar', id: 'el-dialogo' } });
+		await abrir(vista);
+
+		expect(elPanel()?.getAttribute('aria-label')).toBe('Confirmar');
+		expect(elPanel()?.id).toBe('el-dialogo');
+	});
+});
+
+describe('cuando el diálogo se va sin cerrarse', () => {
+	test('el foco vuelve igual', async () => {
+		// Desmontar con `open` todavía en `true` se lleva el panel puesto. Sin
+		// devolver el foco desde el desmontaje, queda en un elemento que ya no
+		// está en el documento: el teclado empieza otra vez desde arriba.
+		const abridor = document.createElement('button');
+		abridor.className = 'abridor-de-afuera';
+		document.body.appendChild(abridor);
+		abridor.focus();
+
+		const { vista } = armar({ desdeAbierto: true });
+		await nextTick();
+		await nextTick();
+		expect(document.activeElement).toBe(elPanel());
+
+		vistas.delete(vista);
 		vista.unmount();
+		await nextTick();
+
+		expect(document.activeElement).toBe(abridor);
 	});
 });
