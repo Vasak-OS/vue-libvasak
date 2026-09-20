@@ -2,6 +2,10 @@
 /**
  * Una búsqueda que vive en la barra de la ventana.
  *
+ * Es el `SearchField` del sistema más lo único que la barra agrega: plegarse.
+ * El campo, la lupa, la cruz para vaciarlo y el rebote son los mismos que en
+ * cualquier otra búsqueda de cualquier otra ventana, y por eso viven allá.
+ *
  * # Por qué se despliega
  *
  * Con la barra a un costado hay cuarenta y ocho píxeles de ancho, y un campo de
@@ -13,17 +17,23 @@
  * pestañas, acciones y un campo de doscientos píxeles se queda sin lugar para
  * las pestañas mucho antes de lo que parece.
  *
+ * Fuera de una barra —en un menú, en un panel— `usarLaBarra` responde
+ * horizontal y esto es, simplemente, el campo.
+ *
  * # Y por qué se cierra sola
  *
- * Con Escape y al perder el foco. Un campo abierto encima del contenido que no
- * se cierra tapa justo lo que se está buscando.
+ * Con Escape y al salir el foco. Un campo abierto encima del contenido que no
+ * se cierra tapa justo lo que se está buscando. Qué significa Escape lo decide
+ * acá y no el campo: en un desplegable cierra la lista, en una vista cierra la
+ * vista, y acá pliega.
  *
  * El `mousedown.prevent` de la lupa es lo que la deja cerrar: sin eso, apretarla
- * con el campo enfocado disparaba primero el `blur` —que cierra— y después el
- * clic —que vuelve a abrir—, así que el botón no podía plegar nunca.
+ * con el campo enfocado disparaba primero la salida del foco —que cierra— y
+ * después el clic —que vuelve a abrir—, así que el botón no podía plegar nunca.
  */
 import { computed, nextTick, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
+import SearchField from '../search/SearchField.vue';
 import { usarLaBarra } from '../window/tipos';
 
 const props = withDefaults(
@@ -38,8 +48,18 @@ const props = withDefaults(
 		 * Vertical se pliega siempre: ahí no es una preferencia, es que no entra.
 		 */
 		collapsed?: boolean;
+		disabled?: boolean;
+		/** Ver `SearchField`: en cero, `search` sale sólo con Enter. */
+		debounce?: number;
 	}>(),
-	{ modelValue: '', placeholder: '', label: 'Search', collapsed: false }
+	{
+		modelValue: '',
+		placeholder: '',
+		label: 'Search',
+		collapsed: false,
+		disabled: false,
+		debounce: 0,
+	}
 );
 
 const emit = defineEmits<{
@@ -52,7 +72,7 @@ const emit = defineEmits<{
 const { vertical, posicion } = usarLaBarra();
 
 const abierto = ref(false);
-const campo = ref<HTMLInputElement | null>(null);
+const campo = ref<InstanceType<typeof SearchField> | null>(null);
 
 /** Vertical no hay opción; horizontal decide la aplicación. */
 const sePliega = computed(() => vertical.value || props.collapsed);
@@ -72,7 +92,7 @@ async function abrir() {
 	abierto.value = true;
 	emit('open');
 	await nextTick();
-	campo.value?.focus();
+	campo.value?.enfocar();
 }
 
 function cerrar() {
@@ -81,17 +101,22 @@ function cerrar() {
 	emit('close');
 }
 
-function escribir(evento: Event) {
-	emit('update:modelValue', (evento.target as HTMLInputElement).value);
-}
-
-function buscar() {
-	emit('search', props.modelValue);
+/**
+ * Cerrar al irse el foco, sin cerrarse al moverse por dentro.
+ *
+ * En `focusout` y no en `blur`: `blur` no burbujea, así que desde el envoltorio
+ * no se oye. Y sin mirar a dónde fue el foco, pasar del campo a la cruz de
+ * vaciarlo plegaría la búsqueda en el medio del gesto.
+ */
+function alSalirElFoco(evento: FocusEvent) {
+	const destino = evento.relatedTarget as Node | null;
+	if (destino && (evento.currentTarget as HTMLElement).contains(destino)) return;
+	cerrar();
 }
 </script>
 
 <template>
-  <div class="relative flex shrink-0 items-center">
+  <div class="relative flex shrink-0 items-center" @focusout="alSalirElFoco">
     <button
       v-if="sePliega"
       type="button"
@@ -104,19 +129,17 @@ function buscar() {
       <ThemeIcon name="system-search" type="symbol" :size="14" />
     </button>
 
-    <div v-if="muestraElCampo" :class="clasesDelDesplegado">
-      <input
+    <div v-if="muestraElCampo" :class="clasesDelDesplegado" @keydown.esc="cerrar">
+      <SearchField
         ref="campo"
-        type="search"
-        class="w-full rounded-corner border border-ui-border bg-ui-bg/80 px-2 py-1 text-sm outline-none focus:border-ui-border-strong"
+        :model-value="modelValue"
+        :placeholder="placeholder"
+        :label="label"
+        :disabled="disabled"
+        :debounce="debounce"
         :class="sePliega ? '' : 'w-48'"
-        :value="modelValue"
-        :placeholder="placeholder || label"
-        :aria-label="label"
-        @input="escribir"
-        @keydown.enter="buscar"
-        @keydown.esc="cerrar"
-        @blur="cerrar">
+        @update:model-value="emit('update:modelValue', $event)"
+        @search="emit('search', $event)" />
     </div>
   </div>
 </template>

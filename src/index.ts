@@ -14,6 +14,8 @@ import AlertMessage from "./feedback/AlertMessage.vue";
 import EmptyState from "./feedback/EmptyState.vue";
 import ToastArea from "./feedback/ToastArea.vue";
 import ProgressBar from "./forms/ProgressBar.vue";
+import SearchField from "./search/SearchField.vue";
+import SearchSelect from "./search/SearchSelect.vue";
 import TextInput from "./forms/TextInput.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
 import DeviceCard from "./cards/DeviceCard.vue";
@@ -56,6 +58,8 @@ const components = [
   AlertMessage,
   EmptyState,
   ProgressBar,
+  SearchField,
+  SearchSelect,
   TextInput,
   ToastArea,
   ConfigSection,
@@ -107,6 +111,8 @@ export {
   AlertMessage,
   EmptyState,
   ProgressBar,
+  SearchField,
+  SearchSelect,
   TextInput,
   ToastArea,
   ConfigSection,
@@ -139,6 +145,8 @@ export type { TonoDelAviso } from "./feedback/tonos";
 export { CLASES_POR_TONO, rolDelTono } from "./feedback/tonos";
 export type { ContextoDelMenu, FocoAlAbrir } from "./dropdown/tipos";
 export type { ContextoDelDialogo } from "./dialog/tipos";
+export type { OpcionDeBusqueda } from "./search/buscar";
+export { buscarOpciones } from "./search/buscar";
 export { CLAVE_DEL_DIALOGO, usarElDialogo } from "./dialog/tipos";
 export { CLAVE_DEL_MENU, usarElMenu } from "./dropdown/tipos";
 export type { ContextoDelTooltip } from "./tooltip/tipos";

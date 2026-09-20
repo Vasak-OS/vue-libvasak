@@ -76,7 +76,11 @@ describe('con la barra a un costado', () => {
 			await nextTick();
 			await vista.find('button[aria-label="Buscar"]').trigger('click');
 
-			expect(vista.find('input[type="search"]').element.parentElement?.className).toContain(clase);
+			// Se busca el panel por su clase y no por el padre inmediato: el campo
+			// vive dentro de `SearchField`, así que entre el `input` y el panel hay
+			// un nivel más.
+			const panel = vista.find('input[type="search"]').element.closest('.z-40');
+			expect(panel?.className).toContain(clase);
 			vista.unmount();
 		}
 	});
