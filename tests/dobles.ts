@@ -18,6 +18,20 @@ const oyentes = new Map<string, Set<() => unknown>>();
 let esperaDelRegistro: Promise<void> | null = null;
 
 /**
+ * Cómo vaciar la memoria del módulo de iconos.
+ *
+ * Se recibe de afuera en vez de importarlo acá arriba: importar un módulo que
+ * importa Vue **antes** de que `preparar.ts` registre el DOM deja a
+ * `@vue/runtime-dom` con `document` en nulo para toda la corrida, y ahí no monta
+ * ni un componente. Lo pone `preparar.ts`, después de registrarlo.
+ */
+let olvidarLosIconos: (() => void) | null = null;
+
+export function asiSeOlvidanLosIconos(como: () => void) {
+	olvidarLosIconos = como;
+}
+
+/**
  * Pone un nombre en el tema de iconos.
  *
  * Se puede pasar una función para quedarse con el control de cuándo contesta.
@@ -118,6 +132,11 @@ export function olvidarTodo() {
 	esperaDelRegistro = null;
 	laVentanaRecibio.length = 0;
 	pedidosDeIcono.length = 0;
+	// Y lo que el módulo de iconos guarda de su lado. Su memoria y su cuenta de
+	// suscriptores viven en el módulo, y el módulo se comparte entre archivos de
+	// prueba: sin esto, una prueba arranca con los suscriptores que dejó otra y
+	// cuenta un oyente que acá arriba se acaba de borrar.
+	olvidarLosIconos?.();
 }
 
 /**
