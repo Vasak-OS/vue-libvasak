@@ -301,6 +301,30 @@ describe('el campo de texto', () => {
 		expect(vista.attributes('autocomplete')).toBe('new-password');
 	});
 
+	test('la tecla llega a quien lo usa', async () => {
+		// Es cómo la tienda confirma la búsqueda y cómo la configuración conecta
+		// al Wi-Fi: con Enter sobre el campo.
+		const vista = mount(TextInput, { props: { modelValue: '' } });
+
+		await vista.find('input').trigger('keyup', { key: 'Enter' });
+		await vista.find('input').trigger('keydown', { key: 'Enter' });
+
+		expect(vista.emitted('keyup')).toHaveLength(1);
+		expect(vista.emitted('keydown')).toHaveLength(1);
+	});
+
+	test('y declararlas no se lleva puesto lo que se escribe', async () => {
+		// Vue saca de los atributos **todo** evento declarado, así que el
+		// reenvío no es opcional y el `@input` convive con los otros dos en el
+		// mismo elemento. Si uno se llevara al otro, el campo dejaría de avisar
+		// lo que se escribe y el chequeo de tipos seguiría en cero.
+		const vista = mount(TextInput, { props: { modelValue: '' } });
+
+		await vista.find('input').setValue('hola');
+
+		expect(vista.emitted('update:modelValue')?.[0]).toEqual(['hola']);
+	});
+
 	test('la etiqueta de `FormGroup` ata al campo, que era un contrato sin escribir', () => {
 		// El campo no trae etiqueta a propósito, y hasta acá el `id` que las une
 		// llegaba de rebote por el `fallthrough`: nada lo declaraba ni lo
