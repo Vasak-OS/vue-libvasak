@@ -13,8 +13,10 @@
 
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
+import { h } from 'vue';
 import AlertMessage from '../src/feedback/AlertMessage.vue';
 import EmptyState from '../src/feedback/EmptyState.vue';
+import FormGroup from '../src/forms/FormGroup.vue';
 import ToastArea from '../src/feedback/ToastArea.vue';
 import { rolDelTono } from '../src/feedback/tonos';
 import ProgressBar from '../src/forms/ProgressBar.vue';
@@ -75,8 +77,8 @@ describe('la pila de avisos transitorios', () => {
 	test('dibuja uno por aviso, con el rol que le toca a cada uno', () => {
 		const vista = mount(ToastArea, { props: { toasts: avisos } });
 
-		expect(document.body.querySelectorAll('[role="status"]').length).toBe(1);
-		expect(document.body.querySelectorAll('[role="alert"]').length).toBe(1);
+		expect(document.body.querySelectorAll('[role="status"]')).toHaveLength(1);
+		expect(document.body.querySelectorAll('[role="alert"]')).toHaveLength(1);
 		vista.unmount();
 	});
 
@@ -109,7 +111,7 @@ describe('la pila de avisos transitorios', () => {
 		// animado en vez de aparecer de golpe.
 		const vista = mount(ToastArea, { props: { toasts: [] } });
 
-		expect(document.body.querySelectorAll('[role="status"], [role="alert"]').length).toBe(0);
+		expect(document.body.querySelectorAll('[role="status"], [role="alert"]')).toHaveLength(0);
 		vista.unmount();
 	});
 });
@@ -130,8 +132,8 @@ describe('el estado vacío', () => {
 		const sin = mount(EmptyState, { props: { title: 'Sin resultados' } });
 		const con = mount(EmptyState, { props: { title: 'Sin resultados', note: 'Probá con menos filtros' } });
 
-		expect(sin.findAll('p').length).toBe(1);
-		expect(con.findAll('p').length).toBe(2);
+		expect(sin.findAll('p')).toHaveLength(1);
+		expect(con.findAll('p')).toHaveLength(2);
 	});
 });
 
@@ -198,5 +200,30 @@ describe('el campo de texto', () => {
 		const vista = mount(TextInput, { props: { modelValue: '/etc/fstab', mono: true } });
 
 		expect(vista.classes().join(' ')).toContain('font-mono');
+	});
+
+	test('la etiqueta de `FormGroup` ata al campo, que era un contrato sin escribir', () => {
+		// El campo no trae etiqueta a propósito, y hasta acá el `id` que las une
+		// llegaba de rebote por el `fallthrough`: nada lo declaraba ni lo
+		// comprobaba. Sin la atadura, el lector de pantalla lee la etiqueta y el
+		// campo como dos cosas que no tienen nada que ver.
+		const vista = mount(FormGroup, {
+			props: { label: 'Ruta del tema', htmlFor: 'ruta' },
+			slots: { default: h(TextInput, { id: 'ruta', modelValue: '/usr/share' }) },
+		});
+
+		const etiqueta = vista.find('label');
+		expect(etiqueta.attributes('for')).toBe('ruta');
+		expect(vista.find('input').attributes('id')).toBe(etiqueta.attributes('for'));
+	});
+
+	test('y suelto se lo nombra a mano', () => {
+		// Una caja de búsqueda con lupa y sin etiqueta visible: sin esto un
+		// lector de pantalla no dice más que «campo de texto».
+		const vista = mount(TextInput, {
+			props: { modelValue: '', type: 'search', ariaLabel: 'Buscar aplicaciones' },
+		});
+
+		expect(vista.attributes('aria-label')).toBe('Buscar aplicaciones');
 	});
 });

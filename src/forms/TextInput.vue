@@ -9,7 +9,11 @@
  * tres las inventaran solas es la mejor señal de que van acá.
  *
  * No trae etiqueta: para eso está `FormGroup`, que ya la ata al campo por `id`.
- * Poner otra acá dejaría dos formas de hacer lo mismo.
+ * Poner otra acá dejaría dos formas de hacer lo mismo. Pero el `id` de esa atadura
+ * va declarado —era lo único que sostenía ese contrato y no estaba escrito en
+ * ningún lado—, y queda `ariaLabel` para el campo que se usa suelto: una caja de
+ * búsqueda con lupa y sin etiqueta visible no tiene otra forma de tener nombre, y
+ * sin nombre un lector de pantalla sólo dice «campo de texto».
  */
 import { computed } from 'vue';
 
@@ -17,6 +21,10 @@ const props = withDefaults(
 	defineProps<{
 		modelValue: string;
 		type?: 'text' | 'password' | 'search' | 'url' | 'email' | 'number';
+		/** La otra mitad del `for` de `FormGroup`: sin esto la etiqueta no ata a nada. */
+		id?: string;
+		/** El nombre del campo cuando no hay etiqueta visible que se lo dé. */
+		ariaLabel?: string;
 		placeholder?: string;
 		disabled?: boolean;
 		readonly?: boolean;
@@ -59,6 +67,8 @@ const clases = computed(() => [
 
 <template>
   <input
+    :id="id"
+    :aria-label="ariaLabel"
     :type="type"
     :value="modelValue"
     :placeholder="placeholder"
