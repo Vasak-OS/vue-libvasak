@@ -16,6 +16,7 @@ import * as eventos from '@tauri-apps/api/event';
 import { mock } from 'bun:test';
 import './complemento-vue';
 import {
+	asiSeOlvidanLosIconos,
 	getCurrentWindow,
 	getIconSource,
 	getSymbolSource,
@@ -36,3 +37,10 @@ mock.module('@vasakgroup/tauri-plugin-i18n', () => ({ useI18n }));
 // Sin esto `getCurrentWindow()` lanza —no hay ventana de Tauri— y la única
 // forma de probar los botones sería no apretarlos.
 mock.module('@tauri-apps/api/window', () => ({ getCurrentWindow }));
+
+// La memoria de los iconos vive en el módulo y el módulo se comparte entre
+// archivos de prueba, así que `olvidarTodo()` tiene que poder vaciarla. Se
+// importa acá y no en `dobles.ts` porque este módulo arrastra a Vue, y Vue
+// tomado antes del registro del DOM se queda con `document` en nulo.
+const { olvidarLosIconosDelTema } = await import('../src/internos/iconoDelTema');
+asiSeOlvidanLosIconos(olvidarLosIconosDelTema);
