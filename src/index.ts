@@ -34,6 +34,7 @@ import DropdownMenuTrigger from "./dropdown/DropdownMenuTrigger.vue";
 import FormGroup from "./forms/FormGroup.vue";
 import ListCard from "./cards/ListCard.vue";
 import SliderControl from "./forms/SliderControl.vue";
+import SwitchRow from "./forms/SwitchRow.vue";
 import SwitchToggle from "./forms/SwitchToggle.vue";
 import SwitchTrack from "./forms/SwitchTrack.vue";
 import ToggleControl from "./controls/ToggleControl.vue";
@@ -80,6 +81,7 @@ const components = [
   FormGroup,
   ListCard,
   SliderControl,
+  SwitchRow,
   SwitchToggle,
   SwitchTrack,
   ToggleControl,
@@ -134,6 +136,7 @@ export {
   FormGroup,
   ListCard,
   SliderControl,
+  SwitchRow,
   SwitchToggle,
   SwitchTrack,
   ToggleControl,
