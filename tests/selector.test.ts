@@ -121,3 +121,30 @@ describe('los atributos', () => {
 		expect(campo.get('div').attributes('aria-label')).toBeUndefined();
 	});
 });
+
+describe('el tipo del modelo', () => {
+	test('es el de quien lo usa, no un `string | number` fijo', async () => {
+		// Era fijo, y eso obliga a quien tiene un `ref<string>` —o algo más
+		// estrecho, como los cuatro lados de la barra de la ventana— a aceptar
+		// de vuelta un `number` que nunca va a llegar. Con `strictTemplates` en
+		// las aplicaciones eso dejó de pasar en silencio.
+		//
+		// Se mira el fuente y no el tipo generado: comprobar el genérico de
+		// verdad pide montar `vue-tsc` sobre un componente de prueba, y eso ya
+		// lo hace cada aplicación con su propio guardia.
+		const fuente = await Bun.file(new URL('../src/forms/SelectField.vue', import.meta.url)).text();
+
+		expect(fuente).toContain('generic="T extends string | number"');
+		expect(fuente).toContain('defineModel<T>');
+	});
+
+	test('y el `change` se declara en vez de caer por atributos', async () => {
+		// Con `strictTemplates`, un `@change` sobre un componente que no lo
+		// emite es un error, y quien lo escribía no tenía forma de saber si
+		// llegaba a algún lado.
+		const fuente = await Bun.file(new URL('../src/forms/SelectField.vue', import.meta.url)).text();
+
+		expect(fuente).toContain('change: [evento: Event]');
+		expect(fuente).toContain("@change=\"emit('change', $event)\"");
+	});
+});

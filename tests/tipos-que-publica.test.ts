@@ -49,6 +49,32 @@ async function conteniendo(patron: RegExp): Promise<string[]> {
 	return hallados.sort();
 }
 
+describe('el chequeo de las plantillas', () => {
+	test('mira cada atributo, no sólo los que reconoce', async () => {
+		// Sin `strictTemplates`, `vue-tsc` comprueba el tipo de las propiedades
+		// que sí existen y **no dice nada** de una que no existe, de un evento
+		// que el componente no emite ni de un atributo inventado sobre un
+		// elemento. Un `@click` sobre un componente sin `defineEmits` funciona
+		// por caída de atributos, pero un `:size` sobre un `<img>` no hace nada
+		// y nadie se entera.
+		const tsconfig = (await Bun.file(`${raiz}tsconfig.json`).json()) as {
+			vueCompilerOptions?: { strictTemplates?: boolean };
+		};
+
+		expect(tsconfig.vueCompilerOptions?.strictTemplates).toBe(true);
+	});
+
+	test('y los `data-*` siguen permitidos, que es la excepción legítima', async () => {
+		// HTML los permite todos, y acá marcan nodos que después se buscan con
+		// `closest()`. Declararlos uno por uno deja la lista vieja en cuanto
+		// alguien marca un nodo nuevo, así que se declara la forma.
+		const declaracion = await Bun.file(`${raiz}src/tipos-de-plantilla.d.ts`).text();
+
+		expect(declaracion).toContain('data-${string}');
+		expect(declaracion).toContain("declare module 'vue'");
+	});
+});
+
 describe('lo que la librería publica', () => {
 	test('y las pruebas que siguen miran archivos de verdad', () => {
 		expect(fuentes).toContain('src/index.ts');
