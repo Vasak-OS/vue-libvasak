@@ -28,6 +28,9 @@ import ListCard from "./cards/ListCard.vue";
 import SliderControl from "./forms/SliderControl.vue";
 import SwitchToggle from "./forms/SwitchToggle.vue";
 import ToggleControl from "./controls/ToggleControl.vue";
+import Tooltip from "./tooltip/Tooltip.vue";
+import TooltipContent from "./tooltip/TooltipContent.vue";
+import TooltipTrigger from "./tooltip/TooltipTrigger.vue";
 import TrayIconButton from "./tray/TrayIconButton.vue";
 import type { App } from "vue";
 
@@ -62,6 +65,9 @@ const components = [
   SliderControl,
   SwitchToggle,
   ToggleControl,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   TrayIconButton,
 ];
 
@@ -104,6 +110,9 @@ export {
   SliderControl,
   SwitchToggle,
   ToggleControl,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   TrayIconButton,
 };
 
@@ -112,6 +121,8 @@ export type { TonoDelAviso } from "./feedback/tonos";
 export { CLASES_POR_TONO, rolDelTono } from "./feedback/tonos";
 export type { ContextoDelMenu, FocoAlAbrir } from "./dropdown/tipos";
 export { CLAVE_DEL_MENU, usarElMenu } from "./dropdown/tipos";
+export type { ContextoDelTooltip } from "./tooltip/tipos";
+export { CLAVE_DEL_TOOLTIP, usarElTooltip } from "./tooltip/tipos";
 export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
 export type { AccionDePestana, ElementoDePestana } from "./tabs/tipos";
 export type {
