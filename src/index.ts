@@ -10,6 +10,11 @@ import TabBar from "./tabs/TabBar.vue";
 import TabItem from "./tabs/TabItem.vue";
 import BarSearch from "./bar/BarSearch.vue";
 import ActionButton from "./controls/ActionButton.vue";
+import AlertMessage from "./feedback/AlertMessage.vue";
+import EmptyState from "./feedback/EmptyState.vue";
+import ToastArea from "./feedback/ToastArea.vue";
+import ProgressBar from "./forms/ProgressBar.vue";
+import TextInput from "./forms/TextInput.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
 import DeviceCard from "./cards/DeviceCard.vue";
 import DropdownMenu from "./dropdown/DropdownMenu.vue";
@@ -39,6 +44,11 @@ const components = [
   TabItem,
   BarSearch,
   ActionButton,
+  AlertMessage,
+  EmptyState,
+  ProgressBar,
+  TextInput,
+  ToastArea,
   ConfigSection,
   DeviceCard,
   DropdownMenu,
@@ -76,6 +86,11 @@ export {
   TabItem,
   BarSearch,
   ActionButton,
+  AlertMessage,
+  EmptyState,
+  ProgressBar,
+  TextInput,
+  ToastArea,
   ConfigSection,
   DeviceCard,
   DropdownMenu,
@@ -92,6 +107,9 @@ export {
   TrayIconButton,
 };
 
+export type { AvisoTransitorio } from "./feedback/ToastArea.vue";
+export type { TonoDelAviso } from "./feedback/tonos";
+export { CLASES_POR_TONO, rolDelTono } from "./feedback/tonos";
 export type { ContextoDelMenu, FocoAlAbrir } from "./dropdown/tipos";
 export { CLAVE_DEL_MENU, usarElMenu } from "./dropdown/tipos";
 export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
