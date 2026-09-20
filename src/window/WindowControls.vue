@@ -30,6 +30,17 @@
  * pantalla. Los nombres entran por propiedad, traducidos por la aplicación: una
  * librería de componentes que traduce obliga a todas a compartir sus claves.
  *
+ * # Los iconos van en la variante simbólica
+ *
+ * `ThemeIcon` resuelve por omisión la variante **en color**, que es la que usa
+ * el escritorio para los iconos de aplicaciones y carpetas. Para los controles
+ * de ventana es la equivocada: en los temas derivados de Breeze —los de
+ * VasakOS lo son— `window-close` en color es el círculo rojo relleno de KDE,
+ * mientras que minimizar y maximizar son trazos grises. Los tres botones
+ * quedaban desparejos y la ventana se leía distinta del resto del escritorio.
+ * Las dieciséis aplicaciones que traían esto copiado pedían `getSymbolSource`,
+ * o sea la simbólica; al centralizarlo acá se perdió por el valor por omisión.
+ *
  * # Se acomodan con la barra
  *
  * Con la barra vertical se apilan, que es lo único que entra en cuarenta y ocho
@@ -147,7 +158,7 @@ const CLASES =
       :title="etiquetaDeMinimizar"
       :aria-label="etiquetaDeMinimizar"
       @click="minimizar()">
-      <ThemeIcon name="window-minimize" :size="24" />
+      <ThemeIcon name="window-minimize" type="symbol" :size="24" />
     </button>
     <button
       v-if="lleva.maximize"
@@ -156,7 +167,7 @@ const CLASES =
       :title="etiquetaDeMaximizar"
       :aria-label="etiquetaDeMaximizar"
       @click="maximizar()">
-      <ThemeIcon name="window-maximize" :size="24" />
+      <ThemeIcon name="window-maximize" type="symbol" :size="24" />
     </button>
     <button
       v-if="lleva.close"
@@ -165,7 +176,7 @@ const CLASES =
       :title="etiquetaDeCerrar"
       :aria-label="etiquetaDeCerrar"
       @click="cerrar()">
-      <ThemeIcon name="window-close" :size="24" />
+      <ThemeIcon name="window-close" type="symbol" :size="24" />
     </button>
   </div>
 </template>
