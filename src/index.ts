@@ -174,3 +174,16 @@ export {
   usarLaBarra,
 } from "./window/tipos";
 export { posicionDe, usarLaPosicionDeLaBarra } from "./window/preferencia";
+
+/**
+ * Vaciar la memoria de iconos del tema.
+ *
+ * Es para las pruebas de quien use la librería, y por eso sale del paquete y no
+ * se queda adentro. Lo resuelto se memoriza por nombre en el módulo, y un
+ * módulo se comparte entre archivos de prueba: el primero que pida un icono con
+ * el tema sin preparar deja **guardado que no hay ninguno**, y cualquier prueba
+ * posterior que lo prepare ya no lo ve. Pasó al adoptar la librería en el
+ * instalador, donde el aviso dejó de dibujar su icono al correr la suite entera
+ * y lo dibujaba bien al correr su archivo solo.
+ */
+export { olvidarLosIconosDelTema } from "./internos/iconoDelTema";
