@@ -12,6 +12,12 @@ import BarSearch from "./bar/BarSearch.vue";
 import ActionButton from "./controls/ActionButton.vue";
 import ConfigSection from "./layout/ConfigSection.vue";
 import DeviceCard from "./cards/DeviceCard.vue";
+import Dialog from "./dialog/Dialog.vue";
+import DialogContent from "./dialog/DialogContent.vue";
+import DialogDescription from "./dialog/DialogDescription.vue";
+import DialogFooter from "./dialog/DialogFooter.vue";
+import DialogHeader from "./dialog/DialogHeader.vue";
+import DialogTitle from "./dialog/DialogTitle.vue";
 import DropdownMenu from "./dropdown/DropdownMenu.vue";
 import DropdownMenuContent from "./dropdown/DropdownMenuContent.vue";
 import DropdownMenuItem from "./dropdown/DropdownMenuItem.vue";
@@ -44,6 +50,12 @@ const components = [
   ActionButton,
   ConfigSection,
   DeviceCard,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -84,6 +96,12 @@ export {
   ActionButton,
   ConfigSection,
   DeviceCard,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -102,6 +120,8 @@ export {
 };
 
 export type { ContextoDelMenu, FocoAlAbrir } from "./dropdown/tipos";
+export type { ContextoDelDialogo } from "./dialog/tipos";
+export { CLAVE_DEL_DIALOGO, usarElDialogo } from "./dialog/tipos";
 export { CLAVE_DEL_MENU, usarElMenu } from "./dropdown/tipos";
 export type { ContextoDelTooltip } from "./tooltip/tipos";
 export { CLAVE_DEL_TOOLTIP, usarElTooltip } from "./tooltip/tipos";
