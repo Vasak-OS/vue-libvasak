@@ -44,3 +44,17 @@ mock.module('@tauri-apps/api/window', () => ({ getCurrentWindow }));
 // tomado antes del registro del DOM se queda con `document` en nulo.
 const { olvidarLosIconosDelTema } = await import('../src/internos/iconoDelTema');
 asiSeOlvidanLosIconos(olvidarLosIconosDelTema);
+
+/**
+ * Compilar un `.vue` acá y no en la primera prueba que monte.
+ *
+ * El primer componente que se importa paga la compilación del complemento de
+ * Vue, y eso tarda varios segundos. Si lo paga una prueba, se come el límite de
+ * cinco segundos de `bun test` y **falla por el reloj sin tener nada roto** —y
+ * falla la primera del archivo que toque correr primero, así que el síntoma se
+ * mueve de lugar entre corridas—. Se vio: la suite fallaba una de cada tres
+ * veces, siempre en una prueba distinta y siempre la primera en montar.
+ *
+ * El preload no tiene límite, así que el costo se paga acá una sola vez.
+ */
+await import('../src/icons/ThemeIcon.vue');

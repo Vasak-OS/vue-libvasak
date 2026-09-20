@@ -56,7 +56,24 @@ const props = withDefaults(
 	{ type: 'text', disabled: false, readonly: false, invalid: false, mono: false, required: false, lazy: false }
 );
 
-const emit = defineEmits<{ 'update:modelValue': [valor: string] }>();
+const emit = defineEmits<{
+	'update:modelValue': [valor: string];
+	/**
+	 * Las teclas, declaradas y reenviadas a mano.
+	 *
+	 * Caían solas sobre el `input` —es su nodo raíz— y funcionaban, pero con
+	 * `strictTemplates` lo que no está declarado no se puede pasar, y hay dos
+	 * usos de verdad: la tienda confirma con Enter y la configuración conecta
+	 * al Wi-Fi y guarda credenciales con Enter, en siete lugares.
+	 *
+	 * Declararlas tiene un filo conocido: Vue saca de los atributos **todo**
+	 * evento declarado, así que el reenvío de abajo no es opcional. Sin él el
+	 * campo enmudece, el chequeo de tipos sigue en cero y nada avisa. De ahí
+	 * que cada uno tenga su prueba.
+	 */
+	keyup: [evento: KeyboardEvent];
+	keydown: [evento: KeyboardEvent];
+}>();
 
 function alEscribir(evento: Event) {
 	if (props.lazy) return;
@@ -92,5 +109,7 @@ const clases = computed(() => [
     :aria-invalid="invalid || undefined"
     :class="clases"
     @input="alEscribir"
-    @change="alSalir" />
+    @change="alSalir"
+    @keyup="emit('keyup', $event)"
+    @keydown="emit('keydown', $event)" />
 </template>
