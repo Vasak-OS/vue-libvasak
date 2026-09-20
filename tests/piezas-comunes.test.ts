@@ -21,7 +21,7 @@ import ToastArea from '../src/feedback/ToastArea.vue';
 import { rolDelTono } from '../src/feedback/tonos';
 import ProgressBar from '../src/forms/ProgressBar.vue';
 import TextInput from '../src/forms/TextInput.vue';
-import { olvidarTodo, ponerEnElTema } from './dobles';
+import { olvidarTodo, ponerEnElTema, variantesPedidas } from './dobles';
 
 /** La pila de avisos se teletransporta al `body` y no la limpia el desmontaje. */
 afterEach(() => {
@@ -149,6 +149,35 @@ describe('el estado vacío', () => {
 		await new Promise((listo) => setTimeout(listo, 0));
 
 		expect(vista.find('img').attributes('alt')).toBe('');
+	});
+
+	test('el icono se puede pedir en la variante monocroma', async () => {
+		// No todos los nombres existen en las dos: el gestor de archivos pide
+		// `search` en la monocroma, y pedir la que no está deja un hueco del
+		// tamaño del icono en vez de un icono.
+		//
+		// Se mira **qué variante se pidió** y no qué fuente volvió: el doble
+		// devuelve lo mismo para las dos, así que mirar la fuente daba verde con
+		// la variante equivocada. Se vio saboteando.
+		olvidarTodo();
+		ponerEnElTema('search', 'la-del-tema');
+		const vista = mount(EmptyState, {
+			props: { title: 'Sin resultados', icon: 'search', iconType: 'symbol' },
+		});
+		await new Promise((listo) => setTimeout(listo, 0));
+
+		expect(variantesPedidas('search')).toEqual(['symbol']);
+		vista.unmount();
+	});
+
+	test('y por omisión es la de color, que es la que casi todos tienen', async () => {
+		olvidarTodo();
+		ponerEnElTema('folder-open', 'la-del-tema');
+		const vista = mount(EmptyState, { props: { title: 'Vacía', icon: 'folder-open' } });
+		await new Promise((listo) => setTimeout(listo, 0));
+
+		expect(variantesPedidas('folder-open')).toEqual(['icon']);
+		vista.unmount();
 	});
 
 	test('la nota es opcional', () => {
