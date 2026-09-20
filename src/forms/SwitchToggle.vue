@@ -1,49 +1,64 @@
+<script setup lang="ts">
+/**
+ * Un interruptor de dos estados.
+ *
+ * ── Lo que le faltaba ───────────────────────────────────────────────────────
+ *
+ * Esto era un `<button>` pelado con un círculo adentro: se anunciaba como
+ * «botón» y **no decía si estaba encendido o apagado**, que es la única
+ * información que este control transmite. Tampoco tenía nombre: un botón cuyo
+ * contenido es un círculo no tiene nada que leer.
+ *
+ * El escritorio y la configuración le agregaron `role="switch"`, `aria-checked`
+ * y una etiqueta, cada uno por su lado y con el mismo comentario. Ahora está
+ * acá, y `label` es **obligatorio**: en todos los usos la etiqueta ya está
+ * escrita al lado del interruptor, así que quien lo usa pasa la misma cadena y
+ * no hay que inventar ninguna.
+ *
+ * ── El contrato ─────────────────────────────────────────────────────────────
+ *
+ * `v-model`, como el resto de la librería. Antes era `isOn` con un evento
+ * `toggle`, y las aplicaciones estaban repartidas entre eso, `v-model` y
+ * `valor` con `cambiar`: tres formas de decir lo mismo. Es un cambio que rompe,
+ * y se arregla en la misma pasada que adopta esta versión.
+ *
+ * Es un `<button role="switch">` de verdad y no un `div` con un `@click`: es lo
+ * que hace que responda a la barra espaciadora y reciba el foco con Tab sin
+ * `tabindex` a mano.
+ *
+ * Para la fila entera clickeable —etiqueta, descripción e interruptor dentro de
+ * un solo botón— no se usa esto sino `SwitchTrack`, que es el dibujo sin el
+ * control: un botón no puede vivir adentro de otro.
+ */
+import SwitchTrack from './SwitchTrack.vue';
+
+const props = withDefaults(
+	defineProps<{
+		modelValue: boolean;
+		/** Qué controla este interruptor. Es su nombre accesible. */
+		label: string;
+		disabled?: boolean;
+		size?: 'small' | 'medium';
+	}>(),
+	{ disabled: false, size: 'small' }
+);
+
+const emit = defineEmits<{ 'update:modelValue': [valor: boolean] }>();
+
+function alternar() {
+	emit('update:modelValue', !props.modelValue);
+}
+</script>
+
 <template>
   <button
     type="button"
-    @click="handleClick"
+    role="switch"
+    :aria-checked="modelValue"
+    :aria-label="label"
     :disabled="disabled"
-    :class="[
-      'relative inline-flex items-center rounded-full transition-colors',
-      size === 'small' ? 'h-6 w-11' : 'h-7 w-12',
-      isOn ? activeClass : inactiveClass,
-      disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-      customClass
-    ]"
-  >
-    <span
-      :class="[
-        'inline-block transform rounded-full bg-white shadow transition-transform',
-        size === 'small' ? 'h-4 w-4' : 'h-6 w-6',
-        isOn ? (size === 'small' ? 'translate-x-6' : 'translate-x-5') : 'translate-x-1'
-      ]"
-    ></span>
+    class="rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+    @click="alternar">
+    <SwitchTrack :on="modelValue" :size="size" />
   </button>
 </template>
-
-<script setup lang="ts">
-interface Props {
-  isOn: boolean;
-  disabled?: boolean;
-  size?: 'small' | 'medium';
-  activeClass?: string;
-  inactiveClass?: string;
-  customClass?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  disabled: false,
-  size: 'small',
-  activeClass: 'bg-primary dark:bg-primary-dark',
-  inactiveClass: 'background',
-  customClass: '',
-});
-
-const emit = defineEmits<{
-  toggle: [value: boolean];
-}>();
-
-const handleClick = () => {
-  emit('toggle', !props.isOn);
-};
-</script>
