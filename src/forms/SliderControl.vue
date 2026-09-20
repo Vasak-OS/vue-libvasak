@@ -5,12 +5,14 @@
     <button
       v-if="showButton"
       @click="handleButtonClick"
+      type="button"
+      :title="buttonLabel ?? label"
+      :aria-label="buttonLabel ?? label"
       class="w-8 h-8 flex items-center justify-center rounded-corner transition-all duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80 hover:scale-110 active:scale-95"
     >
       <img
         :src="icon"
-        :alt="alt"
-        :title="tooltip"
+        alt=""
         class="w-6 h-6 transition-all duration-200"
         :class="iconClass"
       />
@@ -22,7 +24,7 @@
     >
       <img
         :src="icon"
-        :alt="alt"
+        alt=""
         class="w-6 h-6 transition-all duration-200"
       />
     </div>
@@ -33,6 +35,8 @@
       :max="max"
       :value="modelValue"
       @input="handleInput"
+      :aria-label="label"
+      :aria-valuetext="`${percentage}%`"
       class="flex-1 transition-all duration-200 hover:scale-105"
     />
     
@@ -46,12 +50,33 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Un deslizador con su icono y su porcentaje: el volumen, el brillo.
+ *
+ * ── Lo que le faltaba ───────────────────────────────────────────────────────
+ *
+ * El `<input type="range">` no tenía nombre: ni `aria-label` ni un `<label>`
+ * asociado, así que se anunciaba «control deslizante, 47» sin decir de qué. Y
+ * el número tampoco tenía unidad — `aria-valuetext` es lo que hace que se oiga
+ * «47%» en vez de «47».
+ *
+ * Con `showButton`, ese botón tampoco tenía nombre: su único contenido es un
+ * icono, y el `alt` era la cadena vacía por omisión.
+ *
+ * Por eso `label` es obligatorio y reemplaza a `alt` y `tooltip`, que eran dos
+ * formas de nombrar lo mismo y ninguna obligaba a hacerlo.
+ */
 import { computed } from 'vue';
 
 interface Props {
   icon: string;
-  alt?: string;
-  tooltip?: string;
+  /**
+   * Qué regula el deslizador, ya traducido. Obligatorio: el `input` no tiene
+   * `<label>` asociado ni texto propio.
+   */
+  label: string;
+  /** El nombre de la acción del botón, si no es el mismo que el del deslizador. */
+  buttonLabel?: string;
   modelValue: number;
   min?: number;
   max?: number;
@@ -61,8 +86,6 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  alt: '',
-  tooltip: '',
   min: 0,
   max: 100,
   showButton: false,
