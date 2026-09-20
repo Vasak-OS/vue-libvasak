@@ -33,8 +33,24 @@ export function ponerEnElTema(nombre: string, fuente: string | (() => Promise<st
  * consola y devuelve `''`.
  */
 export async function getIconSource(nombre: string) {
+	pedidosDeIcono.push({ nombre, variante: 'icon' });
 	const puesto = temaDeIconos.get(nombre) ?? '';
 	return typeof puesto === 'function' ? await puesto() : puesto;
+}
+
+/**
+ * Qué se le pidió al tema, y en qué variante.
+ *
+ * El tema tiene los dos: `window-close` en color es el círculo rojo relleno que
+ * heredan los temas de Breeze, y el simbólico una equis del mismo gris que los
+ * otros dos botones. Desde afuera los dos son una cadena, así que sin anotar la
+ * variante no hay forma de comprobar cuál se pidió.
+ */
+export const pedidosDeIcono: Array<{ nombre: string; variante: 'icon' | 'symbol' }> = [];
+
+/** Las variantes con que se pidió un nombre, en orden. */
+export function variantesPedidas(nombre: string) {
+	return pedidosDeIcono.filter((pedido) => pedido.nombre === nombre).map((p) => p.variante);
 }
 
 /**
@@ -45,7 +61,13 @@ export async function getIconSource(nombre: string) {
  * enteraba.
  */
 export async function getSymbolSource(nombre: string) {
-	return await getIconSource(nombre);
+	// Se anota **antes** de resolver y se queda con su propia entrada: el
+	// `await` de abajo cede, y con dos resoluciones cruzadas la última entrada
+	// de la lista puede ser de otra.
+	const mio = pedidosDeIcono.length;
+	const fuente = await getIconSource(nombre);
+	pedidosDeIcono[mio].variante = 'symbol';
+	return fuente;
 }
 
 /** Deja el próximo `listen` colgado. Lo que devuelve lo suelta. */
@@ -95,6 +117,7 @@ export function olvidarTodo() {
 	oyentes.clear();
 	esperaDelRegistro = null;
 	laVentanaRecibio.length = 0;
+	pedidosDeIcono.length = 0;
 }
 
 /**
