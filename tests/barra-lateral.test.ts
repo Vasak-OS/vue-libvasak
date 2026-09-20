@@ -38,8 +38,14 @@ const CATEGORIAS = [
 	},
 ];
 
-/** Deja que terminen las promesas del montaje. */
-async function asentar(vueltas = 4) {
+/**
+ * Deja que terminen las promesas del montaje.
+ *
+ * Ocho vueltas y no cuatro desde que el oyente del tema es uno solo para todas
+ * las instancias: el primero que monta espera a que el registro esté puesto
+ * antes de resolver, y esa espera son dos eslabones más en la cadena.
+ */
+async function asentar(vueltas = 8) {
 	for (let i = 0; i < vueltas; i++) {
 		await nextTick();
 	}

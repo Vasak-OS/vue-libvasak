@@ -22,6 +22,7 @@ import {
 	olvidarTodo,
 	traducir,
 	vaciarElCatalogo,
+	variantesPedidas,
 } from './dobles';
 
 /** Un testigo que dice qué orientación le llegó por inyección. */
@@ -260,6 +261,35 @@ describe('los botones de la ventana', () => {
 		await boton.trigger('click');
 
 		expect(cerrosDeVentana()).toBe(1);
+	});
+});
+
+describe('los iconos de los botones', () => {
+	/** Deja que terminen las resoluciones del montaje. */
+	async function asentar() {
+		for (let i = 0; i < 4; i++) {
+			await nextTick();
+			await new Promise((sigue) => setTimeout(sigue, 0));
+		}
+	}
+
+	test('los tres salen de la variante simbólica', async () => {
+		// En color, `window-close` de los temas derivados de Breeze —los de
+		// VasakOS lo son— es el círculo rojo relleno de KDE, mientras que
+		// minimizar y maximizar son trazos grises: los tres botones quedaban
+		// desparejos y la ventana se leía distinta del resto del escritorio.
+		// Las aplicaciones que traían esto copiado pedían la simbólica, y al
+		// centralizarlo se perdió por el valor por omisión de `ThemeIcon`.
+		const vista = mount(WindowFrame, {
+			props: { position: 'top', minimizeLabel: 'min', maximizeLabel: 'max', closeLabel: 'cerrar' },
+		});
+		await asentar();
+
+		expect(variantesPedidas('window-minimize')).toEqual(['symbol']);
+		expect(variantesPedidas('window-maximize')).toEqual(['symbol']);
+		expect(variantesPedidas('window-close')).toEqual(['symbol']);
+
+		vista.unmount();
 	});
 });
 
