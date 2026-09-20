@@ -29,6 +29,20 @@ function esperar(ms: number) {
 	return new Promise((listo) => setTimeout(listo, ms));
 }
 
+/**
+ * El rebote de las pruebas, con margen.
+ *
+ * Holgado a propósito: con un rebote corto, una máquina cargada puede disparar
+ * el temporizador de la primera tecla antes de que la prueba escriba la
+ * segunda, y la prueba falla por el reloj y no por el código. Se vio — un
+ * sabotaje en otro componente la tumbó.
+ */
+const REBOTE = 120;
+/** Bastante menos que el rebote: acá todavía no tiene que haber pasado nada. */
+const UN_POCO = 35;
+/** Bastante más: acá ya tiene que haber pasado. */
+const DE_SOBRA = REBOTE * 2;
+
 afterEach(() => {
 	olvidarTodo();
 });
@@ -48,7 +62,7 @@ describe('el campo', () => {
 		const vista = mount(SearchField, { props: { modelValue: 'ho' } });
 
 		await vista.find('input').setValue('hol');
-		await esperar(60);
+		await esperar(DE_SOBRA);
 		expect(vista.emitted('search')).toBeUndefined();
 
 		await vista.find('input').trigger('keydown.enter');
@@ -59,26 +73,26 @@ describe('el campo', () => {
 		// La tienda recorre quince mil paquetes y consulta al AUR por búsqueda:
 		// una por tecla no sólo cuesta, además deja que el resultado de la
 		// penúltima llegue después que el de la última y la pise.
-		const vista = mount(SearchField, { props: { modelValue: '', debounce: 40 } });
+		const vista = mount(SearchField, { props: { modelValue: '', debounce: REBOTE } });
 
 		await vista.find('input').setValue('fire');
 		expect(vista.emitted('search')).toBeUndefined();
 
-		await esperar(70);
+		await esperar(DE_SOBRA);
 		expect(vista.emitted('search')?.[0]).toEqual(['fire']);
 	});
 
 	test('y escribir de nuevo reinicia la espera en vez de sumar búsquedas', async () => {
-		const vista = mount(SearchField, { props: { modelValue: '', debounce: 40 } });
+		const vista = mount(SearchField, { props: { modelValue: '', debounce: REBOTE } });
 		const campo = vista.find('input');
 
 		await campo.setValue('fi');
-		await esperar(25);
+		await esperar(UN_POCO);
 		await campo.setValue('fire');
-		await esperar(25);
+		await esperar(UN_POCO);
 		expect(vista.emitted('search')).toBeUndefined();
 
-		await esperar(40);
+		await esperar(DE_SOBRA);
 		expect(vista.emitted('search')).toHaveLength(1);
 	});
 
@@ -86,11 +100,11 @@ describe('el campo', () => {
 		// Sin esto, Enter busca y el temporizador busca **otra vez** con el mismo
 		// texto un rato después. Estaba escrito como advertencia en la copia de
 		// la tienda, que es de donde sale el rebote.
-		const vista = mount(SearchField, { props: { modelValue: 'fire', debounce: 40 } });
+		const vista = mount(SearchField, { props: { modelValue: 'fire', debounce: REBOTE } });
 
 		await vista.find('input').setValue('fire');
 		await vista.find('input').trigger('keydown.enter');
-		await esperar(70);
+		await esperar(DE_SOBRA);
 
 		expect(vista.emitted('search')).toHaveLength(1);
 	});
@@ -251,6 +265,80 @@ describe('el desplegable', () => {
 		await panel.trigger('keydown.enter');
 
 		expect(vista.emitted('update:modelValue')?.[0]).toEqual(['be-latin1']);
+	});
+
+	test('el clic elige, aunque caiga sobre el texto de adentro', async () => {
+		// El ratón se atiende en el panel y no opción por opción, así que el
+		// clic llega sobre el `span` del nombre y hay que subir hasta la fila.
+		const vista = armar();
+		await vista.find('button').trigger('click');
+		await nextTick();
+
+		await opciones(vista)[2].find('span').trigger('click');
+
+		expect(vista.emitted('update:modelValue')?.[0]).toEqual(['la-latin1']);
+	});
+
+	test('y el clic fuera de toda opción no elige nada', async () => {
+		// El panel oye el clic entero: el que cae en el borde o en el cartel de
+		// «sin resultados» no tiene ninguna fila debajo.
+		const vista = armar();
+		await vista.find('button').trigger('click');
+		await nextTick();
+
+		await vista.find('[role="listbox"]').trigger('click');
+
+		expect(vista.emitted('update:modelValue')).toBeUndefined();
+	});
+
+	test('pasar el ratón mueve la marca, para que Enter elija lo que se está mirando', async () => {
+		const vista = armar();
+		await vista.find('button').trigger('click');
+		await nextTick();
+
+		await opciones(vista)[3].trigger('mousemove');
+		await vista.find('.z-20').trigger('keydown.enter');
+
+		expect(vista.emitted('update:modelValue')?.[0]).toEqual(['us']);
+	});
+
+	test('dos desplegables no comparten el identificador de su lista', async () => {
+		// Si lo compartieran, el `aria-activedescendant` de uno apuntaría a una
+		// opción del otro y un lector de pantalla anunciaría la equivocada, sin
+		// que nada se vea roto.
+		//
+		// Se abren de a uno porque abrir el segundo cierra el primero: el foco
+		// se va al campo del que se abre, y eso es exactamente lo que el cierre
+		// por `focusout` tiene que hacer.
+		const uno = armar();
+		await uno.find('button').trigger('click');
+		await nextTick();
+		const idDeUno = uno.find('input').attributes('aria-controls');
+
+		const otro = armar();
+		await otro.find('button').trigger('click');
+		await nextTick();
+		const idDelOtro = otro.find('input').attributes('aria-controls');
+
+		expect(idDeUno).toBeTruthy();
+		expect(idDeUno).not.toBe(idDelOtro);
+	});
+
+	test('y abrir uno cierra el que estaba abierto', async () => {
+		// Dos listas desplegadas a la vez es un estado que no tiene sentido, y
+		// sale gratis del cierre por `focusout`: abrir la segunda mueve el foco
+		// a su campo, que es irse de la primera.
+		const uno = armar();
+		await uno.find('button').trigger('click');
+		await nextTick();
+		expect(uno.find('[role="listbox"]').exists()).toBe(true);
+
+		const otro = armar();
+		await otro.find('button').trigger('click');
+		await nextTick();
+
+		expect(uno.find('[role="listbox"]').exists()).toBe(false);
+		expect(otro.find('[role="listbox"]').exists()).toBe(true);
 	});
 
 	test('Escape cierra sin elegir y devuelve el foco al botón', async () => {

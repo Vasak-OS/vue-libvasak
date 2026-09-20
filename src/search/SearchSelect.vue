@@ -30,6 +30,7 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import { buscarOpciones, type OpcionDeBusqueda } from './buscar';
+import { siguienteIdDeLista } from './ids';
 import SearchField from './SearchField.vue';
 
 const props = withDefaults(
@@ -82,8 +83,15 @@ const lista = ref<HTMLElement | null>(null);
 const boton = ref<HTMLButtonElement | null>(null);
 const campo = ref<InstanceType<typeof SearchField> | null>(null);
 
-/** Único por instancia, para que `aria-activedescendant` apunte a lo suyo. */
-const idLista = `lista-${Math.random().toString(36).slice(2, 9)}`;
+/**
+ * Único por instancia, para que `aria-activedescendant` apunte a lo suyo.
+ *
+ * Con un contador y no con azar: dos desplegables sorteando el mismo número es
+ * improbable pero posible, y si pasa el fallo es invisible —un lector de
+ * pantalla anuncia la opción del otro—. Es además el mismo mecanismo que usan
+ * los títulos de los diálogos.
+ */
+const idLista = siguienteIdDeLista();
 
 const seleccionada = computed(
 	() => props.options.find((o) => o.valor === props.modelValue) ?? null
@@ -138,6 +146,32 @@ function mover(paso: number) {
 function irA(indice: number) {
 	activa.value = indice;
 	desplazarALaActiva();
+}
+
+/**
+ * Qué opción hay debajo de un evento del ratón.
+ *
+ * El ratón se atiende en el panel y no opción por opción, que es donde ya vive
+ * el teclado: la interacción queda en un solo lugar en vez de repartida entre
+ * el contenedor y sesenta hijos, y son dos oyentes en vez de ciento veinte. Las
+ * opciones son marcado; no escuchan nada.
+ */
+function indiceBajoElRaton(evento: Event): number | null {
+	const fila = (evento.target as HTMLElement | null)?.closest?.('[data-indice]');
+	if (!fila) return null;
+	const indice = Number(fila.getAttribute('data-indice'));
+	return Number.isInteger(indice) ? indice : null;
+}
+
+function alClic(evento: MouseEvent) {
+	const indice = indiceBajoElRaton(evento);
+	const opcion = indice === null ? undefined : coincidencias.value[indice];
+	if (opcion) elegir(opcion.valor);
+}
+
+function alPasarElRaton(evento: MouseEvent) {
+	const indice = indiceBajoElRaton(evento);
+	if (indice !== null) activa.value = indice;
 }
 
 function desplazarALaActiva() {
@@ -216,7 +250,7 @@ function alPerderElFoco(evento: FocusEvent) {
       <ThemeIcon name="go-down" type="symbol" :size="12" class="shrink-0 opacity-60" />
     </button>
 
-    <!-- Dibujado acá y no por el sistema: ése es el punto de todo el componente.
+    <!-- Dibujado acá y no por el sistema: ése es el punto de este componente.
          `min-w-64` porque el botón puede vivir en un panel angosto y los nombres
          quedaban cortados: un desplegable donde no se lee qué dice cada opción no
          sirve de nada. Se pasa de ancho por encima de lo que tenga al lado, que
@@ -231,7 +265,9 @@ function alPerderElFoco(evento: FocusEvent) {
       @keydown.home.prevent="irA(0)"
       @keydown.end.prevent="irA(coincidencias.length - 1)"
       @keydown.enter.prevent="elegirLaActiva()"
-      @keydown.tab="cerrar(false)">
+      @keydown.tab="cerrar(false)"
+      @click="alClic"
+      @mousemove="alPasarElRaton">
       <div class="border-ui-border border-b p-2">
         <SearchField
           ref="campo"
@@ -258,9 +294,7 @@ function alPerderElFoco(evento: FocusEvent) {
           :class="[
             indice === activa ? 'bg-ui-surface' : '',
             opcion.valor === modelValue ? 'font-medium text-primary' : 'text-tx-main',
-          ]"
-          @click="elegir(opcion.valor)"
-          @mousemove="activa = indice">
+          ]">
           <span class="min-w-0 flex-1 truncate">{{ opcion.etiqueta }}</span>
           <span v-if="opcion.detalle" class="shrink-0 text-tx-muted text-xs">
             {{ opcion.detalle }}
