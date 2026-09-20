@@ -25,6 +25,18 @@ const props = withDefaults(
 		id?: string;
 		/** El nombre del campo cuando no hay etiqueta visible que se lo dé. */
 		ariaLabel?: string;
+		/**
+		 * El `id` del texto que explica el error o la ayuda de abajo.
+		 *
+		 * Sin esto, el mensaje de error se ve pero no se anuncia: quien no mira la
+		 * pantalla oye que el campo es inválido y nunca por qué.
+		 */
+		describedBy?: string;
+		/**
+		 * Qué autocompletar. Va declarado y no por caída de atributos porque con
+		 * `strictTemplates` lo que no está declarado no se puede pasar.
+		 */
+		autocomplete?: string;
 		placeholder?: string;
 		disabled?: boolean;
 		readonly?: boolean;
@@ -75,6 +87,8 @@ const clases = computed(() => [
     :disabled="disabled"
     :readonly="readonly"
     :required="required"
+    :aria-describedby="describedBy"
+    :autocomplete="autocomplete"
     :aria-invalid="invalid || undefined"
     :class="clases"
     @input="alEscribir"

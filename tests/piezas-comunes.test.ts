@@ -56,6 +56,29 @@ describe('el aviso en línea', () => {
 		expect(vista.attributes('aria-atomic')).toBe('true');
 	});
 
+	test('el título se puede poner, y sin él no queda una línea vacía', () => {
+		// Un aviso de cinco líneas sin título obliga a leerlo entero para saber
+		// si importa. Venía de la copia del instalador, la única que lo tenía.
+		const con = mount(AlertMessage, { props: { title: 'No se pudo leer el disco' }, slots: { default: 'Detalle' } });
+		const sin = mount(AlertMessage, { slots: { default: 'Detalle' } });
+
+		expect(con.find('p').text()).toBe('No se pudo leer el disco');
+		expect(sin.find('p').exists()).toBe(false);
+	});
+
+	test('el icono es opcional y no se lee en voz alta', async () => {
+		// El texto del aviso ya dice lo mismo: un lector de pantalla que anuncie
+		// «imagen, diálogo de error» antes del mensaje repite.
+		olvidarTodo();
+		ponerEnElTema('dialog-error', 'datos-del-icono');
+		const con = mount(AlertMessage, { props: { icon: 'dialog-error' }, slots: { default: 'x' } });
+		const sin = mount(AlertMessage, { slots: { default: 'x' } });
+		await new Promise((listo) => setTimeout(listo, 0));
+
+		expect(con.find('img').attributes('alt')).toBe('');
+		expect(sin.find('img').exists()).toBe(false);
+	});
+
 	test('cada tono trae su color y son distintos entre sí', () => {
 		const clases = (tone: string) =>
 			mount(AlertMessage, { props: { tone }, slots: { default: 'x' } }).classes().join(' ');
@@ -137,6 +160,11 @@ describe('el estado vacío', () => {
 	});
 });
 
+/** La franja de adentro, que es la que dice cuánto falta. */
+function laBanda(vista: { element: Element }): string {
+	return vista.element.firstElementChild?.className ?? '';
+}
+
 describe('la barra de progreso', () => {
 	test('dice cuánto lleva, con el ARIA que hace falta', () => {
 		// Sin esto es una caja de colores que no le dice nada a quien no la ve.
@@ -152,6 +180,28 @@ describe('la barra de progreso', () => {
 		const vista = mount(ProgressBar, { props: { value: null, label: 'Buscando' } });
 
 		expect(vista.attributes('aria-valuenow')).toBeUndefined();
+	});
+
+	test('la banda indeterminada ocupa todo, para no parecer una fracción', () => {
+		// Una banda que ocupa un tercio se lee como «33% completado». Y se queda
+		// quieta: la animación es infinita, así que `prefers-reduced-motion` la
+		// detiene, y quien pidió menos movimiento terminaba viendo un progreso
+		// inventado. Lo encontró el instalador.
+		// La banda es el hijo, no la raíz: la raíz es la caja, que siempre ocupa
+		// todo el ancho. Apuntarle a ella dejaba la prueba pasando sin mirar nada.
+		const vista = mount(ProgressBar, { props: { value: null, label: 'Buscando' } });
+
+		const banda = laBanda(vista);
+		expect(banda).toContain('w-full');
+		expect(banda).not.toContain('w-1/3');
+	});
+
+	test('y deja de latir si se pidió menos movimiento', () => {
+		// Una barra que se mueve sin parar durante media hora es justo lo que
+		// marea a alguien con trastorno vestibular.
+		const vista = mount(ProgressBar, { props: { value: null, label: 'Buscando' } });
+
+		expect(laBanda(vista)).toContain('motion-reduce:animate-none');
 	});
 
 	test('y un valor fuera de rango se acota en vez de desbordar', () => {
@@ -200,6 +250,26 @@ describe('el campo de texto', () => {
 		const vista = mount(TextInput, { props: { modelValue: '/etc/fstab', mono: true } });
 
 		expect(vista.classes().join(' ')).toContain('font-mono');
+	});
+
+	test('el error se ve y además se puede atar a su explicación', () => {
+		// `aria-invalid` dice que algo está mal; sin `aria-describedby`, quien no
+		// mira la pantalla nunca se entera de **por qué**.
+		const vista = mount(TextInput, {
+			props: { modelValue: 'x', invalid: true, describedBy: 'ayuda-de-la-ruta' },
+		});
+
+		expect(vista.attributes('aria-describedby')).toBe('ayuda-de-la-ruta');
+	});
+
+	test('y el autocompletado va declarado', () => {
+		// Con `strictTemplates`, lo que no está declarado no se puede pasar: sin
+		// esto un campo de contraseña no tiene forma de decir qué es.
+		const vista = mount(TextInput, {
+			props: { modelValue: '', type: 'password', autocomplete: 'new-password' },
+		});
+
+		expect(vista.attributes('autocomplete')).toBe('new-password');
 	});
 
 	test('la etiqueta de `FormGroup` ata al campo, que era un contrato sin escribir', () => {

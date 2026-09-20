@@ -35,6 +35,7 @@ import FormGroup from "./forms/FormGroup.vue";
 import ListCard from "./cards/ListCard.vue";
 import SliderControl from "./forms/SliderControl.vue";
 import SwitchToggle from "./forms/SwitchToggle.vue";
+import SwitchTrack from "./forms/SwitchTrack.vue";
 import ToggleControl from "./controls/ToggleControl.vue";
 import Tooltip from "./tooltip/Tooltip.vue";
 import TooltipContent from "./tooltip/TooltipContent.vue";
@@ -80,6 +81,7 @@ const components = [
   ListCard,
   SliderControl,
   SwitchToggle,
+  SwitchTrack,
   ToggleControl,
   Tooltip,
   TooltipContent,
@@ -133,6 +135,7 @@ export {
   ListCard,
   SliderControl,
   SwitchToggle,
+  SwitchTrack,
   ToggleControl,
   Tooltip,
   TooltipContent,
