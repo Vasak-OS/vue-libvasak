@@ -22,6 +22,11 @@
  * `valor` con `cambiar`: tres formas de decir lo mismo. Es un cambio que rompe,
  * y se arregla en la misma pasada que adopta esta versión.
  *
+ * El anillo de foco va acá adentro y no lo pone quien lo usa. Quien lo usaba
+ * en el escritorio se lo agregaba por fuera con una clase suelta, que es
+ * exactamente la señal de que faltaba adentro: sin él, recorrer con Tab es a
+ * ciegas —WCAG 2.4.7— y cada aplicación lo resuelve o lo olvida por su cuenta.
+ *
  * Es un `<button role="switch">` de verdad y no un `div` con un `@click`: es lo
  * que hace que responda a la barra espaciadora y reciba el foco con Tab sin
  * `tabindex` a mano.
@@ -57,7 +62,7 @@ function alternar() {
     :aria-checked="modelValue"
     :aria-label="label"
     :disabled="disabled"
-    class="rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+    class="rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     @click="alternar">
     <SwitchTrack :on="modelValue" :size="size" />
   </button>

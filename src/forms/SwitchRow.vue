@@ -58,7 +58,7 @@ const emit = defineEmits<{ 'update:modelValue': [valor: boolean] }>();
     role="switch"
     :aria-checked="modelValue"
     :disabled="disabled"
-    class="flex w-full items-start gap-3 rounded-corner p-2 text-left transition-colors hover:bg-ui-surface/60 disabled:cursor-not-allowed disabled:opacity-60"
+    class="flex w-full items-start gap-3 rounded-corner p-2 text-left transition-colors hover:bg-ui-surface/60 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     @click="emit('update:modelValue', !props.modelValue)">
     <SwitchTrack :on="modelValue" class="mt-0.5" />
 
