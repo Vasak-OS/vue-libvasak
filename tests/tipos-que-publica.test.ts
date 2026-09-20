@@ -18,8 +18,28 @@ import { describe, expect, test } from 'bun:test';
 import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
+/** Este mismo archivo, relativo a la raíz. */
+const propio = fileURLToPath(import.meta.url).slice(raiz.length);
 
-const fuentes = await Array.fromAsync(new Bun.Glob('src/**/*.{ts,d.ts,vue}').scan({ cwd: raiz }));
+/**
+ * Todo lo que el chequeo de tipos mira, no sólo `src`.
+ *
+ * Una declaración puesta en `tests/` o en un archivo de configuración suelto
+ * aplana los tipos igual, y con un patrón más angosto las pruebas de abajo
+ * pasarían sin haberla visto. Lo marcó la revisión en las aplicaciones.
+ *
+ * Menos este archivo: los patrones que busca los lleva escritos adentro, así
+ * que al ampliar el escaneo empezaría a encontrarse a sí mismo.
+ */
+const fuentes = (
+	await Promise.all(
+		['src/**/*.{ts,tsx,mts,cts,vue}', 'tests/**/*.{ts,tsx,vue}', '*.{ts,mts,cts}'].map(
+			async (patron) => await Array.fromAsync(new Bun.Glob(patron).scan({ cwd: raiz }))
+		)
+	)
+)
+	.flat()
+	.filter((ruta) => ruta !== propio);
 
 async function conteniendo(patron: RegExp): Promise<string[]> {
 	const hallados: string[] = [];
@@ -32,6 +52,8 @@ async function conteniendo(patron: RegExp): Promise<string[]> {
 describe('lo que la librería publica', () => {
 	test('y las pruebas que siguen miran archivos de verdad', () => {
 		expect(fuentes).toContain('src/index.ts');
+		expect(fuentes.some((ruta) => ruta.startsWith('tests/'))).toBe(true);
+		expect(fuentes).toContain('vite.config.ts');
 		expect(fuentes.length).toBeGreaterThan(10);
 	});
 
