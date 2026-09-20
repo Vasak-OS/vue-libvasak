@@ -270,7 +270,7 @@ function recalcularSiEstaAbierto(evento?: Event) {
 
 function alHacerClicAfuera(evento: MouseEvent) {
 	const destino = evento.target as HTMLElement;
-	const adentro = !!destino.closest('[dropdown-content]');
+	const adentro = !!destino.closest('[data-dropdown-content]');
 	const enElDisparador = !!disparador.value?.contains(destino);
 
 	if (!adentro && !enElDisparador) {
@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
           overscrollBehavior: 'contain',
           zIndex: 50,
         }"
-        dropdown-content
+        data-dropdown-content
         class="min-w-30 rounded-corner border border-primary bg-ui-bg/80 shadow-lg focus:outline-none"
         @click="(e) => e.stopPropagation()"
         @keydown="alTeclear">
