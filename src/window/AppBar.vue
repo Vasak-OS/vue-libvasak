@@ -54,9 +54,6 @@ const props = withDefaults(
 	{
 		position: null,
 		title: '',
-		minimizeLabel: 'Minimize',
-		maximizeLabel: 'Maximize',
-		closeLabel: 'Close',
 		controls: () => LOS_TRES_CONTROLES,
 	}
 );

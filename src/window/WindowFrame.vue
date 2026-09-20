@@ -53,6 +53,12 @@ const props = withDefaults(
 		/** Fija la barra a un lado, ignorando la preferencia del escritorio. */
 		position?: PosicionDeLaBarra | null;
 		title?: string;
+		/**
+		 * Las tres etiquetas de los botones de ventana.
+		 *
+		 * Sin pasar nada salen del catálogo de la aplicación. Ver `WindowControls`,
+		 * que es donde se resuelven.
+		 */
 		minimizeLabel?: string;
 		maximizeLabel?: string;
 		closeLabel?: string;
@@ -67,9 +73,6 @@ const props = withDefaults(
 	{
 		position: null,
 		title: '',
-		minimizeLabel: 'Minimize',
-		maximizeLabel: 'Maximize',
-		closeLabel: 'Close',
 		controls: () => LOS_TRES_CONTROLES,
 		hideBar: false,
 	}

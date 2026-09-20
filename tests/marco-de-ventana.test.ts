@@ -17,7 +17,12 @@ import AppBar from '../src/window/AppBar.vue';
 import WindowControls from '../src/window/WindowControls.vue';
 import WindowFrame from '../src/window/WindowFrame.vue';
 import { posicionDe, usarLaBarra } from '../src/index';
-import { cerrosDeVentana, olvidarTodo } from './dobles';
+import {
+	cerrosDeVentana,
+	olvidarTodo,
+	traducir,
+	vaciarElCatalogo,
+} from './dobles';
 
 /** Un testigo que dice qué orientación le llegó por inyección. */
 const Testigo = defineComponent({
@@ -43,6 +48,7 @@ function abrirLaVentana(position: 'top' | 'bottom' | 'left' | 'right') {
 
 beforeEach(() => {
 	olvidarTodo();
+	vaciarElCatalogo();
 });
 
 describe('el marco', () => {
@@ -269,5 +275,57 @@ describe('la preferencia del escritorio', () => {
 		for (const basura of [{}, null, { window: {} }, { window: { barPosition: 'arriba' } }]) {
 			expect(posicionDe(basura)).toBeNull();
 		}
+	});
+});
+
+/**
+ * Las etiquetas de los tres botones de ventana.
+ *
+ * Estaban fijas en inglés —«Minimize», «Maximize», «Close»— y cada aplicación
+ * envolvía el marco sólo para pasárselas traducidas. Eran trece envoltorios
+ * haciendo lo mismo. Ahora las busca el marco, con las claves que define cada
+ * aplicación en sus `locales`.
+ */
+describe('las etiquetas de la ventana', () => {
+	const conBotones = () => mount(WindowFrame, { props: { title: 'Ventana' } });
+	const etiquetas = (vista: ReturnType<typeof conBotones>) =>
+		vista.findAll('button[aria-label]').map((b) => b.attributes('aria-label'));
+
+	test('salen del catálogo de la aplicación sin que nadie las pase', () => {
+		traducir('ventana.minimizar', 'Minimizar');
+		traducir('ventana.maximizar', 'Maximizar');
+		traducir('ventana.cerrar', 'Cerrar');
+
+		expect(etiquetas(conBotones())).toEqual(['Minimizar', 'Maximizar', 'Cerrar']);
+	});
+
+	test('y van también al `title`, que es el tooltip que se ve', () => {
+		traducir('ventana.cerrar', 'Cerrar');
+
+		const cerrar = conBotones().findAll('button[aria-label]').at(-1);
+
+		expect(cerrar?.attributes('title')).toBe('Cerrar');
+	});
+
+	test('la que se pasa gana sobre el catálogo', () => {
+		// Es lo que deja a una aplicación llamarlas de otra manera, y lo que
+		// hace que este cambio no rompa a las trece que hoy las pasan.
+		traducir('ventana.cerrar', 'Cerrar');
+
+		const vista = mount(WindowFrame, { props: { title: 'V', closeLabel: 'Salir' } });
+
+		expect(vista.findAll('button[aria-label]').at(-1)?.attributes('aria-label')).toBe('Salir');
+	});
+
+	test('sin la clave en el catálogo se ve la clave cruda', () => {
+		// No es un descuido: es lo que hace `t()` en todo el sistema, y lo que
+		// avisa a una aplicación que dejó de pasar la etiqueta sin poner la
+		// clave. Si esto pasara desapercibido, el botón quedaría sin nombre
+		// para un lector de pantalla.
+		expect(etiquetas(conBotones())).toEqual([
+			'ventana.minimizar',
+			'ventana.maximizar',
+			'ventana.cerrar',
+		]);
 	});
 });
