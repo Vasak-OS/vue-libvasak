@@ -118,3 +118,25 @@ export function getCurrentWindow() {
 export function cerrosDeVentana() {
 	return laVentanaRecibio.filter((que) => que === 'close').length;
 }
+
+/**
+ * El catálogo de traducciones, que en una ventana de verdad llena el plugin.
+ *
+ * `t()` devuelve la clave cruda cuando no la encuentra, y eso es parte del
+ * contrato: una aplicación que deje de pasar la etiqueta sin haber puesto la
+ * clave lo ve en el tooltip. Para poder comprobar las dos caras, la prueba
+ * decide qué hay en el catálogo.
+ */
+const catalogo = new Map<string, string>();
+
+export function traducir(clave: string, texto: string) {
+	catalogo.set(clave, texto);
+}
+
+export function vaciarElCatalogo() {
+	catalogo.clear();
+}
+
+export function useI18n() {
+	return { t: (clave: string) => catalogo.get(clave) ?? clave };
+}

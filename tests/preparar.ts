@@ -15,7 +15,13 @@ import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import * as eventos from '@tauri-apps/api/event';
 import { mock } from 'bun:test';
 import './complemento-vue';
-import { getCurrentWindow, getIconSource, getSymbolSource, listen } from './dobles';
+import {
+	getCurrentWindow,
+	getIconSource,
+	getSymbolSource,
+	listen,
+	useI18n,
+} from './dobles';
 
 GlobalRegistrator.register();
 
@@ -24,6 +30,9 @@ GlobalRegistrator.register();
 // no la prueba: el marco de la ventana importa `@tauri-apps/api/event` entero.
 mock.module('@tauri-apps/api/event', () => ({ ...eventos, listen }));
 mock.module('@vasakgroup/plugin-vicons', () => ({ getIconSource, getSymbolSource }));
+// El marco busca en el catálogo las etiquetas de los tres botones, así que sin
+// este doble la prueba no puede decir qué hay traducido y qué no.
+mock.module('@vasakgroup/tauri-plugin-i18n', () => ({ useI18n }));
 // Sin esto `getCurrentWindow()` lanza —no hay ventana de Tauri— y la única
 // forma de probar los botones sería no apretarlos.
 mock.module('@tauri-apps/api/window', () => ({ getCurrentWindow }));

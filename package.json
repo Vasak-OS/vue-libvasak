@@ -45,10 +45,11 @@
   },
   "license": "GPLv3",
   "peerDependencies": {
-    "vue": "^3.0.0",
     "@tauri-apps/api": "^2.0.0",
+    "@vasakgroup/plugin-config-manager": "^2.0.0",
     "@vasakgroup/plugin-vicons": "^2.0.0",
-    "@vasakgroup/plugin-config-manager": "^2.0.0"
+    "@vasakgroup/tauri-plugin-i18n": "^2.3.0",
+    "vue": "^3.0.0"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.14.5",
@@ -56,6 +57,7 @@
     "@types/bun": "^1.4.2",
     "@vasakgroup/plugin-config-manager": "^2.6.0",
     "@vasakgroup/plugin-vicons": "^2.0.0",
+    "@vasakgroup/tauri-plugin-i18n": "^2.3.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/test-utils": "^2.5.1",
     "happy-dom": "^20.14.5",

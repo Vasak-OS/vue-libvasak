@@ -39,22 +39,41 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed, getCurrentInstance } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import { type ControlDeVentana, LOS_TRES_CONTROLES, usarLaBarra } from './tipos';
+import { useI18n } from '@vasakgroup/tauri-plugin-i18n';
 
 const props = withDefaults(
 	defineProps<{
 		/** Cuáles de los tres se dibujan, y en este orden. */
 		controls?: ControlDeVentana[];
+		/**
+		 * Lo que oye un lector de pantalla en cada botón, y el tooltip.
+		 *
+		 * Sin pasar nada salen del catálogo de la aplicación —`ventana.minimizar`,
+		 * `ventana.maximizar` y `ventana.cerrar`—. Las claves las define cada
+		 * aplicación en sus `locales`; acá sólo se buscan. Pasarlas gana, que es
+		 * lo que deja llamarlas de otra manera.
+		 */
 		minimizeLabel?: string;
 		maximizeLabel?: string;
 		closeLabel?: string;
 	}>(),
 	{
 		controls: () => LOS_TRES_CONTROLES,
-		minimizeLabel: 'Minimize',
-		maximizeLabel: 'Maximize',
-		closeLabel: 'Close',
 	}
 );
+
+const { t } = useI18n();
+
+/**
+ * La propiedad si vino, y si no el catálogo.
+ *
+ * `t()` devuelve la clave cruda cuando no la encuentra: una aplicación que deje
+ * de pasar la etiqueta sin haber puesto la clave lo ve en el tooltip, que es lo
+ * mismo que hace `t()` en todo el sistema.
+ */
+const etiquetaDeMinimizar = computed(() => props.minimizeLabel ?? t('ventana.minimizar'));
+const etiquetaDeMaximizar = computed(() => props.maximizeLabel ?? t('ventana.maximizar'));
+const etiquetaDeCerrar = computed(() => props.closeLabel ?? t('ventana.cerrar'));
 
 const emit = defineEmits<{
 	minimize: [];
@@ -125,8 +144,8 @@ const CLASES =
       v-if="lleva.minimize"
       type="button"
       :class="[CLASES, 'hover:bg-status-success']"
-      :title="minimizeLabel"
-      :aria-label="minimizeLabel"
+      :title="etiquetaDeMinimizar"
+      :aria-label="etiquetaDeMinimizar"
       @click="minimizar()">
       <ThemeIcon name="window-minimize" :size="24" />
     </button>
@@ -134,8 +153,8 @@ const CLASES =
       v-if="lleva.maximize"
       type="button"
       :class="[CLASES, 'hover:bg-status-warning']"
-      :title="maximizeLabel"
-      :aria-label="maximizeLabel"
+      :title="etiquetaDeMaximizar"
+      :aria-label="etiquetaDeMaximizar"
       @click="maximizar()">
       <ThemeIcon name="window-maximize" :size="24" />
     </button>
@@ -143,8 +162,8 @@ const CLASES =
       v-if="lleva.close"
       type="button"
       :class="[CLASES, 'hover:bg-status-error']"
-      :title="closeLabel"
-      :aria-label="closeLabel"
+      :title="etiquetaDeCerrar"
+      :aria-label="etiquetaDeCerrar"
       @click="cerrar()">
       <ThemeIcon name="window-close" :size="24" />
     </button>
