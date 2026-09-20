@@ -20,7 +20,15 @@ import { computed } from 'vue';
 const props = withDefaults(
 	defineProps<{
 		modelValue: string;
-		type?: 'text' | 'password' | 'search' | 'url' | 'email' | 'number';
+		/**
+		 * El tipo del campo.
+		 *
+		 * `date` y `time` están porque la configuración pone la fecha y la hora del
+		 * sistema y programa la luz nocturna, y son cuatro campos de verdad. El
+		 * navegador les dibuja su propio selector, que es justo lo que se quiere:
+		 * uno escrito a mano no entiende de husos ni de formatos locales.
+		 */
+		type?: 'text' | 'password' | 'search' | 'url' | 'email' | 'number' | 'date' | 'time';
 		/** La otra mitad del `for` de `FormGroup`: sin esto la etiqueta no ata a nada. */
 		id?: string;
 		/** El nombre del campo cuando no hay etiqueta visible que se lo dé. */

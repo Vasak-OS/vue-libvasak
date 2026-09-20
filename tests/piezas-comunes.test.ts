@@ -301,6 +301,26 @@ describe('el campo de texto', () => {
 		expect(vista.attributes('autocomplete')).toBe('new-password');
 	});
 
+	test('sirve para la fecha y la hora, que las dibuja el navegador', () => {
+		// La configuración pone la fecha y la hora del sistema y programa la luz
+		// nocturna: cuatro campos. El selector nativo entiende de formatos
+		// locales, cosa que uno escrito a mano no.
+		//
+		// La línea de arriba es la que ataja de verdad: montar con un tipo
+		// cualquiera dibuja el atributo igual, así que lo único que nota un
+		// tipo que falte es el chequeo. Sin `date` en la unión, `vue-tsc` se
+		// Esto comprueba que se dibujen, no que la unión los acepte: montar con
+		// un tipo cualquiera dibuja el atributo igual, y sacarlos de la unión no
+		// rompe esta prueba —se comprobó—. Lo que ataja un tipo que falte es el
+		// chequeo de plantillas **de quien la usa**, que es donde apareció:
+		// vasak-settings no compilaba sus cuatro campos de fecha y hora.
+		const fecha = mount(TextInput, { props: { modelValue: '2026-09-20', type: 'date' } });
+		const hora = mount(TextInput, { props: { modelValue: '21:30', type: 'time' } });
+
+		expect(fecha.attributes('type')).toBe('date');
+		expect(hora.attributes('type')).toBe('time');
+	});
+
 	test('la tecla llega a quien lo usa', async () => {
 		// Es cómo la tienda confirma la búsqueda y cómo la configuración conecta
 		// al Wi-Fi: con Enter sobre el campo.
