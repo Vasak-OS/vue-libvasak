@@ -1,0 +1,32 @@
+# Los chequeos viven en el repositorio `.github` de la organización, así que
+# acá sólo se los llama. Cambiarlos es cambiarlos en un solo lugar.
+#
+# Este repositorio era el único del ecosistema sin ninguna comprobación
+# automática: el único workflow que tenía publica en npm, y sólo corre al crear
+# un release. Las pruebas y el chequeo de tipos existían y no los miraba nadie
+# salvo a mano, en la máquina de quien publicaba — y de acá dependen las
+# dieciséis aplicaciones.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  app:
+    # Sólo lectura. Estos chequeos clonan, instalan dependencias y comprueban:
+    # no comentan, no etiquetan, no publican.
+    #
+    # El workflow llamado declara lo mismo en su trabajo, que es donde el
+    # permiso se aplica; esto lo escribe también acá porque el análisis
+    # estático de este repositorio no puede ver el otro archivo, y ahí un
+    # trabajo sin `permissions` se lee como permisos por omisión.
+    permissions:
+      contents: read
+    uses: Vasak-OS/.github/.github/workflows/app.yml@main
+    with:
+      # No hay backend: es una librería de componentes, sin `Cargo.toml` ni
+      # `src-tauri`. Sin esto, el paso de formato de Rust corre igual para no
+      # encontrar ningún `.rs`.
+      rust: false
