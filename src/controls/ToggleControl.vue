@@ -60,7 +60,7 @@ function alApretar() {
 <template>
   <button
     type="button"
-    class="p-2 rounded-corner bg-ui-bg/80 hover:opacity-50 transition-all duration-300 h-17.5 w-17.5 group relative overflow-hidden hover:scale-105 hover:shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    class="p-2 rounded-corner bg-ui-bg/80 hover:opacity-50 transition-[opacity,scale,box-shadow] duration-300 h-17.5 w-17.5 group relative overflow-hidden hover:scale-105 hover:shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     :class="{
       'animate-pulse': isLoading,
       'ring-2 ring-primary': isActive,
@@ -78,7 +78,7 @@ function alApretar() {
     <img
       :src="icon"
       alt=""
-      class="m-auto w-12.5 h-12.5 transition-all duration-300 group-hover:scale-110 relative z-10"
+      class="m-auto w-12.5 h-12.5 transition-[scale,filter] duration-300 group-hover:scale-110 relative z-10"
       :class="{
         'animate-spin': isLoading,
         'filter brightness-75': !isActive,
