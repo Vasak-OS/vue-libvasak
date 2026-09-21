@@ -91,6 +91,17 @@ const emit = defineEmits<{
 	'update:modelValue': [valor: string];
 	search: [valor: string];
 	clear: [];
+	/**
+	 * Las teclas, para que quien lo usa pueda atender las suyas.
+	 *
+	 * Escape sobre todo: qué significa depende de dónde viva esta caja, así que
+	 * no lo decide el campo. Eso ya estaba dicho, pero no se podía hacer: con
+	 * `strictTemplates`, un `@keydown` sobre un componente que no lo declara es
+	 * un error de tipos, y la salida era un `v-bind` de objeto, que no se
+	 * comprueba. Declararlo lo saca de `$attrs`, así que reenviarlo abajo no es
+	 * opcional: sin eso el campo enmudece y nada avisa.
+	 */
+	keydown: [evento: KeyboardEvent];
 }>();
 
 const campo = ref<InstanceType<typeof TextInput> | null>(null);
@@ -148,9 +159,16 @@ function vaciar() {
  *
  * Es además la salida para el caso en que el campo aparezca detrás de una
  * animación y el foco de `autofocus` llegue demasiado pronto.
+ *
+ * Se lo pide a `TextInput`, que lo expone. Antes se alcanzaba el elemento por
+ * `$el`, que es `any` y deja de andar sin avisar el día que ese componente
+ * crezca una raíz distinta.
+ *
+ * Devuelve si el foco llegó: dentro de un panel `hidden` no llega y tampoco
+ * falla, y quien llama necesita saberlo para mostrar el panel y reintentar.
  */
-function enfocar() {
-	campo.value?.$el?.focus?.();
+function enfocar(): boolean {
+	return campo.value?.enfocar() ?? false;
 }
 
 defineExpose({ enfocar });
@@ -174,11 +192,15 @@ watch(
 </script>
 
 <template>
-  <!-- El Enter se oye acá y no en el campo: burbujea igual, y `TextInput` no
-       declara eventos de teclado, así que ponérselos encima es cablear por
-       fuera de su contrato. Escape **no** se oye: qué significa depende de
-       dónde viva esta caja —cerrar el desplegable, plegar la barra, salir de la
-       vista— y ésa no es una decisión del campo. -->
+  <!-- El Enter se oye en la caja y no en el campo: burbujea igual y alcanza
+       una sola vez, aunque mañana haya más de un elemento adentro que lo
+       produzca.
+
+       Las demás teclas **se reenvían** en vez de atenderse: qué significa
+       Escape depende de dónde viva esta caja —cerrar el desplegable, plegar la
+       barra, salir de la vista— y ésa no es una decisión del campo. Se reenvían
+       desde el campo y no desde acá para no reinterpretar a mano lo que el
+       modificador `.enter` de Vue ya decide bien. -->
   <div class="relative flex items-center" @keydown.enter="buscarYa">
     <!-- La lupa —o la ruedita mientras busca— no se lee: la etiqueta del campo
          ya dice qué es esto, y un lector de pantalla que diga «imagen, buscar»
@@ -201,7 +223,8 @@ watch(
       :disabled="disabled"
       class="pl-7 [&::-webkit-search-cancel-button]:appearance-none"
       :class="muestraLaCruz ? 'pr-8' : ''"
-      @update:model-value="escribir" />
+      @update:model-value="escribir"
+      @keydown="emit('keydown', $event)" />
 
     <button
       v-if="muestraLaCruz"

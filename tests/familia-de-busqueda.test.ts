@@ -144,6 +144,23 @@ describe('el campo', () => {
 		expect(vista.emitted('update:modelValue')).toBeUndefined();
 	});
 
+	test('pero las teclas llegan a quien lo usa, que es quien sabe qué hacer', async () => {
+		// Estaba dicho —«quien la use se la pone encima»— y no se podía hacer:
+		// con `strictTemplates`, un `@keydown` sobre un componente que no lo
+		// declara es un error de tipos, y la salida era un `v-bind` de objeto,
+		// que no se comprueba. La lista del correo lo necesita para Escape, que
+		// ahí limpia la búsqueda y devuelve el foco a los mensajes.
+		const vista = mount(SearchField, { props: { modelValue: 'hola' } });
+
+		await vista.find('input').trigger('keydown', { key: 'Escape' });
+
+		const teclas = vista.emitted('keydown') as [KeyboardEvent][] | undefined;
+		expect(teclas).toHaveLength(1);
+		expect(teclas?.[0][0].key).toBe('Escape');
+		// Y el campo sigue sin decidir por su cuenta: no vació nada.
+		expect(vista.emitted('update:modelValue')).toBeUndefined();
+	});
+
 	test('sin lista no se anuncia como combobox', () => {
 		const vista = mount(SearchField, { props: { modelValue: '' } });
 

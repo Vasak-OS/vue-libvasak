@@ -412,3 +412,64 @@ describe('la forma de pantalla completa', () => {
 		expect(abierto.value).toBe(false);
 	});
 });
+
+describe('el redondeo de la ventana', () => {
+	test('la tinta del velo no asoma en cuadrado por fuera del marco', async () => {
+		// El velo es `fixed inset-0` —la pantalla entera— y la ventana es
+		// transparente con las esquinas redondeadas: un rectángulo recto deja
+		// tres o cuatro píxeles de gris en cada esquina, fuera del marco y
+		// sobre el escritorio. Es el mismo radio que usa `WindowFrame`.
+		const { vista } = armar();
+		await abrir(vista);
+
+		expect(elVeloTenido()?.className).toContain('rounded-corner-window');
+	});
+
+	test('y el panel a pantalla completa tampoco, ni lo que dibuje adentro', async () => {
+		// Ahí el fondo lo pone quien lo usa, sobre un panel que tapa la
+		// pantalla entera: sin el redondeo asoma igual, y encima es opaco.
+		//
+		// Y hace falta recortar además: el radio recorta lo que pinta **este**
+		// elemento y no lo que pinten sus descendientes, así que un hijo con
+		// fondo propio volvería a dejar las esquinas cuadradas. Lo marcó la
+		// revisión.
+		const { vista } = armar({ extra: { size: 'full' } });
+		await abrir(vista);
+
+		expect(elPanel()?.className).toContain('rounded-corner-window');
+		expect(elPanel()?.className).toContain('overflow-hidden');
+	});
+});
+
+describe('el ancho', () => {
+	test('el de siempre y el ancho son dos formas, no una clase que se pisa', async () => {
+		// Pisar el ancho del sistema desde afuera funciona para ensanchar y no
+		// para angostar: las dos clases van en el mismo atributo y ahí gana la
+		// que Tailwind haya emitido después en la hoja, que sigue el orden de
+		// la escala. `max-w-2xl` le gana a `max-w-lg`; `max-w-xs` no. Sin error
+		// y sin forma de enterarse salvo mirándolo.
+		const normal = armar();
+		await abrir(normal.vista);
+		expect(elPanel()?.className).toContain('max-w-lg');
+
+		normal.vista.unmount();
+		vistas.delete(normal.vista);
+		for (const suelto of document.body.querySelectorAll('[role="dialog"]')) {
+			suelto.parentElement?.remove();
+		}
+
+		const ancho = armar({ extra: { size: 'lg' } });
+		await abrir(ancho.vista);
+		expect(elPanel()?.className).toContain('max-w-2xl');
+		expect(elPanel()?.className).not.toContain('max-w-lg');
+	});
+
+	test('y el ancho sigue trayendo la caja: borde, fondo y relleno', async () => {
+		const { vista } = armar({ extra: { size: 'lg' } });
+		await abrir(vista);
+
+		const clases = elPanel()?.className ?? '';
+		expect(clases).toContain('border-ui-border');
+		expect(clases).toContain('p-6');
+	});
+});
