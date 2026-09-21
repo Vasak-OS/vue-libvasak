@@ -17,6 +17,14 @@
  * Se teletransporta al `body` por la misma razón que el diálogo: dentro de un
  * contenedor con `overflow` se recorta, y su `z-index` tiene que competir con
  * el de la ventana.
+ *
+ * ── Y por encima del diálogo ────────────────────────────────────────────────
+ *
+ * Los dos se teletransportan al `body`, así que con el mismo `z-index` el
+ * orden lo decide cuál se agregó último — y el diálogo se agrega al abrirse,
+ * o sea siempre después. Un aviso disparado desde adentro de un diálogo
+ * quedaba tapado por él, que es justo cuando más falta hace: «se copió», «no
+ * se pudo guardar». Por eso la pila va más arriba, y no empatada.
  */
 import { computed } from 'vue';
 import { CLASES_POR_TONO, rolDelTono, type TonoDelAviso } from './tonos';
@@ -56,7 +64,7 @@ const ubicacion = computed(() =>
     <!-- `pointer-events-none` en la pila y `auto` en cada aviso: la columna
          ocupa una franja de la ventana, y sin esto se come los clics de lo que
          haya debajo aunque no se vea nada. -->
-    <div class="pointer-events-none fixed z-50 flex flex-col gap-2" :class="ubicacion">
+    <div class="pointer-events-none fixed z-60 flex flex-col gap-2" :class="ubicacion">
       <TransitionGroup
         enter-active-class="transition-all duration-300 ease-out"
         leave-active-class="transition-all duration-200 ease-in"

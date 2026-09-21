@@ -331,3 +331,63 @@ describe('cuando el diálogo se va sin cerrarse', () => {
 		expect(document.activeElement).toBe(abridor);
 	});
 });
+
+/** El velo teñido, que es la capa gris de atrás del panel. */
+const elVeloTenido = () => document.body.querySelector('.bg-ui-border-dark\\/40');
+
+describe('la forma de pantalla completa', () => {
+	test('no trae las clases que quien lo usa tendría que deshacer', async () => {
+		// Es lo único que hace que la clase de quien lo usa mande. Las dos van en
+		// el mismo atributo, y ahí no gana la última escrita sino la que Tailwind
+		// haya emitido después en la hoja: un `max-w-none` puesto desde afuera
+		// puede perder contra el `max-w-lg` de acá. La forma estable de que mande
+		// es que la clase que compite no esté.
+		const { vista } = armar({ extra: { size: 'full' }, clase: 'bg-ui-bg/80' });
+		await abrir(vista);
+
+		const clases = elPanel()?.className ?? '';
+		expect(clases).not.toContain('max-w-lg');
+		expect(clases).not.toContain('border-ui-border');
+		expect(clases).not.toContain('p-6');
+		expect(clases).toContain('h-full');
+		// Y la de quien lo usa sigue llegando: es lo que dibuja el fondo ahora.
+		expect(clases).toContain('bg-ui-bg/80');
+	});
+
+	test('y el velo no se tiñe, que si no son dos capas de gris', async () => {
+		// El panel tapa la ventana entera, así que la tinta del velo sólo se
+		// suma a la del panel. Con la de la galería —`bg-ui-bg/80`— quedaba más
+		// oscuro que la foto que se está mirando.
+		const { vista } = armar({ extra: { size: 'full' } });
+		await abrir(vista);
+
+		expect(elVeloTenido()).toBeNull();
+	});
+
+	test('el diálogo de siempre sí lo tiñe, y trae su caja', async () => {
+		const { vista } = armar();
+		await abrir(vista);
+
+		expect(elVeloTenido()).not.toBeNull();
+		expect(elPanel()?.className ?? '').toContain('max-w-lg');
+	});
+
+	test('sigue siendo un diálogo: encierra el foco y Escape lo cierra', async () => {
+		// Es lo único por lo que el visor de fotos lo usa. Si `full` se llevara
+		// puesto el comportamiento, adoptarlo no tendría sentido.
+		const { vista, abierto } = armar({ extra: { size: 'full' } });
+		await abrir(vista);
+
+		expect(document.activeElement).toBe(elPanel());
+
+		const ultimo = document.body.querySelector<HTMLElement>('.borrar');
+		ultimo?.focus();
+		teclearDentro('Tab');
+		await nextTick();
+		expect(document.activeElement).toBe(document.body.querySelector('.cancelar'));
+
+		teclearDentro('Escape');
+		await nextTick();
+		expect(abierto.value).toBe(false);
+	});
+});

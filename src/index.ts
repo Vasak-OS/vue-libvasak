@@ -12,6 +12,7 @@ import BarSearch from "./bar/BarSearch.vue";
 import ActionButton from "./controls/ActionButton.vue";
 import AlertMessage from "./feedback/AlertMessage.vue";
 import EmptyState from "./feedback/EmptyState.vue";
+import LoadingState from "./feedback/LoadingState.vue";
 import ToastArea from "./feedback/ToastArea.vue";
 import ProgressBar from "./forms/ProgressBar.vue";
 import SearchField from "./search/SearchField.vue";
@@ -59,6 +60,7 @@ const components = [
   ActionButton,
   AlertMessage,
   EmptyState,
+  LoadingState,
   ProgressBar,
   SearchField,
   SearchSelect,
@@ -114,6 +116,7 @@ export {
   ActionButton,
   AlertMessage,
   EmptyState,
+  LoadingState,
   ProgressBar,
   SearchField,
   SearchSelect,

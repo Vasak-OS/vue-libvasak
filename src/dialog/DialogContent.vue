@@ -32,12 +32,49 @@ import { usarElDialogo } from './tipos';
  * cuando prefiere no poner un `DialogTitle` visible.
  */
 defineOptions({ inheritAttrs: false });
+
+const props = withDefaults(
+	defineProps<{
+		/**
+		 * La forma del panel.
+		 *
+		 * `md` es el diálogo de siempre: una caja centrada, con borde, fondo y
+		 * un ancho máximo, que es lo que quiere una pregunta o un formulario.
+		 *
+		 * `full` ocupa la ventana entera y no dibuja nada —ni borde, ni fondo,
+		 * ni relleno—: lo pone quien lo usa. Es para lo que **es** la pantalla
+		 * mientras está abierto, como el visor de fotos de la galería, donde la
+		 * caja centrada no tiene sentido pero el foco encerrado y el Escape sí.
+		 *
+		 * El velo tampoco se tiñe en `full`: el panel lo tapa entero, y las dos
+		 * capas de color se sumaban a un gris que nadie pidió.
+		 */
+		size?: 'md' | 'full';
+	}>(),
+	{ size: 'md' }
+);
+
 const atributos = useAttrs();
 const claseDeQuienLoUsa = computed(() => (atributos.class as string | undefined) ?? '');
 const restoDeLosAtributos = computed(() => {
 	const { class: _clase, ...resto } = atributos;
 	return resto;
 });
+
+/**
+ * Las clases del panel, según la forma.
+ *
+ * `full` **no** pone lo que tendría que deshacer. Poner `max-w-lg` y dejar que
+ * quien lo usa lo tape con `max-w-none` no funciona: las dos clases van en el
+ * mismo atributo y ahí no gana la última escrita sino la que Tailwind haya
+ * emitido después en la hoja, que no depende de esto. La única forma estable de
+ * que quien lo usa mande es que acá no esté la clase que compite.
+ */
+const formaDelPanel = computed(() =>
+	props.size === 'full'
+		? 'relative z-10 h-full w-full text-tx-main'
+		: 'relative z-10 w-full max-w-lg rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg'
+);
 
 const dialogo = usarElDialogo();
 const abierto = computed(() => dialogo.abierto.value);
@@ -166,7 +203,7 @@ onUnmounted(() => {
         class="fixed inset-0 z-50 flex items-center justify-center"
         @click="alVelo"
         @keydown="alTeclear">
-        <div class="absolute inset-0 bg-ui-border-dark/40"></div>
+        <div v-if="props.size === 'md'" class="absolute inset-0 bg-ui-border-dark/40"></div>
         <div
           ref="panel"
           tabindex="-1"
@@ -174,10 +211,7 @@ onUnmounted(() => {
           aria-modal="true"
           :aria-labelledby="dialogo.idDelTitulo.value ?? undefined"
           v-bind="restoDeLosAtributos"
-          :class="[
-            claseDeQuienLoUsa,
-            'relative z-10 w-full max-w-lg rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg',
-          ]">
+          :class="[claseDeQuienLoUsa, formaDelPanel]">
           <slot />
         </div>
       </div>
