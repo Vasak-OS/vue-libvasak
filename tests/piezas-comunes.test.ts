@@ -16,6 +16,7 @@ import { mount } from '@vue/test-utils';
 import { h } from 'vue';
 import AlertMessage from '../src/feedback/AlertMessage.vue';
 import EmptyState from '../src/feedback/EmptyState.vue';
+import LoadingState from '../src/feedback/LoadingState.vue';
 import FormGroup from '../src/forms/FormGroup.vue';
 import ToastArea from '../src/feedback/ToastArea.vue';
 import { rolDelTono } from '../src/feedback/tonos';
@@ -368,5 +369,36 @@ describe('el campo de texto', () => {
 		});
 
 		expect(vista.attributes('aria-label')).toBe('Buscar aplicaciones');
+	});
+});
+
+describe('el estado de carga', () => {
+	test('se anuncia, que es lo que no hacía ninguna de las cuatro copias', () => {
+		// Tres de las cuatro eran un `div` que gira. Para quien no ve la
+		// pantalla, la vista quedaba en blanco y sin explicación hasta que
+		// terminara: ni que se estaba esperando, ni qué.
+		const vista = mount(LoadingState, { props: { label: 'Cargando fotos…' } });
+
+		expect(vista.attributes('role')).toBe('status');
+		expect(vista.attributes('aria-atomic')).toBe('true');
+		expect(vista.text()).toContain('Cargando fotos…');
+	});
+
+	test('el anillo se queda quieto con el movimiento reducido', () => {
+		// Girar sin parar es justo lo que esa preferencia pide que no pase, y
+		// acá no se pierde nada: el texto de abajo ya dice qué se espera.
+		const vista = mount(LoadingState, { props: { label: 'Cargando' } });
+		const anillo = vista.find('span').classes();
+
+		expect(anillo).toContain('animate-spin');
+		expect(anillo).toContain('motion-reduce:animate-none');
+	});
+
+	test('el borde punteado es opcional', () => {
+		const suelto = mount(LoadingState, { props: { label: 'Cargando' } });
+		const encajado = mount(LoadingState, { props: { label: 'Cargando', bordered: true } });
+
+		expect(suelto.classes()).not.toContain('border-dashed');
+		expect(encajado.classes()).toContain('border-dashed');
 	});
 });
