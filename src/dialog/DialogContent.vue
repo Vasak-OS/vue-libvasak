@@ -27,9 +27,13 @@ import { usarElDialogo } from './tipos';
  *
  * La raíz es un `Teleport`, que no es un elemento: lo que caería solo por
  * `fallthrough` caería en la nada. Por eso se apaga y se reparte acá — la
- * `class` con las del panel, y el resto (`aria-describedby`, `id`, `data-*`)
- * tal cual, que es lo único que le deja a quien lo usa nombrar el diálogo
- * cuando prefiere no poner un `DialogTitle` visible.
+ * `class` con las del panel, y el resto (`id`, `data-*`) tal cual.
+ *
+ * Nombrar el diálogo sin un `DialogTitle` visible **no** va por acá: eso es
+ * `ariaLabel`, que es una propiedad declarada. Por este camino no se podía,
+ * aunque el atributo llegara: con `strictTemplates`, un `aria-label` escrito
+ * sobre el componente es un error de tipos, porque de un `Teleport` no se
+ * deduce ningún elemento al que pudiera pertenecer.
  */
 defineOptions({ inheritAttrs: false });
 
@@ -50,6 +54,28 @@ const props = withDefaults(
 		 * capas de color se sumaban a un gris que nadie pidió.
 		 */
 		size?: 'md' | 'full';
+		/**
+		 * Cómo se llama el diálogo cuando no hay un `DialogTitle` visible.
+		 *
+		 * Lo normal es el título: se registra solo y el `aria-labelledby` lo
+		 * apunta. Esto es para cuando el nombre existe pero no como título —el
+		 * visor de fotos de la galería lo dibuja en una píldora con su propia
+		 * forma— y para cuando no hay ninguno.
+		 *
+		 * Es una **propiedad declarada** y no un atributo que cae: con
+		 * `strictTemplates`, `aria-label` escrito a mano sobre el componente es
+		 * un error de tipos, porque la raíz es un `Teleport` y de ahí no se
+		 * deduce ningún elemento al que pudiera pertenecer. Lo que quedaba era
+		 * `v-bind` de un objeto, que no se comprueba.
+		 *
+		 * Un `DialogTitle` montado gana: si los dos están, nombra el título.
+		 *
+		 * `aria-describedby` tiene el mismo problema y **no** se resuelve con
+		 * otra propiedad: lo que corresponde es que `DialogDescription` se
+		 * registre solo, como ya hace el título. Hoy no lo hace, y nadie lo
+		 * pide todavía.
+		 */
+		ariaLabel?: string;
 	}>(),
 	{ size: 'md' }
 );
@@ -210,6 +236,7 @@ onUnmounted(() => {
           role="dialog"
           aria-modal="true"
           :aria-labelledby="dialogo.idDelTitulo.value ?? undefined"
+          :aria-label="dialogo.idDelTitulo.value ? undefined : ariaLabel"
           v-bind="restoDeLosAtributos"
           :class="[claseDeQuienLoUsa, formaDelPanel]">
           <slot />
