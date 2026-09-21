@@ -93,6 +93,32 @@ describe('la forma, que es el punto de compartirla', () => {
 		expect(clases).toContain('hover:bg-ui-surface');
 	});
 
+	test('anima los tres colores y la escala, y no «todas»', async () => {
+		// `transition-all` obliga al navegador a mirar cada propiedad animable
+		// del elemento en cada cambio, incluidas las que nadie toca: alcanza con
+		// que alguien agregue un `height` a la clase para que empiece a
+		// interpolarse, y con eso se paga layout de la lista entera. Acá cambian
+		// tres colores y la escala, así que la lista los nombra.
+		//
+		// `scale` y no `transform`: en Tailwind 4 las utilidades `scale-*`
+		// escriben la propiedad nativa `scale`, así que nombrar `transform`
+		// dejaría el movimiento sin animar, sin error y sin aviso.
+		const boton = mount(SideButton, { props: { label: 'Recursos' } });
+
+		const clases = boton.get('button').classes();
+		expect(clases).toContain('transition-[color,background-color,border-color,scale]');
+		expect(clases).not.toContain('transition-all');
+	});
+
+	test('y se hunde un poco al apretarlo', async () => {
+		// `scale` es composición; cambiar el tamaño de verdad sería layout de
+		// toda la lista. Lo traía la copia de resonance, que es de donde sale
+		// este componente.
+		const boton = mount(SideButton, { props: { label: 'Recursos' } });
+
+		expect(boton.get('button').classes()).toContain('active:scale-[0.98]');
+	});
+
 	test('desplegada mide 72 y plegada 84 píxeles', async () => {
 		const barra = mount(SideBar, { props: { title: 'Monitor' } });
 		expect(barra.get('aside').classes()).toContain('md:w-72');
