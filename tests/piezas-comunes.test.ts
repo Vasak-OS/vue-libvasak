@@ -246,6 +246,31 @@ describe('la barra de progreso', () => {
 	});
 });
 
+describe('el nivel de la barra', () => {
+	test('por omisión es la del sistema, sin color de estado', () => {
+		const vista = mount(ProgressBar, { props: { value: 40, label: 'Disco' } });
+
+		expect(laBanda(vista)).toContain('bg-primary');
+	});
+
+	test('y con nivel alto avisa con el color, que es de qué sirve un monitor', () => {
+		// Una copia de archivos al 95 % va bien; un disco al 95 % no. La barra
+		// no puede adivinar cuál es cuál, así que lo dice quien la pone.
+		const atencion = mount(ProgressBar, { props: { value: 80, label: 'Disco', tone: 'warning' } });
+		const critico = mount(ProgressBar, { props: { value: 95, label: 'Disco', tone: 'critical' } });
+
+		expect(laBanda(atencion)).toContain('bg-status-warning');
+		expect(laBanda(critico)).toContain('bg-status-error');
+	});
+
+	test('el color no es lo único que lo dice: el número sigue anunciándose', () => {
+		// Si el color fuera la única señal, quien no lo ve no se entera de nada.
+		const vista = mount(ProgressBar, { props: { value: 95, label: 'Disco', tone: 'critical' } });
+
+		expect(vista.attributes('aria-valuenow')).toBe('95');
+	});
+});
+
 describe('el campo de texto', () => {
 	test('avisa en cada tecla', async () => {
 		const vista = mount(TextInput, { props: { modelValue: '' } });
