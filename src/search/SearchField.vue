@@ -148,9 +148,13 @@ function vaciar() {
  *
  * Es además la salida para el caso en que el campo aparezca detrás de una
  * animación y el foco de `autofocus` llegue demasiado pronto.
+ *
+ * Se lo pide a `TextInput`, que lo expone. Antes se alcanzaba el elemento por
+ * `$el`, que es `any` y deja de andar sin avisar el día que ese componente
+ * crezca una raíz distinta.
  */
 function enfocar() {
-	campo.value?.$el?.focus?.();
+	campo.value?.enfocar();
 }
 
 defineExpose({ enfocar });

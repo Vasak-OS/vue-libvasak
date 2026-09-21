@@ -23,6 +23,7 @@ import DialogContent from '../src/dialog/DialogContent.vue';
 import ToastArea from '../src/feedback/ToastArea.vue';
 import { rolDelTono } from '../src/feedback/tonos';
 import ProgressBar from '../src/forms/ProgressBar.vue';
+import SearchField from '../src/search/SearchField.vue';
 import TextInput from '../src/forms/TextInput.vue';
 import { olvidarTodo, ponerEnElTema, variantesPedidas } from './dobles';
 
@@ -447,5 +448,33 @@ describe('quién queda encima de quién', () => {
 		for (const suelto of document.body.querySelectorAll('[role="dialog"]')) {
 			suelto.parentElement?.remove();
 		}
+	});
+});
+
+describe('enfocar un campo desde afuera', () => {
+	test('el campo de texto expone cómo, sin llegar por `$el`', async () => {
+		// La ventana de redacción del correo abre con el cursor en «Para». Sin
+		// esto había que alcanzar el elemento por `$el`, que es `any`: deja de
+		// andar sin avisar el día que el componente crezca una raíz distinta, y
+		// no lo ataja el chequeo de tipos.
+		const vista = mount(TextInput, { props: { modelValue: '' }, attachTo: document.body });
+
+		expect(document.activeElement).not.toBe(vista.element);
+		(vista.vm as unknown as { enfocar: () => void }).enfocar();
+
+		expect(document.activeElement).toBe(vista.element);
+		vista.unmount();
+	});
+
+	test('y la búsqueda lo usa para devolverse el foco al vaciarse', async () => {
+		// La cruz vacía el campo y le devuelve el foco: si no, quien la aprieta
+		// se queda con el foco en un botón que acaba de desaparecer.
+		const vista = mount(SearchField, { props: { modelValue: 'hola' }, attachTo: document.body });
+
+		await vista.find('button').trigger('mousedown');
+		await vista.find('button').trigger('click');
+
+		expect(document.activeElement).toBe(vista.find('input').element);
+		vista.unmount();
 	});
 });

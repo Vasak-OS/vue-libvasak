@@ -15,7 +15,7 @@
  * búsqueda con lupa y sin etiqueta visible no tiene otra forma de tener nombre, y
  * sin nombre un lector de pantalla sólo dice «campo de texto».
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = withDefaults(
 	defineProps<{
@@ -93,6 +93,23 @@ function alSalir(evento: Event) {
 	emit('update:modelValue', (evento.target as HTMLInputElement).value);
 }
 
+/**
+ * El `input` de abajo, para poder enfocarlo desde afuera.
+ *
+ * Quien lo usa necesita el elemento y no el componente: la ventana de
+ * redacción del correo abre con el cursor en «Para», y el buscador vuelve a
+ * recibir el foco al salir de la lista. Sin esto había que alcanzarlo por
+ * `$el`, que es `any` y deja de compilar el día que este componente crezca una
+ * raíz distinta. `SearchField` ya hacía justamente eso por dentro.
+ */
+const campo = ref<HTMLInputElement | null>(null);
+
+function enfocar() {
+	campo.value?.focus();
+}
+
+defineExpose({ enfocar, campo });
+
 const clases = computed(() => [
 	'w-full rounded-corner border bg-ui-surface/70 px-3 py-1.5 text-sm text-tx-main',
 	'placeholder:text-tx-muted focus:outline-none focus:ring-1 focus:ring-primary',
@@ -104,6 +121,7 @@ const clases = computed(() => [
 
 <template>
   <input
+    ref="campo"
     :id="id"
     :aria-label="ariaLabel"
     :type="type"
