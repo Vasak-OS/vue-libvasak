@@ -466,6 +466,26 @@ describe('enfocar un campo desde afuera', () => {
 		vista.unmount();
 	});
 
+	test('y dice que no cuando el foco no llega', () => {
+		// `focus()` sobre algo que no puede recibirlo no hace nada **y no
+		// falla**: la tecla que lleva al buscador parece rota. El caso real es
+		// un panel `hidden` en una ventana angosta, pero `happy-dom` no modela
+		// la visibilidad —ahí el foco entra igual—, así que se prueba con un
+		// campo fuera del documento, que es la misma rama: `focus()` no hace
+		// nada y `activeElement` no se mueve.
+		const vista = mount(TextInput, { props: { modelValue: '' } });
+
+		expect((vista.vm as unknown as { enfocar: () => boolean }).enfocar()).toBe(false);
+		vista.unmount();
+	});
+
+	test('y sí llega cuando el campo está a la vista', () => {
+		const vista = mount(TextInput, { props: { modelValue: '' }, attachTo: document.body });
+
+		expect((vista.vm as unknown as { enfocar: () => boolean }).enfocar()).toBe(true);
+		vista.unmount();
+	});
+
 	test('y la búsqueda lo usa para devolverse el foco al vaciarse', async () => {
 		// La cruz vacía el campo y le devuelve el foco: si no, quien la aprieta
 		// se queda con el foco en un botón que acaba de desaparecer.

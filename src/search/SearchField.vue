@@ -152,9 +152,12 @@ function vaciar() {
  * Se lo pide a `TextInput`, que lo expone. Antes se alcanzaba el elemento por
  * `$el`, que es `any` y deja de andar sin avisar el día que ese componente
  * crezca una raíz distinta.
+ *
+ * Devuelve si el foco llegó: dentro de un panel `hidden` no llega y tampoco
+ * falla, y quien llama necesita saberlo para mostrar el panel y reintentar.
  */
-function enfocar() {
-	campo.value?.enfocar();
+function enfocar(): boolean {
+	return campo.value?.enfocar() ?? false;
 }
 
 defineExpose({ enfocar });

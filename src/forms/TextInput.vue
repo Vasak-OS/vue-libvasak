@@ -104,11 +104,21 @@ function alSalir(evento: Event) {
  */
 const campo = ref<HTMLInputElement | null>(null);
 
-function enfocar() {
+/**
+ * Enfoca el campo y **dice si lo consiguió**.
+ *
+ * Lo segundo no es un detalle. Un campo dentro de un panel que está `hidden`
+ * no recibe el foco y tampoco falla: `focus()` no hace nada y no avisa, así
+ * que la tecla que lleva al buscador parece rota. Devolviendo si llegó, quien
+ * llama puede mostrar el panel y reintentar sin preguntar cuánto mide la
+ * ventana. Es de la lista del correo, que ya lo había resuelto así.
+ */
+function enfocar(): boolean {
 	campo.value?.focus();
+	return campo.value !== null && document.activeElement === campo.value;
 }
 
-defineExpose({ enfocar, campo });
+defineExpose({ enfocar });
 
 const clases = computed(() => [
 	'w-full rounded-corner border bg-ui-surface/70 px-3 py-1.5 text-sm text-tx-main',
