@@ -425,13 +425,19 @@ describe('el redondeo de la ventana', () => {
 		expect(elVeloTenido()?.className).toContain('rounded-corner-window');
 	});
 
-	test('y el panel a pantalla completa tampoco', async () => {
+	test('y el panel a pantalla completa tampoco, ni lo que dibuje adentro', async () => {
 		// Ahí el fondo lo pone quien lo usa, sobre un panel que tapa la
 		// pantalla entera: sin el redondeo asoma igual, y encima es opaco.
+		//
+		// Y hace falta recortar además: el radio recorta lo que pinta **este**
+		// elemento y no lo que pinten sus descendientes, así que un hijo con
+		// fondo propio volvería a dejar las esquinas cuadradas. Lo marcó la
+		// revisión.
 		const { vista } = armar({ extra: { size: 'full' } });
 		await abrir(vista);
 
 		expect(elPanel()?.className).toContain('rounded-corner-window');
+		expect(elPanel()?.className).toContain('overflow-hidden');
 	});
 });
 

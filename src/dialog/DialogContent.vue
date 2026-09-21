@@ -113,7 +113,12 @@ const CAJA =
 
 const formaDelPanel = computed(() => {
 	if (props.size === 'full') {
-		return 'relative z-10 h-full w-full rounded-corner-window text-tx-main';
+		// `overflow-hidden` además del redondeo: el radio recorta lo que pinta
+		// **este** elemento —su fondo, su `backdrop-filter`— y no lo que pinten
+		// sus descendientes. Un hijo con fondo propio volvería a dejar las
+		// esquinas cuadradas. `WindowFrame` recorta igual, y lo de acá no
+		// hereda ese recorte porque se teletransporta al `body`.
+		return 'relative z-10 h-full w-full overflow-hidden rounded-corner-window text-tx-main';
 	}
 	return `${CAJA} ${props.size === 'lg' ? 'max-w-2xl' : 'max-w-lg'}`;
 });
