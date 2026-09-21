@@ -13,8 +13,9 @@
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { h, nextTick } from 'vue';
 import ThemeIcon from '../src/icons/ThemeIcon.vue';
+import { usarLaVersionDelTema } from '../src/internos/iconoDelTema';
 import { cuantosOyentes, emitir, olvidarTodo, ponerEnElTema } from './dobles';
 
 async function asentar(vueltas = 8) {
@@ -196,5 +197,70 @@ describe('el oyente del tema', () => {
 		await asentar();
 
 		expect(segunda.get('img').attributes('src')).toBe('data:image/png;base64,NUEVO');
+	});
+});
+
+/**
+ * La versión del tema, para quien resuelve por su cuenta.
+ *
+ * `ThemeIcon` resuelve **un** nombre. La tienda no puede usarlo: prueba una
+ * lista de nombres candidatos en orden —los temas no se ponen de acuerdo entre
+ * el `Icon=` del `.desktop`, el identificador de AppStream y el nombre del
+ * paquete— y si ninguno está, cae a un archivo del catálogo.
+ *
+ * Igual tiene que volver a resolver cuando cambia el tema, y sin esto la única
+ * salida es su propio `listen`: un oyente más por instancia al lado del que la
+ * librería ya tiene para todas. Que es exactamente el composable que se está
+ * borrando de cada aplicación.
+ */
+describe('la versión del tema', () => {
+	/** Un componente cualquiera que la mira, como la haría la tienda. */
+	const QUIEN_RESUELVE_SOLO = {
+		setup() {
+			const version = usarLaVersionDelTema();
+			return () => h('span', String(version.value));
+		},
+	};
+
+	function montarLector() {
+		const componente = mount(QUIEN_RESUELVE_SOLO);
+		montados.push(componente);
+		return componente;
+	}
+
+	test('sube al cambiar el tema', async () => {
+		const lector = montarLector();
+		await asentar();
+		expect(lector.text()).toBe('0');
+
+		await emitir('vicons:theme-changed');
+		await asentar();
+
+		expect(lector.text()).toBe('1');
+	});
+
+	test('y se cuelga del oyente que ya está, sin poner otro', async () => {
+		// Es el punto entero: si cada uno registrara el suyo, esto sería el
+		// composable por instancia con otro nombre.
+		montar({ name: 'firefox' });
+		await asentar();
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(1);
+
+		montarLector();
+		montarLector();
+		await asentar();
+
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(1);
+	});
+
+	test('y el último que se va lo suelta', async () => {
+		const lector = montarLector();
+		await asentar();
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(1);
+
+		lector.unmount();
+		await asentar();
+
+		expect(cuantosOyentes('vicons:theme-changed')).toBe(0);
 	});
 });
