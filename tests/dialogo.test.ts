@@ -412,3 +412,25 @@ describe('la forma de pantalla completa', () => {
 		expect(abierto.value).toBe(false);
 	});
 });
+
+describe('el redondeo de la ventana', () => {
+	test('la tinta del velo no asoma en cuadrado por fuera del marco', async () => {
+		// El velo es `fixed inset-0` —la pantalla entera— y la ventana es
+		// transparente con las esquinas redondeadas: un rectángulo recto deja
+		// tres o cuatro píxeles de gris en cada esquina, fuera del marco y
+		// sobre el escritorio. Es el mismo radio que usa `WindowFrame`.
+		const { vista } = armar();
+		await abrir(vista);
+
+		expect(elVeloTenido()?.className).toContain('rounded-corner-window');
+	});
+
+	test('y el panel a pantalla completa tampoco', async () => {
+		// Ahí el fondo lo pone quien lo usa, sobre un panel que tapa la
+		// pantalla entera: sin el redondeo asoma igual, y encima es opaco.
+		const { vista } = armar({ extra: { size: 'full' } });
+		await abrir(vista);
+
+		expect(elPanel()?.className).toContain('rounded-corner-window');
+	});
+});

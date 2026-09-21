@@ -174,11 +174,14 @@ watch(
 </script>
 
 <template>
-  <!-- El Enter se oye acá y no en el campo: burbujea igual, y `TextInput` no
-       declara eventos de teclado, así que ponérselos encima es cablear por
-       fuera de su contrato. Escape **no** se oye: qué significa depende de
-       dónde viva esta caja —cerrar el desplegable, plegar la barra, salir de la
-       vista— y ésa no es una decisión del campo. -->
+  <!-- El Enter se oye en la caja y no en el campo: burbujea igual y alcanza
+       una sola vez, aunque mañana haya más de un elemento adentro que lo
+       produzca. (`TextInput` declara `keydown` desde la 0.16.0, así que
+       ponérselo encima también sería válido; cuando esto se escribió, no.)
+
+       Escape **no** se oye: qué significa depende de dónde viva esta caja
+       —cerrar el desplegable, plegar la barra, salir de la vista— y ésa no es
+       una decisión del campo. Quien la use se lo pone encima y llega igual. -->
   <div class="relative flex items-center" @keydown.enter="buscarYa">
     <!-- La lupa —o la ruedita mientras busca— no se lee: la etiqueta del campo
          ya dice qué es esto, y un lector de pantalla que diga «imagen, buscar»

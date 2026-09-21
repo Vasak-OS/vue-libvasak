@@ -46,7 +46,10 @@ const props = withDefaults(
 		 * un ancho máximo, que es lo que quiere una pregunta o un formulario.
 		 *
 		 * `full` ocupa la ventana entera y no dibuja nada —ni borde, ni fondo,
-		 * ni relleno—: lo pone quien lo usa. Es para lo que **es** la pantalla
+		 * ni relleno— salvo el redondeo de la ventana, que no es decoración:
+		 * el panel tapa la pantalla entera y la ventana es transparente con las
+		 * esquinas redondeadas, así que sin él el fondo que ponga quien lo usa
+		 * asoma en cuadrado por fuera del marco. Lo demás lo pone quien lo usa. Es para lo que **es** la pantalla
 		 * mientras está abierto, como el visor de fotos de la galería, donde la
 		 * caja centrada no tiene sentido pero el foco encerrado y el Escape sí.
 		 *
@@ -98,7 +101,7 @@ const restoDeLosAtributos = computed(() => {
  */
 const formaDelPanel = computed(() =>
 	props.size === 'full'
-		? 'relative z-10 h-full w-full text-tx-main'
+		? 'relative z-10 h-full w-full rounded-corner-window text-tx-main'
 		: 'relative z-10 w-full max-w-lg rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg'
 );
 
@@ -229,7 +232,14 @@ onUnmounted(() => {
         class="fixed inset-0 z-50 flex items-center justify-center"
         @click="alVelo"
         @keydown="alTeclear">
-        <div v-if="props.size === 'md'" class="absolute inset-0 bg-ui-border-dark/40"></div>
+        <!-- La tinta va redondeada como la ventana. El velo es `fixed inset-0`,
+             o sea la pantalla entera, y la ventana es transparente con las
+             esquinas redondeadas: un rectángulo recto asoma tres o cuatro
+             píxeles de gris en cada esquina, fuera del marco y sobre lo que
+             haya detrás. `WindowFrame` usa el mismo radio. -->
+        <div
+          v-if="props.size === 'md'"
+          class="absolute inset-0 rounded-corner-window bg-ui-border-dark/40"></div>
         <div
           ref="panel"
           tabindex="-1"
