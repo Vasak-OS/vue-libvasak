@@ -45,6 +45,15 @@ const props = withDefaults(
 		 * `md` es el diálogo de siempre: una caja centrada, con borde, fondo y
 		 * un ancho máximo, que es lo que quiere una pregunta o un formulario.
 		 *
+		 * `lg` es la misma caja más ancha, para un formulario de verdad: la
+		 * ventana de redacción del correo, el editor de atajos de Configuración.
+		 * Existe como opción y no como clase que se pasa desde afuera porque
+		 * pisar el ancho del sistema no es estable: las dos clases van en el
+		 * mismo atributo y ahí gana la que Tailwind haya emitido después en la
+		 * hoja. `max-w-2xl` le gana a `max-w-lg` por el orden de la escala, y
+		 * `max-w-xs` **no**, así que ensanchar funcionaba y angostar no — sin
+		 * error, y sin forma de saberlo salvo mirándolo.
+		 *
 		 * `full` ocupa la ventana entera y no dibuja nada —ni borde, ni fondo,
 		 * ni relleno— salvo el redondeo de la ventana, que no es decoración:
 		 * el panel tapa la pantalla entera y la ventana es transparente con las
@@ -56,7 +65,7 @@ const props = withDefaults(
 		 * El velo tampoco se tiñe en `full`: el panel lo tapa entero, y las dos
 		 * capas de color se sumaban a un gris que nadie pidió.
 		 */
-		size?: 'md' | 'full';
+		size?: 'md' | 'lg' | 'full';
 		/**
 		 * Cómo se llama el diálogo cuando no hay un `DialogTitle` visible.
 		 *
@@ -99,11 +108,15 @@ const restoDeLosAtributos = computed(() => {
  * emitido después en la hoja, que no depende de esto. La única forma estable de
  * que quien lo usa mande es que acá no esté la clase que compite.
  */
-const formaDelPanel = computed(() =>
-	props.size === 'full'
-		? 'relative z-10 h-full w-full rounded-corner-window text-tx-main'
-		: 'relative z-10 w-full max-w-lg rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg'
-);
+const CAJA =
+	'relative z-10 w-full rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg';
+
+const formaDelPanel = computed(() => {
+	if (props.size === 'full') {
+		return 'relative z-10 h-full w-full rounded-corner-window text-tx-main';
+	}
+	return `${CAJA} ${props.size === 'lg' ? 'max-w-2xl' : 'max-w-lg'}`;
+});
 
 const dialogo = usarElDialogo();
 const abierto = computed(() => dialogo.abierto.value);

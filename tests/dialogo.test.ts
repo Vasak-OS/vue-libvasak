@@ -434,3 +434,36 @@ describe('el redondeo de la ventana', () => {
 		expect(elPanel()?.className).toContain('rounded-corner-window');
 	});
 });
+
+describe('el ancho', () => {
+	test('el de siempre y el ancho son dos formas, no una clase que se pisa', async () => {
+		// Pisar el ancho del sistema desde afuera funciona para ensanchar y no
+		// para angostar: las dos clases van en el mismo atributo y ahí gana la
+		// que Tailwind haya emitido después en la hoja, que sigue el orden de
+		// la escala. `max-w-2xl` le gana a `max-w-lg`; `max-w-xs` no. Sin error
+		// y sin forma de enterarse salvo mirándolo.
+		const normal = armar();
+		await abrir(normal.vista);
+		expect(elPanel()?.className).toContain('max-w-lg');
+
+		normal.vista.unmount();
+		vistas.delete(normal.vista);
+		for (const suelto of document.body.querySelectorAll('[role="dialog"]')) {
+			suelto.parentElement?.remove();
+		}
+
+		const ancho = armar({ extra: { size: 'lg' } });
+		await abrir(ancho.vista);
+		expect(elPanel()?.className).toContain('max-w-2xl');
+		expect(elPanel()?.className).not.toContain('max-w-lg');
+	});
+
+	test('y el ancho sigue trayendo la caja: borde, fondo y relleno', async () => {
+		const { vista } = armar({ extra: { size: 'lg' } });
+		await abrir(vista);
+
+		const clases = elPanel()?.className ?? '';
+		expect(clases).toContain('border-ui-border');
+		expect(clases).toContain('p-6');
+	});
+});
