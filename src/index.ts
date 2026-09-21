@@ -189,4 +189,4 @@ export { posicionDe, usarLaPosicionDeLaBarra } from "./window/preferencia";
  * instalador, donde el aviso dejó de dibujar su icono al correr la suite entera
  * y lo dibujaba bien al correr su archivo solo.
  */
-export { olvidarLosIconosDelTema } from "./internos/iconoDelTema";
+export { olvidarLosIconosDelTema, usarLaVersionDelTema } from "./internos/iconoDelTema";

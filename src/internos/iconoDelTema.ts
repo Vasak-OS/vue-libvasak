@@ -1,6 +1,6 @@
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { getIconSource, getSymbolSource } from '@vasakgroup/plugin-vicons';
-import { onMounted, onUnmounted, ref, type Ref, watch } from 'vue';
+import { onMounted, onUnmounted, readonly, ref, type Ref, watch } from 'vue';
 
 /**
  * Resolver un icono del tema del escritorio, y seguirlo cuando cambia.
@@ -148,6 +148,49 @@ function resolverCompartido(nombre: string, tipo: 'icon' | 'symbol'): Promise<st
 
 	enVuelo.set(clave, nuevo);
 	return nuevo;
+}
+
+/**
+ * Cuántas veces cambió el tema de iconos, para quien resuelve por su cuenta.
+ *
+ * `ThemeIcon` resuelve **un** nombre del tema. Hay componentes que no pueden
+ * usarlo porque su forma de conseguir el icono es otra: la tienda prueba una
+ * lista de nombres candidatos en orden —los temas no se ponen de acuerdo entre
+ * el `Icon=` del `.desktop`, el identificador de AppStream y el nombre del
+ * paquete— y si ninguno está, cae a un archivo del catálogo.
+ *
+ * Ese componente igual tiene que volver a resolver cuando la persona cambia de
+ * tema, y sin esto la única salida es registrar su propio `listen`: un oyente
+ * más por instancia, al lado del que esta librería ya tiene para todas. Eso es
+ * exactamente el composable que este barrido viene borrando de cada aplicación.
+ *
+ * Se devuelve de sólo lectura: quien la usa la mira en un `watch`, no la mueve.
+ *
+ * ```ts
+ * const version = usarLaVersionDelTema();
+ * watch([loQueSea, version], resolver, { immediate: true });
+ * ```
+ */
+export function usarLaVersionDelTema(): Readonly<Ref<number>> {
+	let desmontado = false;
+
+	onMounted(async () => {
+		await tomarElOyente();
+		// Registrarse tarda: si el componente ya se fue, se devuelve en el acto
+		// en vez de dejar la cuenta subida para siempre.
+		if (desmontado) {
+			devolverElOyente();
+		}
+	});
+
+	onUnmounted(() => {
+		if (!desmontado) {
+			desmontado = true;
+			devolverElOyente();
+		}
+	});
+
+	return readonly(version);
 }
 
 export function useIconoDelTema(nombre: Ref<string>, tipo: Ref<'icon' | 'symbol'>) {

@@ -79,6 +79,7 @@ const SUPERFICIE_DE_LA_1_0 = [
 	'usarElTooltip',
 	'usarLaBarra',
 	'usarLaPosicionDeLaBarra',
+	'usarLaVersionDelTema',
 ];
 
 describe('la superficie pública de la 1.0', () => {
