@@ -51,6 +51,20 @@ async function asentar(vueltas = 8) {
 	}
 }
 
+/**
+ * Espera a que la recarga del cambio de tema haya pasado.
+ *
+ * Desde que la recarga va por tandas, el aviso del cambio de tema **no**
+ * resuelve en el acto: espera 100 ms para que varios avisos seguidos sean uno
+ * solo. Estas pruebas van por el camino de verdad —con la espera incluida— y no
+ * lo saltean, porque lo que prometen es que el icono termina siguiendo al tema,
+ * y eso ahora incluye el rebote.
+ */
+async function esperarLaRecarga() {
+	await new Promise((listo) => setTimeout(listo, 150));
+	await asentar();
+}
+
 beforeEach(() => {
 	olvidarTodo();
 });
@@ -307,7 +321,7 @@ describe('los iconos', () => {
 
 		ponerEnElTema('utilities-system-monitor', 'data:image/png;base64,OSCURO');
 		await emitir('vicons:theme-changed');
-		await asentar();
+		await esperarLaRecarga();
 
 		expect(barra.get('img').attributes('src')).toBe('data:image/png;base64,OSCURO');
 	});

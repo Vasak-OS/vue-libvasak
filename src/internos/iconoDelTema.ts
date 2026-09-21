@@ -21,7 +21,30 @@ import { onMounted, onUnmounted, readonly, ref, type Ref, watch } from 'vue';
  *
  * Ahora lo resuelto se memoriza por nombre y tipo, el pedido en vuelo se
  * comparte, y el oyente del cambio de tema es uno solo para todas las
- * instancias. Al cambiar el tema se vacía la memoria y todas vuelven a resolver.
+ * instancias.
+ *
+ * # Y por qué la recarga va por tandas
+ *
+ * La memoria evita **pedir dos veces lo mismo**. No evita **pedir cuarenta cosas
+ * a la vez**, que es otro problema y aparece donde los nombres son todos
+ * distintos: el menú del escritorio dibuja la lista entera de aplicaciones
+ * instaladas, entre sesenta y ciento cincuenta iconos, casi todas fuera de
+ * pantalla. Al cambiar de tema, resolver todo de golpe es una llamada al backend
+ * por aplicación disparada en el proceso que dibuja el panel.
+ *
+ * Así que al cambiar el tema no se resuelve todo de una:
+ *
+ * - se **espera 100 ms** antes de empezar, porque los avisos vienen de a varios
+ *   —cambiar de claro a oscuro toca más de una cosa— y sólo importa el último;
+ * - si entra un aviso nuevo con un ciclo a medio correr, el viejo **se cancela**;
+ * - lo que está **en pantalla** se recarga primero, y para saberlo hay un
+ *   `IntersectionObserver`: sin eso el orden lo decide el de montaje, que no
+ *   tiene nada que ver con lo que la persona está mirando;
+ * - y el resto va **de a diez, con 16 ms entre tandas** —un cuadro a 60 Hz—
+ *   para que el hilo pueda dibujar entre medio.
+ *
+ * Esto venía de `vasak-desktop`, que lo escribió porque le hacía falta y lo tuvo
+ * sin pruebas: acá es de todos y está probado.
  *
  * Interno a propósito: lo comparten `ThemeIcon` y `SideButton`, y lo que las
  * aplicaciones usan es el componente, no esto.
@@ -60,14 +83,171 @@ export function olvidarLosIconosDelTema() {
 	soltarElOyente = null;
 	registrando = null;
 	version.value = 0;
+	registradas.clear();
+	enPantalla.clear();
+	proximoId = 0;
+	// El vigía también: se queda mirando elementos de componentes que ya no
+	// existen, y en las pruebas eso lo hereda el archivo siguiente.
+	vigia?.disconnect();
+	vigia = null;
+	vigiaIntentado = false;
+	if (esperando !== null) {
+		clearTimeout(esperando);
+		esperando = null;
+	}
+	if (cicloActual) cicloActual.cancelado = true;
+	cicloActual = null;
+}
+
+// ── El planificador de la recarga ──────────────────────────────────────────
+
+/** Cuánto se espera antes de empezar, para que varios avisos sean uno. */
+const ESPERA_MS = 100;
+/** Cuántos iconos se resuelven juntos. */
+const POR_TANDA = 10;
+/** Un cuadro a 60 Hz: lo que se le deja al hilo entre tanda y tanda. */
+const ENTRE_TANDAS_MS = 16;
+
+type Recarga = () => Promise<void>;
+
+/** Cada instancia registrada, con el elemento que dibuja si lo tiene. */
+const registradas = new Map<number, { recargar: Recarga; elemento: HTMLElement | null }>();
+const enPantalla = new Set<number>();
+let proximoId = 0;
+
+/**
+ * Quién está en pantalla.
+ *
+ * Se crea a la primera, y no al cargar el módulo, porque en una prueba con el
+ * DOM puesto después del import no existiría. Donde no haya
+ * `IntersectionObserver` —una prueba sin DOM— se sigue sin él: todas cuentan
+ * como visibles, que es el orden de antes y no rompe nada.
+ */
+let vigia: IntersectionObserver | null = null;
+let vigiaIntentado = false;
+
+function elVigia(): IntersectionObserver | null {
+	if (vigiaIntentado) {
+		return vigia;
+	}
+	vigiaIntentado = true;
+	if (typeof IntersectionObserver === 'undefined') {
+		return null;
+	}
+	vigia = new IntersectionObserver(
+		(entradas) => {
+			for (const entrada of entradas) {
+				const cual = (entrada.target as HTMLElement).dataset?.iconoId;
+				if (cual == null) continue;
+				const id = Number.parseInt(cual, 10);
+				if (entrada.isIntersecting) enPantalla.add(id);
+				else enPantalla.delete(id);
+			}
+		},
+		{ threshold: 0 }
+	);
+	return vigia;
+}
+
+function anotar(recargar: Recarga): number {
+	const id = proximoId++;
+	registradas.set(id, { recargar, elemento: null });
+	// Hasta que el vigía diga lo contrario, cuenta como visible: si no, lo que
+	// se acaba de montar se recargaría último, que es justo al revés.
+	enPantalla.add(id);
+	return id;
+}
+
+/**
+ * Le dice al vigía qué elemento mirar.
+ *
+ * Va aparte de `anotar` porque el elemento no existe cuando se registra: en
+ * `setup` todavía no hay DOM. Quien lo tenga lo pasa al montar.
+ */
+function mirarElemento(id: number, elemento: HTMLElement | null) {
+	const entrada = registradas.get(id);
+	if (!entrada || !elemento) return;
+	const ojo = elVigia();
+	if (!ojo) return;
+	entrada.elemento = elemento;
+	elemento.dataset.iconoId = String(id);
+	ojo.observe(elemento);
+}
+
+function olvidar(id: number) {
+	const entrada = registradas.get(id);
+	if (entrada?.elemento) {
+		vigia?.unobserve(entrada.elemento);
+		delete entrada.elemento.dataset.iconoId;
+	}
+	enPantalla.delete(id);
+	registradas.delete(id);
+}
+
+let esperando: ReturnType<typeof setTimeout> | null = null;
+/** El ciclo en curso. Se compara por identidad para saber si sigue siendo el suyo. */
+let cicloActual: { cancelado: boolean } | null = null;
+
+function dormir(ms: number) {
+	return new Promise((listo) => setTimeout(listo, ms));
+}
+
+async function correrElCiclo(ciclo: { cancelado: boolean }) {
+	// Se saca una foto: lo que se desmonte a mitad desaparece del mapa y se
+	// saltea al buscarlo.
+	const todas = [...registradas.keys()];
+	const visibles = todas.filter((id) => enPantalla.has(id));
+	const ocultas = todas.filter((id) => !enPantalla.has(id));
+
+	for (const grupo of [visibles, ocultas]) {
+		for (let desde = 0; desde < grupo.length; desde += POR_TANDA) {
+			if (ciclo.cancelado) return;
+			const tanda = grupo.slice(desde, desde + POR_TANDA);
+			await Promise.allSettled(
+				tanda.map((id) => registradas.get(id)?.recargar() ?? Promise.resolve())
+			);
+			if (ciclo.cancelado) return;
+			if (desde + POR_TANDA < grupo.length || grupo === visibles) {
+				await dormir(ENTRE_TANDAS_MS);
+			}
+		}
+	}
+
+	if (cicloActual === ciclo) cicloActual = null;
+}
+
+/**
+ * Empieza de nuevo, cancelando lo que hubiera a medio hacer.
+ *
+ * Exportado para las pruebas: sin esto habría que esperar los 100 ms de rebote
+ * en cada una, y una prueba que duerme es una prueba que a veces falla sola.
+ */
+export function recargarLosIconosAhora() {
+	if (esperando !== null) {
+		clearTimeout(esperando);
+		esperando = null;
+	}
+	if (cicloActual) cicloActual.cancelado = true;
+	const ciclo = { cancelado: false };
+	cicloActual = ciclo;
+	void correrElCiclo(ciclo);
 }
 
 function alCambiarElTema() {
 	// Lo resuelto ya no vale, y lo que esté en vuelo tampoco: se pidió contra el
-	// tema anterior.
+	// tema anterior. Se vacía en el acto y no al empezar el ciclo, para que nadie
+	// que resuelva mientras tanto se lleve un valor del tema viejo.
 	memoria.clear();
 	enVuelo.clear();
+	// Los que resuelven por su cuenta con `usarLaVersionDelTema()` no pasan por
+	// el planificador: son pocos y saben lo que hacen.
 	version.value++;
+
+	if (esperando !== null) clearTimeout(esperando);
+	esperando = setTimeout(() => {
+		esperando = null;
+		recargarLosIconosAhora();
+	}, ESPERA_MS);
 }
 
 /**
@@ -197,6 +377,11 @@ export function useIconoDelTema(nombre: Ref<string>, tipo: Ref<'icon' | 'symbol'
 	const fuente = ref('');
 	let desmontado = false;
 	let ultimoPedido = 0;
+	// Se anota en el `setup` y no al montar: entre una cosa y la otra puede
+	// llegar un cambio de tema, y quien no está anotado no se entera.
+	const id = anotar(async () => {
+		await resolver();
+	});
 
 	async function resolver() {
 		const mio = ++ultimoPedido;
@@ -223,12 +408,14 @@ export function useIconoDelTema(nombre: Ref<string>, tipo: Ref<'icon' | 'symbol'
 
 	onUnmounted(() => {
 		desmontado = true;
+		olvidar(id);
 		devolverElOyente();
 	});
 
 	watch([nombre, tipo], resolver);
-	// Al cambiar el tema, todas vuelven a resolver contra la memoria vacía.
-	watch(version, resolver);
 
-	return fuente;
+	// El cambio de tema ya **no** se mira acá: lo reparte el planificador, que
+	// decide en qué orden y de a cuántos. Mirar `version` además haría las dos
+	// cosas a la vez, que es lo que se está tratando de evitar.
+	return { fuente, mirarElemento: (elemento: HTMLElement | null) => mirarElemento(id, elemento) };
 }
