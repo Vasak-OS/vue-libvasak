@@ -13,11 +13,13 @@
 
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
-import { h } from 'vue';
+import { defineComponent, h, nextTick } from 'vue';
 import AlertMessage from '../src/feedback/AlertMessage.vue';
 import EmptyState from '../src/feedback/EmptyState.vue';
 import LoadingState from '../src/feedback/LoadingState.vue';
 import FormGroup from '../src/forms/FormGroup.vue';
+import Dialog from '../src/dialog/Dialog.vue';
+import DialogContent from '../src/dialog/DialogContent.vue';
 import ToastArea from '../src/feedback/ToastArea.vue';
 import { rolDelTono } from '../src/feedback/tonos';
 import ProgressBar from '../src/forms/ProgressBar.vue';
@@ -400,5 +402,50 @@ describe('el estado de carga', () => {
 
 		expect(suelto.classes()).not.toContain('border-dashed');
 		expect(encajado.classes()).toContain('border-dashed');
+	});
+});
+
+/** El número de la clase `z-N` de un elemento, o 0 si no lleva ninguna. */
+function altura(clases: string): number {
+	const encontrada = clases.split(/\s+/).find((clase) => /^z-\d+$/.test(clase));
+	return encontrada ? Number(encontrada.slice(2)) : 0;
+}
+
+describe('quién queda encima de quién', () => {
+	test('un aviso transitorio se ve por encima de un diálogo abierto', async () => {
+		// Los dos se teletransportan al `body`, así que con el mismo `z-index`
+		// el orden lo decide cuál se agregó último — y el diálogo se agrega al
+		// abrirse, o sea siempre después. Un «se copió» disparado desde adentro
+		// de un diálogo quedaba tapado por él.
+		//
+		// Se comparan los dos números y no se comprueba uno fijo: lo que
+		// importa es el orden, y bajar cualquiera de los dos lo rompe igual.
+		const pila = mount(ToastArea, {
+			props: { toasts: [{ id: 1, message: 'Se copió' }] },
+			attachTo: document.body,
+		});
+		const dialogo = mount(
+			defineComponent({
+				setup: () => () => h(Dialog, { open: true }, () => h(DialogContent, () => 'Borrar')),
+			}),
+			{ attachTo: document.body }
+		);
+		await nextTick();
+
+		// El velo es el padre del panel: es el que lleva el `z-index` del
+		// diálogo. Se lo busca así y no por su clase para que la prueba falle
+		// si el diálogo no llegó a abrirse, en vez de comparar contra cero.
+		const elVelo = document.body.querySelector('[role="dialog"]')?.parentElement;
+		const laPila = document.body.querySelector('.pointer-events-none.fixed');
+
+		expect(elVelo).toBeTruthy();
+		expect(altura(elVelo?.className ?? '')).toBeGreaterThan(0);
+		expect(altura(laPila?.className ?? '')).toBeGreaterThan(altura(elVelo?.className ?? ''));
+
+		pila.unmount();
+		dialogo.unmount();
+		for (const suelto of document.body.querySelectorAll('[role="dialog"]')) {
+			suelto.parentElement?.remove();
+		}
 	});
 });
