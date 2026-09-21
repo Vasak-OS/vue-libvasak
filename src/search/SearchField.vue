@@ -91,6 +91,17 @@ const emit = defineEmits<{
 	'update:modelValue': [valor: string];
 	search: [valor: string];
 	clear: [];
+	/**
+	 * Las teclas, para que quien lo usa pueda atender las suyas.
+	 *
+	 * Escape sobre todo: qué significa depende de dónde viva esta caja, así que
+	 * no lo decide el campo. Eso ya estaba dicho, pero no se podía hacer: con
+	 * `strictTemplates`, un `@keydown` sobre un componente que no lo declara es
+	 * un error de tipos, y la salida era un `v-bind` de objeto, que no se
+	 * comprueba. Declararlo lo saca de `$attrs`, así que reenviarlo abajo no es
+	 * opcional: sin eso el campo enmudece y nada avisa.
+	 */
+	keydown: [evento: KeyboardEvent];
 }>();
 
 const campo = ref<InstanceType<typeof TextInput> | null>(null);
@@ -183,12 +194,13 @@ watch(
 <template>
   <!-- El Enter se oye en la caja y no en el campo: burbujea igual y alcanza
        una sola vez, aunque mañana haya más de un elemento adentro que lo
-       produzca. (`TextInput` declara `keydown` desde la 0.16.0, así que
-       ponérselo encima también sería válido; cuando esto se escribió, no.)
+       produzca.
 
-       Escape **no** se oye: qué significa depende de dónde viva esta caja
-       —cerrar el desplegable, plegar la barra, salir de la vista— y ésa no es
-       una decisión del campo. Quien la use se lo pone encima y llega igual. -->
+       Las demás teclas **se reenvían** en vez de atenderse: qué significa
+       Escape depende de dónde viva esta caja —cerrar el desplegable, plegar la
+       barra, salir de la vista— y ésa no es una decisión del campo. Se reenvían
+       desde el campo y no desde acá para no reinterpretar a mano lo que el
+       modificador `.enter` de Vue ya decide bien. -->
   <div class="relative flex items-center" @keydown.enter="buscarYa">
     <!-- La lupa —o la ruedita mientras busca— no se lee: la etiqueta del campo
          ya dice qué es esto, y un lector de pantalla que diga «imagen, buscar»
@@ -211,7 +223,8 @@ watch(
       :disabled="disabled"
       class="pl-7 [&::-webkit-search-cancel-button]:appearance-none"
       :class="muestraLaCruz ? 'pr-8' : ''"
-      @update:model-value="escribir" />
+      @update:model-value="escribir"
+      @keydown="emit('keydown', $event)" />
 
     <button
       v-if="muestraLaCruz"
