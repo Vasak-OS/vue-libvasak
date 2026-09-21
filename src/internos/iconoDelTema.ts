@@ -166,7 +166,21 @@ function anotar(recargar: Recarga): number {
  */
 function mirarElemento(id: number, elemento: HTMLElement | null) {
 	const entrada = registradas.get(id);
-	if (!entrada || !elemento) return;
+	if (!entrada || entrada.elemento === elemento) return;
+
+	// Se suelta el anterior **antes** de tomar el nuevo. `ThemeIcon` cambia el
+	// `span` del hueco por el `img` cuando el icono resuelve, así que esto corre
+	// dos veces con elementos distintos: sin soltar, los dos quedan vigilados
+	// con el mismo identificador, y un aviso tardío del viejo —que ya no está en
+	// el documento, o sea nunca visible— saca de «en pantalla» a un icono que sí
+	// lo está. Ahí se recargaría último, que es justo al revés.
+	if (entrada.elemento) {
+		vigia?.unobserve(entrada.elemento);
+		delete entrada.elemento.dataset.iconoId;
+		entrada.elemento = null;
+	}
+
+	if (!elemento) return;
 	const ojo = elVigia();
 	if (!ojo) return;
 	entrada.elemento = elemento;
@@ -214,6 +228,20 @@ async function correrElCiclo(ciclo: { cancelado: boolean }) {
 	}
 
 	if (cicloActual === ciclo) cicloActual = null;
+}
+
+/**
+ * Cuántos iconos hay anotados en el planificador.
+ *
+ * Sólo para las pruebas, y hace falta: lo que se anota al montar tiene que
+ * irse al desmontar, y desde afuera eso **no se puede ver** contando pedidos.
+ * Un componente desmontado que siguiera anotado tampoco pediría nada —al
+ * desmontarse su nombre queda vacío y la resolución sale antes de preguntar—,
+ * así que una prueba que cuente pedidos pasa con la baja puesta y sin ella.
+ * Se vio: el sabotaje de sacar la baja no movió ninguna prueba.
+ */
+export function cuantosIconosAnotados(): number {
+	return registradas.size;
 }
 
 /**
