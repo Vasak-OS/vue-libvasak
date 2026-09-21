@@ -297,15 +297,36 @@ describe('los atributos de quien lo usa', () => {
 		expect(elPanel()?.className).toContain('max-w-3xl');
 	});
 
-	test('y los demás también, que es la otra forma de nombrarlo', async () => {
+	test('y los demás también, que es lo que deja ponerle un `id`', async () => {
 		// Apagar el `fallthrough` para repartir la `class` a mano se lleva
-		// puesto todo lo demás. Un diálogo sin `DialogTitle` visible se queda
-		// entonces sin ninguna forma de tener nombre.
-		const { vista } = armar({ titulo: false, extra: { 'aria-label': 'Confirmar', id: 'el-dialogo' } });
+		// puesto todo lo demás.
+		const { vista } = armar({ titulo: false, extra: { id: 'el-dialogo' } });
 		await abrir(vista);
 
-		expect(elPanel()?.getAttribute('aria-label')).toBe('Confirmar');
 		expect(elPanel()?.id).toBe('el-dialogo');
+	});
+
+	test('sin título visible, el nombre lo pone `ariaLabel`', async () => {
+		// Es una propiedad declarada y no un atributo que cae. Por ahí no se
+		// podía aunque el atributo llegara: con `strictTemplates`, un
+		// `aria-label` escrito sobre el componente es un error de tipos, porque
+		// de un `Teleport` no se deduce ningún elemento al que pertenezca. Lo
+		// que quedaba era un `v-bind` de objeto, que no se comprueba.
+		const { vista } = armar({ titulo: false, extra: { ariaLabel: 'Viendo foto-2.png' } });
+		await abrir(vista);
+
+		expect(elPanel()?.getAttribute('aria-label')).toBe('Viendo foto-2.png');
+	});
+
+	test('y con título visible gana el título, sin dos nombres a la vez', async () => {
+		// Los dos puestos dejan al lector de pantalla eligiendo: `aria-label`
+		// le gana a `aria-labelledby` en algunos, al revés en otros. El que se
+		// ve en la pantalla es el título, así que ése manda.
+		const { vista } = armar({ extra: { ariaLabel: 'Otro nombre' } });
+		await abrir(vista);
+
+		expect(elPanel()?.hasAttribute('aria-label')).toBe(false);
+		expect(elPanel()?.getAttribute('aria-labelledby')).toBeTruthy();
 	});
 });
 
