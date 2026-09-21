@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-1 rounded-corner relative hover:bg-primary dark:hover:bg-primary-dark group transition-all duration-300"
+    class="p-1 rounded-corner relative hover:bg-primary dark:hover:bg-primary-dark group transition-[background-color] duration-300"
     :class="customClass"
     :title="tooltip"
     @click="handleClick"
@@ -10,7 +10,7 @@
     <img
       :src="icon"
       :alt="alt"
-      class="m-auto h-5.5 w-auto transition-all duration-300"
+      class="m-auto h-5.5 w-auto"
       :class="iconClass"
     />
     
@@ -25,7 +25,7 @@
     <!-- Tooltip personalizado -->
     <div 
       v-if="showCustomTooltip && customTooltipText"
-      class="absolute top-1 left-1/2 transform -translate-x-1/2 text-xs font-semibold p-1 rounded-corner transition-all duration-300 pointer-events-none background"
+      class="absolute top-1 left-1/2 transform -translate-x-1/2 text-xs font-semibold p-1 rounded-corner transition-[opacity,translate] duration-300 pointer-events-none background"
       :class="[
         tooltipClass,
         {

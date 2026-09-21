@@ -1,6 +1,6 @@
 <template>
   <div
-    class="background rounded-corner flex flex-row items-center gap-2 justify-between w-full h-auto p-4 transition-all duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80"
+    class="background rounded-corner flex flex-row items-center gap-2 justify-between w-full h-auto p-4 transition-[background-color] duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80"
   >
     <button
       v-if="showButton"
@@ -8,12 +8,12 @@
       type="button"
       :title="buttonLabel ?? label"
       :aria-label="buttonLabel ?? label"
-      class="w-8 h-8 flex items-center justify-center rounded-corner transition-all duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80 hover:scale-110 active:scale-95"
+      class="w-8 h-8 flex items-center justify-center rounded-corner transition-[background-color,scale] duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80 hover:scale-110 active:scale-95"
     >
       <img
         :src="icon"
         alt=""
-        class="w-6 h-6 transition-all duration-200"
+        class="w-6 h-6"
         :class="iconClass"
       />
     </button>
@@ -25,7 +25,7 @@
       <img
         :src="icon"
         alt=""
-        class="w-6 h-6 transition-all duration-200"
+        class="w-6 h-6"
       />
     </div>
 
@@ -37,11 +37,11 @@
       @input="handleInput"
       :aria-label="label"
       :aria-valuetext="`${percentage}%`"
-      class="flex-1 transition-all duration-200 hover:scale-105"
+      class="flex-1 transition-[scale] duration-200 hover:scale-105"
     />
     
     <span
-      class="w-12 text-right transition-all duration-200 font-medium"
+      class="w-12 text-right transition-[color] duration-200 font-medium"
       :class="percentageClass"
     >
       {{ percentage }}%

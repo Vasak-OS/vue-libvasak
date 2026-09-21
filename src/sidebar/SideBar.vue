@@ -188,7 +188,7 @@ defineExpose({ collapsed: plegada });
 
 <template>
   <aside
-    class="relative z-30 flex h-full shrink-0 flex-col rounded-corner border border-ui-border bg-ui-surface/70 transition-all duration-300"
+    class="relative z-30 flex h-full shrink-0 flex-col rounded-corner border border-ui-border bg-ui-surface/70 transition-[width] duration-300"
     :class="['w-[84px]', plegada ? 'md:w-[84px]' : 'md:w-72']">
     <header
       v-if="hayTitulo || $slots.header"

@@ -59,7 +59,7 @@ const handleClick = (event: Event) => {
   <button
     :type="props.type"
     @click="handleClick"
-    class="rounded-corner transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    class="rounded-corner transition-[background-color,opacity] duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     :class="[
       variantClasses[props.variant],
       sizeClasses[props.size],
