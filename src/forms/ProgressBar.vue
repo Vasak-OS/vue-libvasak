@@ -31,9 +31,28 @@ const props = withDefaults(
 		value: number | null;
 		/** Qué está progresando. Lo lee un lector de pantalla. */
 		label: string;
+		/**
+		 * El color de la franja, para las barras que miden un **nivel**.
+		 *
+		 * Una copia de un archivo al 95 % va bien; un disco al 95 % no. La
+		 * diferencia no la puede adivinar la barra, así que la dice quien la
+		 * pone: el monitor pinta en ámbar desde el 75 % y en rojo desde el 90 %,
+		 * y era lo único que su copia tenía y ésta no.
+		 *
+		 * El color no informa solo: `aria-valuenow` ya dice el número, que es lo
+		 * que oye quien no lo ve. Sirve para reconocerlo de un vistazo entre
+		 * cinco barras, que es justo lo que hace un monitor.
+		 */
+		tone?: 'normal' | 'warning' | 'critical';
 	}>(),
-	{}
+	{ tone: 'normal' }
 );
+
+const COLOR: Record<'normal' | 'warning' | 'critical', string> = {
+	normal: 'bg-primary',
+	warning: 'bg-status-warning',
+	critical: 'bg-status-error',
+};
 
 const acotado = computed(() =>
 	props.value === null ? null : Math.max(0, Math.min(100, props.value))
@@ -50,7 +69,8 @@ const acotado = computed(() =>
     class="h-2 w-full overflow-hidden rounded-corner bg-ui-surface/70">
     <div
       v-if="acotado !== null"
-      class="h-full rounded-corner bg-primary transition-[width] duration-300 ease-out"
+      class="h-full rounded-corner transition-[width] duration-300 ease-out"
+      :class="COLOR[tone]"
       :style="{ width: `${acotado}%` }"></div>
     <!-- Indeterminado: el ancho completo, latiendo. No dice cuánto falta porque
          no se sabe, pero sí que algo sigue pasando. Con menos movimiento pedido
