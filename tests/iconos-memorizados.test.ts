@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
 import { h, nextTick } from 'vue';
 import ThemeIcon from '../src/icons/ThemeIcon.vue';
-import { usarLaVersionDelTema } from '../src/internos/iconoDelTema';
+import { recargarLosIconosAhora, usarLaVersionDelTema } from '../src/internos/iconoDelTema';
 import { cuantosOyentes, emitir, olvidarTodo, ponerEnElTema } from './dobles';
 
 async function asentar(vueltas = 8) {
@@ -48,6 +48,23 @@ function montar(props: Record<string, unknown>) {
 	const componente = mount(ThemeIcon, { props });
 	montados.push(componente);
 	return componente;
+}
+
+/**
+ * Hace pasar la recarga del cambio de tema, sin esperar el reloj.
+ *
+ * Desde que la recarga va por tandas, el aviso **no** resuelve en el acto:
+ * espera 100 ms para que varios avisos seguidos sean uno solo. Acá eso se
+ * empuja en vez de dormirlo: una prueba que depende del reloj de pared falla
+ * sola el día que la máquina esté cargada, y en esta misma suite ya hay una que
+ * lo hace.
+ *
+ * Que el rebote **exista** se prueba aparte, en `planificador-de-iconos`. Lo de
+ * acá es lo otro: que el icono termine siguiendo al tema.
+ */
+async function esperarLaRecarga() {
+	recargarLosIconosAhora();
+	await asentar();
 }
 
 beforeEach(() => {
@@ -161,7 +178,7 @@ describe('el oyente del tema', () => {
 
 		ponerEnElTema('firefox', 'data:image/png;base64,OSCURO');
 		await emitir('vicons:theme-changed');
-		await asentar();
+		await esperarLaRecarga();
 
 		expect(icono.get('img').attributes('src')).toBe('data:image/png;base64,OSCURO');
 	});

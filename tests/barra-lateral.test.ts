@@ -14,6 +14,7 @@ import { nextTick } from 'vue';
 import SideBar from '../src/sidebar/SideBar.vue';
 import SideButton from '../src/sidebar/SideButton.vue';
 import SideGroup from '../src/sidebar/SideGroup.vue';
+import { recargarLosIconosAhora } from '../src/internos/iconoDelTema';
 import {
 	cuantosOyentes,
 	demorarElProximoRegistro,
@@ -49,6 +50,23 @@ async function asentar(vueltas = 8) {
 	for (let i = 0; i < vueltas; i++) {
 		await nextTick();
 	}
+}
+
+/**
+ * Hace pasar la recarga del cambio de tema, sin esperar el reloj.
+ *
+ * Desde que la recarga va por tandas, el aviso **no** resuelve en el acto:
+ * espera 100 ms para que varios avisos seguidos sean uno solo. Acá eso se
+ * empuja en vez de dormirlo: una prueba que depende del reloj de pared falla
+ * sola el día que la máquina esté cargada, y en esta misma suite ya hay una que
+ * lo hace.
+ *
+ * Que el rebote **exista** se prueba aparte, en `planificador-de-iconos`. Lo de
+ * acá es lo otro: que el icono termine siguiendo al tema.
+ */
+async function esperarLaRecarga() {
+	recargarLosIconosAhora();
+	await asentar();
 }
 
 beforeEach(() => {
@@ -307,7 +325,7 @@ describe('los iconos', () => {
 
 		ponerEnElTema('utilities-system-monitor', 'data:image/png;base64,OSCURO');
 		await emitir('vicons:theme-changed');
-		await asentar();
+		await esperarLaRecarga();
 
 		expect(barra.get('img').attributes('src')).toBe('data:image/png;base64,OSCURO');
 	});
