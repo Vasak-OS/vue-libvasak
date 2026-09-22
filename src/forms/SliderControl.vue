@@ -10,7 +10,10 @@
       :aria-label="buttonLabel ?? label"
       class="w-8 h-8 flex items-center justify-center rounded-corner transition-[background-color,scale] duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80 hover:scale-110 active:scale-95"
     >
+      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" :class="iconClass" />
+      <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
       <img
+        v-else
         :src="icon"
         alt=""
         class="w-6 h-6"
@@ -22,7 +25,10 @@
       v-else
       class="w-8 h-8 flex items-center justify-center"
     >
+      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" />
+      <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
       <img
+        v-else
         :src="icon"
         alt=""
         class="w-6 h-6"
@@ -65,11 +71,30 @@
  *
  * Por eso `label` es obligatorio y reemplaza a `alt` y `tooltip`, que eran dos
  * formas de nombrar lo mismo y ninguna obligaba a hacerlo.
+ *
+ * ── El icono va por nombre ─────────────────────────────────────────────────
+ *
+ * `name` es el **nombre** del icono en el tema del escritorio, y `type` cuál de
+ * las dos variantes. Lo dibuja `ThemeIcon`, así que sigue al tema y entra en el
+ * planificador de recarga como cualquier otro.
+ *
+ * `icon` —la ruta ya resuelta— sigue funcionando y está **obsoleto**. Era lo
+ * contrario de lo que hace el resto de la librería: obligaba a quien lo usara a
+ * resolver la ruta por su cuenta, escuchar el cambio de tema y volver a
+ * pedirla, que es exactamente el composable que este barrido viene borrando de
+ * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
+ * Lo pedía el issue #52.
  */
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
 
 interface Props {
-  icon: string;
+  /** El nombre del icono en el tema del escritorio. */
+  name?: string;
+  /** Cuál de las dos variantes del tema. */
+  type?: 'icon' | 'symbol';
+  /** @deprecated La ruta ya resuelta. Usá `name`. Se va en la próxima mayor. */
+  icon?: string;
   /**
    * Qué regula el deslizador, ya traducido. Obligatorio: el `input` no tiene
    * `<label>` asociado ni texto propio.
@@ -86,11 +111,22 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  name: '',
+  type: 'icon',
+  icon: '',
   min: 0,
   max: 100,
   showButton: false,
   iconClass: () => ({}),
   getPercentageClass: () => '',
+});
+
+onMounted(() => {
+  if (props.icon && !props.name) {
+    console.warn(
+      '[SliderControl] «icon» está obsoleto y se va en la próxima mayor: recibe una ruta ya resuelta. Usá «name» con el nombre del icono del tema, y «type» si hace falta el símbolo.'
+    );
+  }
 });
 
 const emit = defineEmits<{

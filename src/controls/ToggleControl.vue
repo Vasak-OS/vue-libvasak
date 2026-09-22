@@ -11,11 +11,30 @@
  * de nombrar lo mismo y ninguna obligaba a hacerlo.
  *
  * Tampoco decía si estaba encendido, que junto con el nombre es todo lo que
- * este control transmite.
+ * este control transmite. *
+ * ── El icono va por nombre ─────────────────────────────────────────────────
+ *
+ * `name` es el **nombre** del icono en el tema del escritorio, y `type` cuál de
+ * las dos variantes. Lo dibuja `ThemeIcon`, así que sigue al tema y entra en el
+ * planificador de recarga como cualquier otro.
+ *
+ * `icon` —la ruta ya resuelta— sigue funcionando y está **obsoleto**. Era lo
+ * contrario de lo que hace el resto de la librería: obligaba a quien lo usara a
+ * resolver la ruta por su cuenta, escuchar el cambio de tema y volver a
+ * pedirla, que es exactamente el composable que este barrido viene borrando de
+ * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
  */
+import { onMounted } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
+
 const props = withDefaults(
 	defineProps<{
-		icon: string;
+		/** El nombre del icono en el tema del escritorio. */
+		name?: string;
+		/** Cuál de las dos variantes del tema. */
+		type?: 'icon' | 'symbol';
+		/** @deprecated La ruta ya resuelta. Usá `name`. Se va en la próxima mayor. */
+		icon?: string;
 		/**
 		 * Qué controla este botón, ya traducido. Obligatorio: el botón no tiene
 		 * más contenido que un icono, y un icono no tiene nada que leer.
@@ -47,8 +66,25 @@ const props = withDefaults(
 		iconClass?: Record<string, boolean>;
 		customClass?: Record<string, boolean>;
 	}>(),
-	{ pressed: null, isActive: false, isLoading: false, iconClass: () => ({}), customClass: () => ({}) }
+	{
+		name: '',
+		type: 'icon',
+		icon: '',
+		pressed: null,
+		isActive: false,
+		isLoading: false,
+		iconClass: () => ({}),
+		customClass: () => ({}),
+	}
 );
+
+onMounted(() => {
+	if (props.icon && !props.name) {
+		console.warn(
+			'[ToggleControl] «icon» está obsoleto y se va en la próxima mayor: recibe una ruta ya resuelta. Usá «name» con el nombre del icono del tema, y «type» si hace falta el símbolo.'
+		);
+	}
+});
 
 const emit = defineEmits<{ click: [] }>();
 
@@ -75,7 +111,21 @@ function alApretar() {
     @click="alApretar">
     <!-- El icono no se lee: el botón ya tiene nombre, y repetirlo haría que un
          lector de pantalla diga la misma cosa dos veces. -->
+    <ThemeIcon
+      v-if="name"
+      :name="name"
+      :type="type"
+      :size="50"
+      class="m-auto transition-[scale,filter] duration-300 group-hover:scale-110 relative z-10"
+      :class="{
+        'animate-spin': isLoading,
+        'filter brightness-75': !isActive,
+        'drop-shadow-lg': isActive,
+        ...iconClass,
+      }" />
+    <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
     <img
+      v-else
       :src="icon"
       alt=""
       class="m-auto w-12.5 h-12.5 transition-[scale,filter] duration-300 group-hover:scale-110 relative z-10"
