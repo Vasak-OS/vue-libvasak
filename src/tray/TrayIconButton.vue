@@ -7,7 +7,18 @@
     @mouseenter="showTooltip = true"
     @mouseleave="showTooltip = false"
   >
+    <ThemeIcon
+      v-if="name"
+      :name="name"
+      :type="type"
+      :size="22"
+      :alt="alt"
+      class="m-auto"
+      :class="iconClass"
+    />
+    <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
     <img
+      v-else
       :src="icon"
       :alt="alt"
       class="m-auto h-5.5 w-auto"
@@ -43,10 +54,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+/**
+ * ── El icono va por nombre ─────────────────────────────────────────────────
+ *
+ * `name` es el **nombre** del icono en el tema del escritorio, y `type` cuál de
+ * las dos variantes. Lo dibuja `ThemeIcon`, así que sigue al tema y entra en el
+ * planificador de recarga como cualquier otro.
+ *
+ * `icon` —la ruta ya resuelta— sigue funcionando y está **obsoleto**. Era lo
+ * contrario de lo que hace el resto de la librería: obligaba a quien lo usara a
+ * resolver la ruta por su cuenta, escuchar el cambio de tema y volver a
+ * pedirla, que es exactamente el composable que este barrido viene borrando de
+ * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
+ */
+import { onMounted, ref } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
+
 
 interface Props {
-  icon: string;
+  /** El nombre del icono en el tema del escritorio. */
+  name?: string;
+  /** Cuál de las dos variantes del tema. */
+  type?: 'icon' | 'symbol';
+  /** @deprecated La ruta ya resuelta. Usá `name`. Se va en la próxima mayor. */
+  icon?: string;
   alt?: string;
   tooltip?: string;
   badge?: number | null;
@@ -57,7 +88,10 @@ interface Props {
   customTooltipText?: string;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
+  name: '',
+  type: 'icon',
+  icon: '',
   alt: '',
   tooltip: '',
   badge: null,
@@ -73,6 +107,20 @@ const emit = defineEmits<{
 }>();
 
 const showTooltip = ref(false);
+
+/**
+ * El aviso de que `icon` está obsoleto.
+ *
+ * Por consola y no un error: quien todavía lo use tiene que seguir viendo su
+ * icono, no una ventana rota. Y en `onMounted`, una vez por instancia.
+ */
+onMounted(() => {
+	if (props.icon && !props.name) {
+		console.warn(
+			'[TrayIconButton] «icon» está obsoleto y se va en la próxima mayor: recibe una ruta ya resuelta. Usá «name» con el nombre del icono del tema, y «type» si hace falta el símbolo.'
+		);
+	}
+});
 
 const handleClick = () => {
   emit('click');
