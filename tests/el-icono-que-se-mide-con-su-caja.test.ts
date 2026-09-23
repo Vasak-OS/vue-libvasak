@@ -114,3 +114,27 @@ describe('lo que no cambia', () => {
 		expect(vista.find('span').attributes('style')).toContain('width: 28px');
 	});
 });
+
+describe('el hueco ocupa lugar de verdad', () => {
+	/**
+	 * Un `span` es inline, y el alto y el ancho **no aplican a un inline no
+	 * reemplazado**. La imagen sí se mide, porque un `img` es reemplazado: o sea
+	 * que el hueco podía no reservar nada mientras la imagen después ocupaba su
+	 * tamaño, y la fila saltaba justo al aparecer el icono. Adentro de un
+	 * contenedor flex no se notaba —ahí el hueco es un elemento flex y su
+	 * `display` se convierte solo—, que es como pasó desapercibido: casi todos
+	 * los iconos del escritorio viven en una fila flex.
+	 *
+	 * Se mira la clase y no el alto calculado porque `happy-dom` no hace
+	 * maquetado: `getBoundingClientRect()` devuelve ceros para todo, así que una
+	 * prueba que midiera pasaría siempre y no diría nada.
+	 */
+	test('el hueco no es un inline, con medida o sin ella', async () => {
+		for (const size of [28, 'auto']) {
+			const vista = montar({ name: 'no-esta-en-el-tema', size });
+			await asentar();
+
+			expect(vista.find('span').classes()).toContain('inline-block');
+		}
+	});
+});

@@ -67,6 +67,13 @@ const medida = computed(() =>
     class="shrink-0 object-contain">
   <!-- Un hueco del mismo tamaño mientras resuelve, para que la fila no salte.
        Con `size="auto"` tampoco lleva medida: la caja es la misma para los dos,
-       así que el hueco ya ocupa lo que va a ocupar la imagen. -->
-  <span v-else ref="dibujo" :style="medida" class="shrink-0" />
+       así que el hueco ya ocupa lo que va a ocupar la imagen.
+
+       Y va `inline-block` porque un `span` es inline, y el alto y el ancho **no
+       aplican a un inline no reemplazado**: la imagen sí se mide —es un
+       elemento reemplazado— pero el hueco no, así que fuera de un contenedor
+       flex no reservaba nada y la fila saltaba igual al aparecer el icono. En
+       flex no cambia nada: ahí el hueco ya es un elemento flex y su `display`
+       se convierte solo. -->
+  <span v-else ref="dibujo" :style="medida" class="inline-block shrink-0" />
 </template>
