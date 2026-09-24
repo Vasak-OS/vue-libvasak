@@ -1,7 +1,9 @@
 <template>
-  <div
-    class="p-1 rounded-corner relative hover:bg-primary group transition-[background-color] duration-300"
-    :class="customClass"
+  <component
+    :is="interactive ? 'button' : 'div'"
+    v-bind="interactive ? { type: 'button', 'aria-label': accessibleName } : {}"
+    class="p-1 rounded-corner relative group transition-[background-color] duration-300"
+    :class="[customClass, interactive ? 'cursor-pointer hover:bg-primary' : '']"
     :title="tooltip"
     @click="handleClick"
     @mouseenter="showTooltip = true"
@@ -28,7 +30,7 @@
     <!-- Badge/Counter -->
     <div
       v-if="badge !== null && badge > 0"
-      class="absolute bottom-1 right-1 bg-primary text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce"
+      class="absolute bottom-1 right-1 bg-primary text-tx-on-primary text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce"
     >
       {{ badge }}
     </div>
@@ -50,11 +52,19 @@
 
     <!-- Slot para contenido adicional personalizado -->
     <slot></slot>
-  </div>
+  </component>
 </template>
 
 <script setup lang="ts">
 /**
+ * ── El que hace algo es un botón, el que informa no ────────────────────────
+ *
+ * Con `interactive` —que es lo normal— la raíz es un `<button>` de verdad, con
+ * su `type` y su nombre accesible. Sin él es un `<div>` quieto: los que sólo
+ * informan se pintaban al pasar el mouse como si fueran botones, y se
+ * anunciaban como «botón» a quien no ve el icono. Las dos cosas prometen un
+ * clic que no existe.
+ *
  * ── El icono va por nombre ─────────────────────────────────────────────────
  *
  * `name` es el **nombre** del icono en el tema del escritorio, y `type` cuál de
@@ -67,7 +77,7 @@
  * pedirla, que es exactamente el composable que este barrido viene borrando de
  * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
  */
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
 
@@ -86,6 +96,15 @@ interface Props {
   tooltipClass?: string | Record<string, boolean>;
   showCustomTooltip?: boolean;
   customTooltipText?: string;
+  /**
+   * Si hacer clic hace algo.
+   *
+   * Los que sólo informan —la batería, Bloq Mayús, el micrófono silenciado— se
+   * pintaban al pasar el mouse como si fueran botones: el resaltado promete un
+   * clic que no existe. Y peor, se anunciaban como «botón» a quien no ve el
+   * icono. Con esto quedan quietos y se dibujan como un `div`.
+   */
+  interactive?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -100,11 +119,21 @@ const props = withDefaults(defineProps<Props>(), {
   tooltipClass: '',
   showCustomTooltip: false,
   customTooltipText: '',
+  interactive: true,
 });
 
 const emit = defineEmits<{
   click: [];
 }>();
+
+/**
+ * Cómo se llama el botón para quien no ve el icono.
+ *
+ * El dibujo es todo el contenido, así que sin esto un lector de pantalla
+ * anuncia un botón **vacío**. Se usa el `alt` del icono, y si no hay, el texto
+ * del tooltip.
+ */
+const accessibleName = computed(() => props.alt || props.tooltip || undefined);
 
 const showTooltip = ref(false);
 
