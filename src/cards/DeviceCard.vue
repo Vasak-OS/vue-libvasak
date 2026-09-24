@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center justify-between background rounded-vsk px-6 py-3 mb-4"
+    class="flex items-center justify-between background rounded-corner px-6 py-3 mb-4"
     :class="[{ 'border-l-4 border-green-500': isConnected }, customClass]"
     @click="handleClick"
   >
@@ -28,7 +28,7 @@
     
     <button
       v-if="showActionButton"
-      class="bg-vsk-primary rounded-vsk px-4 py-2 text-sm font-semibold cursor-pointer hover:opacity-70"
+      class="bg-primary text-tx-on-primary rounded-corner px-4 py-2 text-sm font-semibold cursor-pointer hover:opacity-70"
       @click.stop="handleAction"
     >
       {{ actionLabel }}
