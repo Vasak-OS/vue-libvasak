@@ -1,6 +1,6 @@
 <template>
   <div
-    class="background rounded-corner flex flex-row items-center gap-2 justify-between w-full h-auto p-4 transition-[background-color] duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80"
+    class="background rounded-corner flex flex-row items-center gap-2 justify-between w-full h-auto p-4 transition-[background-color] duration-200 hover:bg-ui-surface/80"
   >
     <button
       v-if="showButton"
@@ -8,7 +8,7 @@
       type="button"
       :title="buttonLabel ?? label"
       :aria-label="buttonLabel ?? label"
-      class="w-8 h-8 flex items-center justify-center rounded-corner transition-[background-color,scale] duration-200 hover:bg-ui-surface/80 dark:hover:bg-ui-surface-dark/80 hover:scale-110 active:scale-95"
+      class="w-8 h-8 flex items-center justify-center rounded-corner transition-[background-color,scale] duration-200 hover:bg-ui-surface/80 hover:scale-110 active:scale-95"
     >
       <ThemeIcon v-if="name" :name="name" :type="type" :size="24" :class="iconClass" />
       <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->

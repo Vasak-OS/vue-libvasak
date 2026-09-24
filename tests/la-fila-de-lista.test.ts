@@ -88,6 +88,31 @@ describe('las clases que la librería dibuja', () => {
 		expect(clases).toContain('background');
 	});
 
+	test('ni una clase de color con sufijo `-dark`', async () => {
+		// `--color-primary` ya vale el color oscuro cuando el tema está en
+		// oscuro: lo resuelve `--use-primary` del lado de la aplicación. Lo que
+		// **no** existe es `--color-primary-dark`, así que `bg-primary-dark` y
+		// sus hermanos no emiten nada — comprobado en las seis aplicaciones, que
+		// no declaran ni un `--color-*-dark` en su `@theme`.
+		//
+		// Eran trece, casi todos como gemelo `dark:` de una clase que ya hacía
+		// lo correcto sola. Lo peor no era que sobraran: `hover:bg-primary-dark`
+		// dejaba el hover **sin fondo**, y `bg-ui-border-dark/40` estaba solo,
+		// sin gemelo vivo, así que ese fondo no existía nunca.
+		const TOKENS =
+			'primary|secondary|ui-surface|ui-bg|ui-border|status-error|status-success|status-warning|tx-main|tx-muted|tx-on-primary|tx-on-secondary';
+		const muerta = new RegExp(`-(?:${TOKENS})-dark\\b`);
+		const raiz = fileURLToPath(new URL('../src/', import.meta.url));
+		const culpables: string[] = [];
+
+		for (const ruta of new Glob('**/*.vue').scanSync(raiz)) {
+			const texto = await Bun.file(raiz + ruta).text();
+			if (muerta.test(texto)) culpables.push(ruta);
+		}
+
+		expect(culpables).toEqual([]);
+	});
+
 	test('y ningún componente de la librería usa una clase `vsk-`', async () => {
 		// Ninguna aplicación define `--radius-vsk` ni `--color-vsk-primary`: lo
 		// único que existe con ese prefijo son las tres fuentes, y ésas se usan
