@@ -257,7 +257,7 @@ onUnmounted(() => {
              haya detrás. `WindowFrame` usa el mismo radio. -->
         <div
           v-if="props.size === 'md'"
-          class="absolute inset-0 rounded-corner-window bg-ui-border-dark/40"></div>
+          class="absolute inset-0 rounded-corner-window bg-ui-border/40"></div>
         <div
           ref="panel"
           tabindex="-1"

@@ -354,7 +354,10 @@ describe('cuando el diálogo se va sin cerrarse', () => {
 });
 
 /** El velo teñido, que es la capa gris de atrás del panel. */
-const elVeloTenido = () => document.body.querySelector('.bg-ui-border-dark\\/40');
+// `bg-ui-border/40` y no `bg-ui-border-dark/40`: ese token no existe en el
+// `@theme` de ninguna aplicación, así que el velo no se teñía de nada. El
+// vivo ya vale el color oscuro cuando el tema está en oscuro.
+const elVeloTenido = () => document.body.querySelector('.bg-ui-border\\/40');
 
 describe('la forma de pantalla completa', () => {
 	test('no trae las clases que quien lo usa tendría que deshacer', async () => {
