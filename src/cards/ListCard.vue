@@ -11,6 +11,13 @@
  *
  * El papel y el foco van **atados a `clickable`**: una fila que dice ser un
  * botón y no hace nada es el mismo problema al revés.
+ *
+ * Y las teclas llevan `.self` **antes** de `.prevent`, que no es un detalle: la
+ * tecla que alguien apreta sobre un botón de adentro **burbujea** hasta acá.
+ * Sin `.self`, apretar Enter en ese botón dispararía además la acción de la
+ * fila entera, y el `.prevent` le cancelaría al botón su propia activación —o a
+ * un campo de texto su salto de línea—. Con `.self` sólo responden las teclas
+ * que llegan a la fila misma, que es cuando la fila tiene el foco.
  */
 interface Props {
 	clickable?: boolean;
@@ -45,8 +52,8 @@ const handleClick = () => {
     :role="props.clickable ? 'button' : undefined"
     :tabindex="props.clickable ? 0 : undefined"
     @click="handleClick"
-    @keydown.enter.prevent="handleClick"
-    @keydown.space.prevent="handleClick"
+    @keydown.enter.self.prevent="handleClick"
+    @keydown.space.self.prevent="handleClick"
   >
     <slot />
   </div>

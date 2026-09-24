@@ -41,6 +41,21 @@ describe('la fila de lista que se puede abrir', () => {
 		expect(vista.emitted('click')).toHaveLength(2);
 	});
 
+	test('pero no cuando la tecla viene de un control de adentro', async () => {
+		// La tecla que alguien apreta sobre un botón de la ranura **burbujea**
+		// hasta la fila. Sin `.self`, apretar Enter ahí dispararía además la
+		// acción de la fila entera, y el `.prevent` le cancelaría al botón su
+		// propia activación. Lo encontró CodeRabbit en el #62 y era real.
+		const vista = mount(ListCard, {
+			props: { clickable: true },
+			slots: { default: '<button type="button" id="dentro">borrar</button>' },
+		});
+
+		await vista.find('#dentro').trigger('keydown.enter');
+
+		expect(vista.emitted('click')).toBeUndefined();
+	});
+
 	test('y la que no se puede abrir no finge que sí', () => {
 		// Anunciar un botón que no hace nada es el mismo problema al revés: se
 		// promete algo que al apretarlo no pasa.
