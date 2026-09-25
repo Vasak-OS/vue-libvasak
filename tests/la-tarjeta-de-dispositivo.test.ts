@@ -111,3 +111,61 @@ describe('los colores siguen al tema', () => {
 		expect(html).toContain('status-success');
 	});
 });
+
+/**
+ * ── La acción que deshace algo se ve distinta ──────────────────────────────
+ *
+ * La copia de `vasak-settings` pintaba de rojo el botón de desconectar y dejaba
+ * en color de marca el de conectar. La tarjeta de la librería pintaba los dos
+ * igual, así que adoptarla tal cual le habría sacado el rojo a una acción
+ * destructiva — que es exactamente la clase de detalle que una adopción se
+ * lleva puesta sin que nadie lo note.
+ *
+ * `actionKind` es una propiedad y **no** sale de `isConnected`: en Bluetooth las
+ * dos cosas coinciden, pero hay tarjetas donde la acción del estado conectado
+ * no destruye nada y otras donde la del desconectado sí —«olvidar este
+ * dispositivo»—. Atarlo al estado acertaría por casualidad en un caso.
+ */
+describe('la acción destructiva', () => {
+	const botonDe = (props: Record<string, unknown>) =>
+		mount(DeviceCard, { props: { title: 'Auriculares', ...props } }).find('button');
+
+	test('por omisión el botón va en el color de marca', () => {
+		const clases = botonDe({ actionLabel: 'Conectar' }).classes();
+
+		expect(clases).toContain('bg-primary');
+		expect(clases).toContain('text-tx-on-primary');
+		expect(clases.join(' ')).not.toContain('status-error');
+	});
+
+	test('y con «destructive» va en rojo, sin quedarse el fondo de marca', () => {
+		const clases = botonDe({ actionLabel: 'Desconectar', actionKind: 'destructive' }).classes();
+
+		expect(clases).toContain('text-status-error');
+		expect(clases).toContain('bg-status-error/10');
+		// Lo que de verdad podía salir mal: que se sumaran las dos y quedara
+		// texto rojo sobre fondo de marca, que es ilegible.
+		expect(clases).not.toContain('bg-primary');
+		expect(clases).not.toContain('text-tx-on-primary');
+	});
+
+	test('el rojo no se cuela por estar conectado: lo decide la propiedad', () => {
+		// `isConnected` sin `actionKind` no vuelve destructivo al botón.
+		const clases = botonDe({ actionLabel: 'Desconectar', isConnected: true }).classes();
+
+		expect(clases).toContain('bg-primary');
+		expect(clases.join(' ')).not.toContain('status-error');
+	});
+
+	test('y sigue deshabilitándose mientras la acción está en curso', () => {
+		const boton = botonDe({
+			actionLabel: 'Desconectar',
+			actionKind: 'destructive',
+			isConnecting: true,
+			connectingLabel: 'Desconectando…',
+		});
+
+		expect(boton.attributes('disabled')).toBeDefined();
+		expect(boton.text()).toBe('Desconectando…');
+	});
+});

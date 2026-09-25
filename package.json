@@ -1,83 +1,83 @@
 {
-  "name": "@vasakgroup/vue-libvasak",
-  "version": "1.8.0",
-  "description": "Vue componenets for VSK Applications",
-  "main": "./dist/vue-libvasak.umd.js",
-  "module": "./dist/vue-libvasak.es.js",
-  "types": "./dist/types/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/vue-libvasak.es.js",
-      "require": "./dist/vue-libvasak.umd.js",
-      "default": "./dist/vue-libvasak.es.js"
-    },
-    "./style.css": "./dist/vue-libvasak.css",
-    "./package.json": "./package.json"
-  },
-  "keywords": [
-    "vue",
-    "vsk",
-    "vasak",
-    "components",
-    "ui",
-    "window",
-    "vasakos",
-    "vasakgroup",
-    "linux"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vasak-os/vue-libvasak.git"
-  },
-  "homepage": "https://github.com/vasak-os/vue-libvasak#readme",
-  "bugs": {
-    "url": "https://github.com/vasak-os/vue-libvasak/issues",
-    "email": "os@vasak.net.ar"
-  },
-  "author": {
-    "name": "Joaquin (Pato) Decima",
-    "email": "jdecima@vasak.net.ar",
-    "url": "https://joaquindecima.gitlab.io/"
-  },
-  "license": "GPLv3",
-  "peerDependencies": {
-    "@tauri-apps/api": "^2.0.0",
-    "@vasakgroup/plugin-config-manager": "^2.0.0",
-    "@vasakgroup/plugin-vicons": "^2.0.0",
-    "@vasakgroup/tauri-plugin-i18n": "^2.3.0",
-    "vue": "^3.0.0"
-  },
-  "devDependencies": {
-    "@happy-dom/global-registrator": "^20.14.5",
-    "@tauri-apps/api": "^2.11.1",
-    "@types/bun": "^1.4.2",
-    "@vasakgroup/plugin-config-manager": "~2.6.1",
-    "@vasakgroup/plugin-vicons": "^2.2.1",
-    "@vasakgroup/tauri-plugin-i18n": "^2.3.0",
-    "@vitejs/plugin-vue": "^6.0.9",
-    "@vue/test-utils": "^2.5.1",
-    "happy-dom": "^20.14.5",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.6",
-    "vue": "^3.5.28",
-    "vue-router": "^5.0.3",
-    "vue-tsc": "^3.3.11"
-  },
-  "scripts": {
-    "build": "bun run typecheck && bunx --bun vite build && bun run tipos",
-    "dev": "bunx --bun vite",
-    "prepare": "bun run build",
-    "typecheck": "bunx vue-tsc --noEmit",
-    "test": "bun test",
-    "tipos": "bunx vue-tsc --declaration --emitDeclarationOnly --noEmit false --outDir dist/types"
-  },
-  "vasak": {
-    "bibliotecasAtrasadas": {
-      "@vasakgroup/plugin-config-manager": "La 2.7.0 declara pinia ^4 y el taller está en pinia 3: subir el rango arrastra un salto mayor ajeno. Acá es sólo de desarrollo —la librería no usa pinia— pero se mantiene alineado con las dieciséis aplicaciones. Por eso el rango es ~2.6.1 y no ^2.6.1, que alcanzaría la 2.7.0 en el próximo `bun update`. Se saca al subir a pinia 4."
-    }
-  }
+	"name": "@vasakgroup/vue-libvasak",
+	"version": "1.9.0",
+	"description": "Vue componenets for VSK Applications",
+	"main": "./dist/vue-libvasak.umd.js",
+	"module": "./dist/vue-libvasak.es.js",
+	"types": "./dist/types/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/vue-libvasak.es.js",
+			"require": "./dist/vue-libvasak.umd.js",
+			"default": "./dist/vue-libvasak.es.js"
+		},
+		"./style.css": "./dist/vue-libvasak.css",
+		"./package.json": "./package.json"
+	},
+	"keywords": [
+		"vue",
+		"vsk",
+		"vasak",
+		"components",
+		"ui",
+		"window",
+		"vasakos",
+		"vasakgroup",
+		"linux"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/vasak-os/vue-libvasak.git"
+	},
+	"homepage": "https://github.com/vasak-os/vue-libvasak#readme",
+	"bugs": {
+		"url": "https://github.com/vasak-os/vue-libvasak/issues",
+		"email": "os@vasak.net.ar"
+	},
+	"author": {
+		"name": "Joaquin (Pato) Decima",
+		"email": "jdecima@vasak.net.ar",
+		"url": "https://joaquindecima.gitlab.io/"
+	},
+	"license": "GPLv3",
+	"peerDependencies": {
+		"@tauri-apps/api": "^2.0.0",
+		"@vasakgroup/plugin-config-manager": "^2.0.0",
+		"@vasakgroup/plugin-vicons": "^2.0.0",
+		"@vasakgroup/tauri-plugin-i18n": "^2.3.0",
+		"vue": "^3.0.0"
+	},
+	"devDependencies": {
+		"@happy-dom/global-registrator": "^20.14.5",
+		"@tauri-apps/api": "^2.11.1",
+		"@types/bun": "^1.4.2",
+		"@vasakgroup/plugin-config-manager": "~2.6.1",
+		"@vasakgroup/plugin-vicons": "^2.2.1",
+		"@vasakgroup/tauri-plugin-i18n": "^2.3.0",
+		"@vitejs/plugin-vue": "^6.0.9",
+		"@vue/test-utils": "^2.5.1",
+		"happy-dom": "^20.14.5",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.6",
+		"vue": "^3.5.43",
+		"vue-router": "^5.3.1",
+		"vue-tsc": "^3.3.11"
+	},
+	"scripts": {
+		"build": "bun run typecheck && bunx --bun vite build && bun run tipos",
+		"dev": "bunx --bun vite",
+		"prepare": "bun run build",
+		"typecheck": "bunx vue-tsc --noEmit",
+		"test": "bun test",
+		"tipos": "bunx vue-tsc --declaration --emitDeclarationOnly --noEmit false --outDir dist/types"
+	},
+	"vasak": {
+		"bibliotecasAtrasadas": {
+			"@vasakgroup/plugin-config-manager": "La 2.7.0 declara pinia ^4 y el taller está en pinia 3: subir el rango arrastra un salto mayor ajeno. Acá es sólo de desarrollo —la librería no usa pinia— pero se mantiene alineado con las dieciséis aplicaciones. Por eso el rango es ~2.6.1 y no ^2.6.1, que alcanzaría la 2.7.0 en el próximo `bun update`. Se saca al subir a pinia 4."
+		}
+	}
 }
