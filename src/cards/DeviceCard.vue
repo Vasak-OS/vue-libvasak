@@ -40,7 +40,8 @@
     <button
       v-if="showActionButton"
       type="button"
-      class="bg-primary text-tx-on-primary rounded-corner px-4 py-2 text-sm font-semibold cursor-pointer hover:opacity-70 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="rounded-corner px-4 py-2 text-sm font-semibold cursor-pointer hover:opacity-70 disabled:opacity-50 disabled:cursor-not-allowed"
+      :class="actionClasses"
       :disabled="isConnecting"
       @click.stop="handleAction"
     >
@@ -84,7 +85,7 @@
  * pedirla, que es exactamente el composable que este barrido viene borrando de
  * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
  */
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
 /**
@@ -120,6 +121,15 @@ interface Props {
   actionLabel?: string;
   /** Qué dice mientras `isConnecting`. */
   connectingLabel?: string;
+  /**
+   * Si la acción deshace algo —desconectar, desvincular, olvidar—, va en rojo.
+   *
+   * No sale de `isConnected`, aunque en Bluetooth las dos cosas coincidan: hay
+   * tarjetas donde la acción del estado conectado no destruye nada, y otras
+   * donde la del desconectado sí —«olvidar este dispositivo»—. Atarlo al
+   * estado acertaría por casualidad en un caso y se equivocaría en el otro.
+   */
+  actionKind?: 'primary' | 'destructive';
   /** Mientras dura la acción: el botón queda deshabilitado y cambia el texto. */
   isConnecting?: boolean;
   showStatusIndicator?: boolean;
@@ -140,11 +150,27 @@ const props = withDefaults(defineProps<Props>(), {
   // usan seis aplicaciones es un texto que nadie puede traducir.
   actionLabel: '',
   connectingLabel: '',
+  actionKind: 'primary',
   isConnecting: false,
   showStatusIndicator: false,
   customClass: '',
   clickable: false,
 });
+
+/**
+ * Las clases del botón de la acción.
+ *
+ * El rojo va tenue —fondo y borde con alfa, texto en el color pleno— y no como
+ * un botón lleno de rojo: en una lista de dispositivos, la acción destructiva
+ * está en **cada** fila, y seis botones rojos macizos gritan más que lo que la
+ * pantalla quiere decir. Lo que tiene que leerse es que ésta deshace algo, no
+ * que sea peligrosa.
+ */
+const actionClasses = computed(() =>
+  props.actionKind === 'destructive'
+    ? 'border border-status-error/20 bg-status-error/10 text-status-error hover:bg-status-error/20'
+    : 'bg-primary text-tx-on-primary',
+);
 
 /** El icono de un dato extra, si lo trae. */
 const iconOf = (info: ExtraInfo): string => (typeof info === 'string' ? '' : (info.icon ?? ''));
