@@ -217,7 +217,7 @@ describe('a quién vigila', () => {
 
 			// Dos elementos vigilados a lo largo de la vida del icono —el hueco y
 			// la imagen— y el primero soltado: queda uno solo mirado.
-			expect(registro.observados.length).toBe(2);
+			expect(registro.observados).toHaveLength(2);
 			expect(registro.soltados).toEqual([registro.observados[0]]);
 		} finally {
 			(globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver =

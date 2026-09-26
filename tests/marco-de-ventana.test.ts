@@ -171,7 +171,7 @@ describe('la barra', () => {
 		// `pointer-events-none` sin mirar.
 		const vista = abrirLaVentana('top');
 
-		expect(vista.findAll('.pointer-events-none').length).toBe(0);
+		expect(vista.findAll('.pointer-events-none')).toHaveLength(0);
 	});
 
 	test('la barra queda `relative`, que es de lo que cuelga `centro`', () => {
@@ -247,7 +247,7 @@ describe('los botones de la ventana', () => {
 
 		await vista.findComponent(WindowControls).find('button[aria-label="cerrar"]').trigger('click');
 
-		expect(cerrados.length).toBe(1);
+		expect(cerrados).toHaveLength(1);
 	});
 
 	test('y sin nadie escuchando, el botón cierra la ventana', async () => {
