@@ -43,6 +43,9 @@ import Tooltip from "./tooltip/Tooltip.vue";
 import TooltipContent from "./tooltip/TooltipContent.vue";
 import TooltipTrigger from "./tooltip/TooltipTrigger.vue";
 import TrayIconButton from "./tray/TrayIconButton.vue";
+import NowPlayingCard from "./media/NowPlayingCard.vue";
+import SeekBar from "./media/SeekBar.vue";
+import SpinningCover from "./media/SpinningCover.vue";
 import type { App } from "vue";
 
 const components = [
@@ -91,6 +94,9 @@ const components = [
   TooltipContent,
   TooltipTrigger,
   TrayIconButton,
+  NowPlayingCard,
+  SeekBar,
+  SpinningCover,
 ];
 
 export default {
@@ -147,8 +153,13 @@ export {
   TooltipContent,
   TooltipTrigger,
   TrayIconButton,
+  NowPlayingCard,
+  SeekBar,
+  SpinningCover,
 };
 
+export type { PlaybackState } from "./media/playback";
+export { formatPlaybackTime } from "./media/playback";
 export type { AvisoTransitorio } from "./feedback/ToastArea.vue";
 export type { TonoDelAviso } from "./feedback/tonos";
 export { CLASES_POR_TONO, rolDelTono } from "./feedback/tonos";

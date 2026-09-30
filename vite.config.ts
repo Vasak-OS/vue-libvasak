@@ -32,6 +32,7 @@ export default defineConfig({
           '@tauri-apps/api/event': 'TauriEvent',
           '@tauri-apps/api/window': 'TauriWindow',
           '@vasakgroup/plugin-vicons': 'VasakVicons',
+          '@vasakgroup/tauri-plugin-i18n': 'VasakI18n',
         },
         exports: 'named',
       },
