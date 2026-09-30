@@ -70,6 +70,19 @@ import * as VasakLib from 'vue-libvasak';
 app.use(VasakLib);
 ```
 
+## Reproductor
+
+`NowPlayingCard`, `SpinningCover` y `SeekBar` dibujan lo que suena sin saber de
+dónde sale: reciben los datos por propiedad y emiten lo que se tocó (`previous`,
+`toggle`, `next`, `seek`). La unidad de `position` y `duration` es la de quien
+los usa —MPRIS cuenta en microsegundos—, y `format` es lo único que tiene que
+conocerla.
+
+Los textos entran por propiedad; sin pasarlos salen del catálogo de la
+aplicación con estas claves: `media.previous`, `media.play`, `media.pause`,
+`media.next`, `media.seek`, `media.nothingPlaying` y `media.byArtist` (con `{0}`
+donde va el artista).
+
 ## Desarrollo
 
 - Construir la librería: `npm run build`

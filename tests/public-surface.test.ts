@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import * as libreria from '../src/index';
+import * as library from '../src/index';
 
 /**
  * Lo que la librería exporta es lo que la 1.0 se comprometió a no romper.
@@ -14,7 +14,7 @@ import * as libreria from '../src/index';
  * nada acá. La librería compila, sus propias pruebas pasan, y el error aparece
  * en otro repositorio, semanas después, como un componente que no existe.
  */
-const SUPERFICIE_DE_LA_1_0 = [
+const PUBLIC_SURFACE = [
 	'ActionButton',
 	'AlertMessage',
 	'AppBar',
@@ -43,15 +43,18 @@ const SUPERFICIE_DE_LA_1_0 = [
 	'LOS_TRES_CONTROLES',
 	'ListCard',
 	'LoadingState',
+	'NowPlayingCard',
 	'POSICIONES',
 	'ProgressBar',
 	'SearchField',
 	'SearchSelect',
+	'SeekBar',
 	'SelectField',
 	'SideBar',
 	'SideButton',
 	'SideGroup',
 	'SliderControl',
+	'SpinningCover',
 	'SwitchRow',
 	'SwitchToggle',
 	'SwitchTrack',
@@ -70,6 +73,7 @@ const SUPERFICIE_DE_LA_1_0 = [
 	'buscarOpciones',
 	'default',
 	'esPosicion',
+	'formatPlaybackTime',
 	'olvidarLosIconosDelTema',
 	'orientacionDe',
 	'posicionDe',
@@ -87,10 +91,10 @@ describe('la superficie pública de la 1.0', () => {
 		// Sacar o renombrar algo de esta lista es una **mayor**, no una minor.
 		// Si esta prueba molesta porque el cambio es deliberado, el número de
 		// versión tiene que subir con él.
-		const exportado = new Set(Object.keys(libreria));
-		const faltantes = SUPERFICIE_DE_LA_1_0.filter((n) => !exportado.has(n));
+		const exported = new Set(Object.keys(library));
+		const missing = PUBLIC_SURFACE.filter((n) => !exported.has(n));
 
-		expect(faltantes).toEqual([]);
+		expect(missing).toEqual([]);
 	});
 
 	test('lo que se sume queda anotado acá', () => {
@@ -99,9 +103,9 @@ describe('la superficie pública de la 1.0', () => {
 		// vistazo con qué se comprometió la 1.0. Una lista que se queda a
 		// medias deja de servir para eso, y entonces la prueba de arriba
 		// protege sólo una parte sin que se note cuál.
-		const exportado = Object.keys(libreria).sort();
-		const nuevos = exportado.filter((n) => !SUPERFICIE_DE_LA_1_0.includes(n));
+		const exported = Object.keys(library).sort();
+		const added = exported.filter((n) => !PUBLIC_SURFACE.includes(n));
 
-		expect(nuevos).toEqual([]);
+		expect(added).toEqual([]);
 	});
 });
