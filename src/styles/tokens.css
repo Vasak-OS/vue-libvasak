@@ -1,0 +1,213 @@
+/*
+ * La forma de los componentes de VasakOS: radios, bordes, rellenos de estado,
+ * sombras, texto y tiempos, con el criterio de Once UI.
+ *
+ * Se publica como `@vasakgroup/vue-libvasak/tokens.css` y cada aplicación lo
+ * importa **después** de `@import "tailwindcss"` en su `main.css`. Hasta acá
+ * cada aplicación tenía su copia de los radios y de los colores en su bloque
+ * `@theme`; con esto la forma llega a todas al subir la librería.
+ *
+ * # La regla: la forma de Once UI, los colores del esquema
+ *
+ * Acá **no hay ni un color escrito a mano**. Todo sale de las variables
+ * `--use-*` que declara el piso de cada aplicación y pisa
+ * `tauri-plugin-config-manager` con el esquema que eligió la persona: los
+ * bordes, los velos de estado, la superficie flotante y hasta la tinta de las
+ * sombras son `color-mix` sobre ellas. Cambiar de esquema cambia todo esto sin
+ * tocar una línea. Hay una prueba que falla si aparece un color literal
+ * (`tests/tokens-exist.test.ts`).
+ *
+ * # Por qué los nombres son éstos
+ *
+ * - `rounded-s`, `rounded-e`, `rounded-t`… ya son utilidades de Tailwind 4
+ *   (esquinas lógicas), así que un `--radius-s` a secas crea una clase
+ *   ambigua. Se extiende la familia que ya existía: `rounded-corner-*`.
+ * - `shadow-sm/md/lg/xl` son de Tailwind; las nuestras llevan `surface` para
+ *   que se vea de un vistazo cuál es cuál y la guardia pueda prohibir las otras.
+ *
+ * La especificación completa, con de dónde sale cada valor, está en
+ * `docs/once-ui.md`.
+ */
+
+/*
+ * Los dos colores que no son del esquema sino derivados de él, fuera del
+ * `@theme` porque cambian con la clase `.dark` igual que las `--use-*`.
+ *
+ * `--use-ui-focus` es el anillo de foco. **No puede ser `primary` a secas**:
+ * con el esquema por omisión, `#dd7878` sobre `#eff1f5` da 2,64:1 y WCAG 1.4.11
+ * pide 3:1 para un indicador de foco. El cálculo de verdad —elegir entre el
+ * primario, el secundario y el texto el primero que llegue a 3:1 contra el
+ * fondo— es del config-manager, que ya hace lo mismo con `--ui-border-strong`,
+ * y escribirá `--ui-focus` / `--ui-focus-dark`. Mientras no lo haga, el piso es
+ * el primario llevado un 40 % hacia el texto principal: con el esquema por
+ * omisión da 3,9:1 en claro (3,76:1 sobre la superficie flotante) y más de 8:1
+ * en oscuro. Sigue siendo del color de la marca y sale del esquema.
+ *
+ * `--use-shadow-ink` es la tinta de las sombras. Once UI usa negro; negro es un
+ * color fijo, y acá no hay colores fijos. En claro la tinta es el texto
+ * principal, que es lo más oscuro que tiene un esquema claro; en oscuro es el
+ * borde del esquema, que en los esquemas oscuros es más oscuro que el fondo
+ * (`#11111b` contra `#1e1e2e` en el de fábrica). En oscuro la sombra casi no se
+ * ve, igual que en Once UI: ahí lo que separa es el borde `ui-line`.
+ */
+:root {
+  --use-ui-focus: var(
+    --ui-focus,
+    color-mix(in srgb, var(--use-primary) 60%, var(--use-text-main))
+  );
+  --use-shadow-ink: var(--use-text-main);
+}
+
+.dark {
+  --use-ui-focus: var(
+    --ui-focus-dark,
+    color-mix(in srgb, var(--use-primary) 60%, var(--use-text-main))
+  );
+  --use-shadow-ink: var(--use-ui-border);
+}
+
+@theme {
+  /* ── Los colores del esquema, como utilidades ───────────────────────────
+     Los mismos que ya declara el `@theme` de cada aplicación, repetidos acá
+     para que la librería se sostenga sola —su banco de estados y sus pruebas
+     leen este archivo— y para que una aplicación nueva no tenga que copiarlos.
+     Valen lo mismo que en las aplicaciones, así que declararlos dos veces no
+     cambia nada. */
+  --color-primary: var(--use-primary);
+  --color-secondary: var(--use-secondary);
+  --color-ui-bg: var(--use-ui-background);
+  --color-ui-surface: var(--use-ui-surface);
+  --color-ui-border: var(--use-ui-border);
+  --color-ui-border-strong: var(--use-ui-border-strong);
+  --color-tx-main: var(--use-text-main);
+  --color-tx-muted: var(--use-text-muted);
+  --color-tx-on-primary: var(--use-text-on-primary);
+  --color-tx-on-secondary: var(--use-text-on-secondary);
+  --color-status-error: var(--use-status-error);
+  --color-status-success: var(--use-status-success);
+  --color-status-warning: var(--use-status-warning);
+
+  /* ── Radios: de Once UI la escala y el anidado, del usuario el tamaño ───
+     Once UI trae cuatro juegos fijos; acá la persona ya eligió su radio en
+     Configuración (`style.radius` → `--corner-radius`), así que la escala se
+     deriva de él. `l` = `m` + 4 y `xl` = `m` + 8 es el anidado de Once UI: un
+     contenedor con `p-1` alrededor de ítems `m` lleva `l`, y así las dos curvas
+     quedan concéntricas. El `min()` hace que con radio 0 todo sea 0 en vez de
+     dejar esquinas de 4 px sueltas. Con 12 da la escala `playful` de Once UI y
+     con 6 la `conservative`. */
+  --radius-corner-xs: calc(var(--corner-radius) * 0.4);
+  --radius-corner-s: calc(var(--corner-radius) * 0.6);
+  --radius-corner-m: var(--corner-radius);
+  --radius-corner-l: calc(var(--corner-radius) + min(var(--corner-radius), 4px));
+  --radius-corner-xl: calc(var(--corner-radius) + min(var(--corner-radius), 8px));
+  --radius-corner-full: 9999px;
+  /* Los nombres de antes, como alias: nadie tiene que tocar nada para subir.
+     `corner-sm` era r / 2,5, que es exactamente r × 0,4. */
+  --radius-corner: var(--radius-corner-m);
+  --radius-corner-sm: var(--radius-corner-xs);
+  --radius-corner-window: calc(var(--corner-radius) + 2px);
+
+  /* ── Bordes: finos, translúcidos y en la dirección del contraste ────────
+     Once UI dibuja los bordes con un gris medio en transparencia. Acá el gris
+     es el texto principal, que oscurece en claro y aclara en oscuro: el canto
+     siempre se ve como canto y no como hueco, que es lo que pasa hoy con
+     `ui-border` en oscuro (más oscuro que el fondo).
+     - `ui-line-weak`: separadores, lo que va dentro de otra cosa.
+     - `ui-line`: el canto de lo que se apoya o flota.
+     - `ui-border-strong` (≥ 3:1, del config-manager) queda para el contorno de
+       un control que tiene que percibirse: campos, selects, vías. */
+  --color-ui-line-weak: color-mix(in srgb, var(--use-text-main) 10%, transparent);
+  --color-ui-line: color-mix(in srgb, var(--use-text-main) 16%, transparent);
+
+  /* ── Rellenos de estado: neutros, no de acento ──────────────────────────
+     Pasar por encima deja un velo gris muy leve con el texto de siempre, en
+     lugar de pintar la opción del color de la marca. El acento queda para lo
+     elegido (`ui-selected-accent`, decisión 4 del 30/09/2026) y para lo que
+     actúa. */
+  --color-ui-hover: color-mix(in srgb, var(--use-text-main) 7%, transparent);
+  --color-ui-pressed: color-mix(in srgb, var(--use-text-main) 12%, transparent);
+  --color-ui-selected: color-mix(in srgb, var(--use-text-main) 10%, transparent);
+  --color-ui-selected-accent: color-mix(in srgb, var(--use-primary) 16%, transparent);
+  /* Lo que flota sobre la ventana —desplegable, globo, applet—: el fondo con
+     un poco de superficie, **opaco**. Sin desenfoque (decisión 3): en una
+     superficie de capa el WebView no ve el escritorio, así que un
+     `backdrop-blur` no desenfoca nada y sólo cuesta. */
+  --color-ui-float: color-mix(in srgb, var(--use-ui-background) 88%, var(--use-ui-surface));
+  --color-ui-scrim: color-mix(in srgb, var(--use-ui-background) 55%, transparent);
+  --color-ui-focus: var(--use-ui-focus);
+
+  /* ── Sombras: las tres capas de Once UI, con la tinta del esquema ─────── */
+  --shadow-surface-xs:
+    0 0 1px color-mix(in srgb, var(--use-shadow-ink) 14%, transparent),
+    0 1px 2px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent),
+    0 2px 4px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent);
+  --shadow-surface-s:
+    0 0 2px color-mix(in srgb, var(--use-shadow-ink) 14%, transparent),
+    0 1px 4px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent),
+    0 4px 8px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent);
+  --shadow-surface-m:
+    0 0 2px color-mix(in srgb, var(--use-shadow-ink) 14%, transparent),
+    0 2px 4px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent),
+    0 8px 8px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent);
+  --shadow-surface-l:
+    0 2px 4px color-mix(in srgb, var(--use-shadow-ink) 14%, transparent),
+    0 8px 12px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent),
+    0 8px 16px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent);
+  --shadow-surface-xl:
+    0 4px 4px color-mix(in srgb, var(--use-shadow-ink) 14%, transparent),
+    0 8px 12px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent),
+    0 24px 24px color-mix(in srgb, var(--use-shadow-ink) 10%, transparent);
+
+  /* ── Texto: los roles y alturas de Once UI, la familia del usuario ──────
+     Redondeados a píxeles enteros: un 13,2 px se dibuja borroso en WebKitGTK
+     con suavizado en escala de grises. `body-s` va a 20 de altura (Once UI:
+     18) porque es el párrafo de Configuración y del correo. */
+  --text-label-xs: 0.75rem;
+  --text-label-xs--line-height: 1rem;
+  --text-label-s: 0.8125rem;
+  --text-label-s--line-height: 1rem;
+  --text-label-m: 0.875rem;
+  --text-label-m--line-height: 1.25rem;
+  --text-body-xs: 0.75rem;
+  --text-body-xs--line-height: 1rem;
+  --text-body-s: 0.875rem;
+  --text-body-s--line-height: 1.25rem;
+  --text-body-m: 1rem;
+  --text-body-m--line-height: 1.5rem;
+  --text-heading-xs: 1rem;
+  --text-heading-xs--line-height: 1.25rem;
+  --text-heading-s: 1.125rem;
+  --text-heading-s--line-height: 1.5rem;
+  --text-heading-m: 1.25rem;
+  --text-heading-m--line-height: 1.5rem;
+
+  /* ── Curvas ──────────────────────────────────────────────────────────────
+     `ease-ui` es el `ease-in-out` de Once UI para todo; `ease-ui-out` arranca
+     rápido y frena, para las entradas. Las duraciones no tienen espacio de
+     nombres en Tailwind 4: van con los números (`duration-100`, `-150`,
+     `-200`, `-300`) y la guardia sólo acepta ésos. */
+  --ease-ui: ease-in-out;
+  --ease-ui-out: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/*
+ * El piso del anillo de foco, con el color que sí llega a 3:1.
+ *
+ * Es el mismo piso que ya tiene el `main.css` de las aplicaciones —con
+ * especificidad cero, para que cualquier componente lo pise sin pelear—, pero
+ * con `ui-focus` en vez de `primary`. Como este archivo se importa después, a
+ * igual especificidad gana éste.
+ */
+:where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+  outline: 2px solid var(--color-ui-focus);
+  outline-offset: 2px;
+}

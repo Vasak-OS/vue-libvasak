@@ -1,5 +1,6 @@
+import { readFileSync } from 'node:fs';
 import vue from '@vitejs/plugin-vue';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 /**
  * Lo que no se empaqueta acá adentro.
@@ -13,8 +14,29 @@ import { defineConfig } from 'vite';
  */
 const externos = [/^vue$/, /^vue-router$/, /^@tauri-apps\//, /^@vasakgroup\//];
 
+/**
+ * `tokens.css` sale tal cual, al lado del bundle.
+ *
+ * No pasa por Vite ni por Tailwind: es un archivo con bloques `@theme` que
+ * compila **la aplicación**, con su propio Tailwind, después de su
+ * `@import "tailwindcss"`. Compilarlo acá lo dejaría sin `@theme` y sin las
+ * utilidades, que es justo lo que la aplicación necesita que traiga.
+ */
+function publishTokens(): Plugin {
+  return {
+    name: 'vasak-publish-tokens',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'tokens.css',
+        source: readFileSync(new URL('./src/styles/tokens.css', import.meta.url), 'utf8'),
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), publishTokens()],
   build: {
     lib: {
       entry: './src/index.ts',

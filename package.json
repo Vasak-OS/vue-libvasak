@@ -1,6 +1,6 @@
 {
 	"name": "@vasakgroup/vue-libvasak",
-	"version": "1.10.0",
+	"version": "2.0.0",
 	"description": "Vue componenets for VSK Applications",
 	"main": "./dist/vue-libvasak.umd.js",
 	"module": "./dist/vue-libvasak.es.js",
@@ -16,6 +16,7 @@
 			"default": "./dist/vue-libvasak.es.js"
 		},
 		"./style.css": "./dist/vue-libvasak.css",
+		"./tokens.css": "./dist/tokens.css",
 		"./package.json": "./package.json"
 	},
 	"keywords": [
@@ -53,6 +54,7 @@
 	},
 	"devDependencies": {
 		"@happy-dom/global-registrator": "^20.14.5",
+		"@tailwindcss/vite": "^4.3.3",
 		"@tauri-apps/api": "^2.12.1",
 		"@types/bun": "^1.4.2",
 		"@vasakgroup/plugin-config-manager": "^2.9.0",
@@ -61,6 +63,7 @@
 		"@vitejs/plugin-vue": "^6.0.9",
 		"@vue/test-utils": "^2.5.1",
 		"happy-dom": "^20.14.5",
+		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3",
 		"vite": "^8.3.1",
 		"vue": "^3.5.43",
@@ -73,7 +76,8 @@
 		"prepare": "bun run build",
 		"typecheck": "bunx vue-tsc --noEmit",
 		"test": "bun test",
-		"tipos": "bunx vue-tsc --declaration --emitDeclarationOnly --noEmit false --outDir dist/types"
+		"tipos": "bunx vue-tsc --declaration --emitDeclarationOnly --noEmit false --outDir dist/types",
+		"bench": "bunx --bun vite --config playground/vite.config.ts"
 	},
 	"vasak": {
 		"bibliotecasAtrasadas": {
