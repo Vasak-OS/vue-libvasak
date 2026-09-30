@@ -9,7 +9,7 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
-import { h } from 'vue';
+import { defineComponent, h, ref } from 'vue';
 import NowPlayingCard from '../src/media/NowPlayingCard.vue';
 import { formatPlaybackTime, playedRatio } from '../src/media/playback';
 import SeekBar from '../src/media/SeekBar.vue';
@@ -313,6 +313,24 @@ describe('la tarjeta', () => {
 
 		expect(view.find('[data-footer]').classes()).toContain('border-t');
 		expect(view.find('[data-footer] [data-eq]').exists()).toBe(true);
+	});
+
+	test('un ecualizador que aparece o se va después del montaje se ve', async () => {
+		const shown = ref(false);
+		const Host = defineComponent({
+			setup: () => () =>
+				h(NowPlayingCard, base, shown.value ? { footer: () => h('div', { 'data-eq': '' }) } : {}),
+		});
+		const view = mount(Host);
+		expect(view.find('[data-footer]').exists()).toBe(false);
+
+		shown.value = true;
+		await view.vm.$nextTick();
+		expect(view.find('[data-footer] [data-eq]').exists()).toBe(true);
+
+		shown.value = false;
+		await view.vm.$nextTick();
+		expect(view.find('[data-footer]').exists()).toBe(false);
 	});
 
 	test('los chips los pone la aplicación', () => {

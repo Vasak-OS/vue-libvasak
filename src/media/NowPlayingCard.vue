@@ -35,7 +35,7 @@
  * artista solo en lugar de la clave cruda.
  */
 import { useI18n } from '@vasakgroup/tauri-plugin-i18n';
-import { computed, useSlots } from 'vue';
+import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import type { PlaybackState } from './playback';
 import SeekBar from './SeekBar.vue';
@@ -99,7 +99,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const slots = useSlots();
 
 const playing = computed(() => props.state === 'playing');
 
@@ -129,8 +128,6 @@ const artistLine = computed(() => {
 	if (!template.includes('{0}')) return props.artist;
 	return template.replace('{0}', () => props.artist);
 });
-
-const hasFooter = computed(() => Boolean(slots.footer));
 
 function previous(): void {
 	if (props.canGoPrevious) emit('previous');
@@ -222,7 +219,10 @@ const SIDE_BUTTON =
       </button>
     </div>
 
-    <div v-if="hasFooter" class="border-t border-ui-border pt-3" data-footer>
+    <!-- `$slots` en la plantilla y no en un `computed`: el objeto de
+         `useSlots()` no es reactivo, y un ecualizador que aparece después del
+         montaje no se dibujaría nunca. -->
+    <div v-if="$slots.footer" class="border-t border-ui-border pt-3" data-footer>
       <slot name="footer" />
     </div>
   </div>
