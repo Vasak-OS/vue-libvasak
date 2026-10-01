@@ -179,13 +179,14 @@ export type { TabAction, TabEntry } from "./tabs/types";
  *
  * Los identificadores de la librería van en inglés (ver `CLAUDE.md` del taller).
  * Los de estos cuatro módulos se renombraron en la 2.0.0 porque la tanda de
- * vue-libvasak#74 los tocaba; los viejos siguen saliendo para que ninguna
- * aplicación tenga que cambiar nada para subir, y se van en la 3.0.
+ * vue-libvasak#74 los tocaba. Los **nombres** viejos de lo que se exporta
+ * siguen saliendo como alias obsoletos y se van en la 3.0.
  *
- * Ojo: el alias es del **nombre**. Los campos de `MenuContext` y
- * `TooltipContext` también pasaron al inglés (`open`, `close`, `trigger`…) y
- * los valores de `FocusOnOpen` son `first`/`last`/`none`. Nadie fuera de la
- * librería los usaba al cerrar la 2.0.0; ver el CHANGELOG.
+ * Ojo: el alias es sólo del nombre. Los campos de `MenuContext`,
+ * `TooltipContext` y `DialogContext` también pasaron al inglés (`open`,
+ * `close`, `trigger`…) y los valores de `FocusOnOpen` son `first`/`last`/
+ * `none`: quien use esos campos o esos valores tiene que migrar. Nadie fuera de
+ * la librería los usaba al cerrar la 2.0.0; ver el CHANGELOG.
  */
 import type { FocusOnOpen as FocusOnOpenType, MenuContext as MenuContextType } from "./dropdown/types";
 import { MENU_KEY as MENU_KEY_VALUE, useMenu as useMenuValue } from "./dropdown/types";

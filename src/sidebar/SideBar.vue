@@ -133,14 +133,29 @@ const toggleClasses = computed(() => [
 ]);
 
 /**
- * Lo que mide el lugar donde está puesta.
+ * El lugar que comparte con el contenido: el primer antepasado más ancho que
+ * la barra misma.
  *
- * Un contenedor que mide cero todavía no se maquetó —el WebView sin tamaño, o
- * una vista que se monta antes de mostrarse—, y plegarse por eso sería plegarse
- * por nada: ahí se mira la página, que es lo que hacía la 1.x.
+ * El padre directo puede ser un envoltorio que sólo la contiene a ella —un
+ * `shrink-0` de una aplicación—, y medir eso es medirse a sí misma: siempre
+ * angosta, plegada para siempre y sin botón para desplegarla. Por eso se sube
+ * mientras el antepasado no sea más ancho que la barra.
+ *
+ * Uno que mide cero todavía no se maquetó —el WebView sin tamaño, o una vista
+ * que se monta antes de mostrarse— y tampoco sirve: se sigue subiendo, y al
+ * final queda la página, que es lo que hacía la 1.x.
  */
+function container(): HTMLElement | null {
+	const own = root.value?.offsetWidth ?? 0;
+	let node = root.value?.parentElement ?? null;
+	while (node && node !== document.documentElement && node.clientWidth <= own) {
+		node = node.parentElement;
+	}
+	return node && node !== document.documentElement ? node : null;
+}
+
 function containerWidth(): number {
-	const width = root.value?.parentElement?.clientWidth;
+	const width = container()?.clientWidth;
 	if (width) return width;
 	return document.documentElement?.clientWidth || window.innerWidth;
 }
@@ -179,8 +194,12 @@ onMounted(() => {
 	check();
 	if (typeof ResizeObserver !== 'undefined') {
 		observer = new ResizeObserver(check);
-		const container = root.value?.parentElement;
-		if (container) observer.observe(container);
+		const shared = container();
+		if (shared) observer.observe(shared);
+		// El padre directo también, aunque sea un envoltorio: cuando por fin se
+		// maqueta, es el que avisa.
+		const parent = root.value?.parentElement;
+		if (parent && parent !== shared) observer.observe(parent);
 		// La página también: mientras el contenedor mida cero es la que manda, y
 		// tiene que poder avisar cuando el WebView recibe su tamaño.
 		if (document.documentElement) observer.observe(document.documentElement);

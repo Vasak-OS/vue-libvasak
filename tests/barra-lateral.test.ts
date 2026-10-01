@@ -610,6 +610,27 @@ describe('el ancho del lugar donde está', () => {
 		expect(vista.find('aside').classes()).toContain('w-72');
 	});
 
+	test('un envoltorio que sólo la contiene a ella no la pliega: mide el lugar compartido', async () => {
+		// Una aplicación que la envuelva en un `shrink-0` le pone un padre del
+		// ancho de la barra. Medir ése es medirse a sí misma: angosta para
+		// siempre, plegada y sin botón para desplegarla.
+		const panel = document.createElement('div');
+		const wrapper = document.createElement('div');
+		panel.append(wrapper);
+		document.body.append(panel);
+		ponerAncho(panel, 1280);
+		ponerAncho(wrapper, 288);
+		const vista = mount(SideBar, { props: { title: 'Ventana' }, attachTo: wrapper });
+		const aside = vista.find('aside').element as HTMLElement;
+		Object.defineProperty(aside, 'offsetWidth', { value: 288, configurable: true });
+		ponerAncho(aside.parentElement as HTMLElement, 288);
+		await avisar();
+
+		expect(vista.find('aside').classes()).toContain('w-72');
+		vista.unmount();
+		panel.remove();
+	});
+
 	test('un contenedor que todavía mide cero no la pliega: manda la página', async () => {
 		// Montada antes de maquetarse, el contenedor dice cero. Plegarse por eso
 		// sería plegarse por nada.

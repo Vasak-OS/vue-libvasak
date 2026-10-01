@@ -192,6 +192,19 @@ describe('el nombre desplegado', () => {
 		return [...document.body.querySelectorAll('[data-tab-expanded-label]')].map((uno) => uno.textContent);
 	}
 
+	test('se topa contra el borde de abajo y desplaza adentro', async () => {
+		// Un nombre largo partido en varias líneas en una pestaña baja se salía
+		// de la ventana con su botón de cerrar.
+		const vista = montarEnVertical();
+		await nextTick();
+		await vista.findComponent(TabItem).trigger('mouseenter');
+		await nextTick();
+
+		const popup = document.body.querySelector<HTMLElement>('[data-tab-expanded-label]')?.parentElement;
+		expect(popup?.style.maxHeight).toContain('100vh');
+		expect(popup?.style.overflowY).toBe('auto');
+	});
+
 	test('aparece al pasar el puntero y se va al salir', async () => {
 		const vista = montarEnVertical();
 		await nextTick();

@@ -133,7 +133,16 @@ const expanded = computed(
 
 /** Dónde se dibuja el desplegado, en coordenadas de la ventana. */
 const expandedStyle = computed(() => {
-	const base = { position: 'fixed' as const, top: `${box.value.top}px`, zIndex: 50 };
+	// Topado contra el borde de abajo: un nombre largo partido en varias
+	// líneas en una pestaña baja se salía de la ventana con su botón de
+	// cerrar. Con el techo, desplaza adentro.
+	const base = {
+		position: 'fixed' as const,
+		top: `${box.value.top}px`,
+		maxHeight: `calc(100vh - ${box.value.top}px - 8px)`,
+		overflowY: 'auto' as const,
+		zIndex: 50,
+	};
 	return barPosition.value === 'right'
 		? { ...base, right: `${box.value.right + EXPANDED_GAP}px` }
 		: { ...base, left: `${box.value.left + EXPANDED_GAP}px` };
