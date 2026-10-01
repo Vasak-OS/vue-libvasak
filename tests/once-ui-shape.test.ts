@@ -23,6 +23,10 @@ import SearchField from '../src/search/SearchField.vue';
 import SideBar from '../src/sidebar/SideBar.vue';
 import TabBar from '../src/tabs/TabBar.vue';
 import TabItem from '../src/tabs/TabItem.vue';
+import { nextTitleId, useDialog } from '../src/dialog/types';
+import { useMenu } from '../src/dropdown/types';
+import { useTooltip } from '../src/tooltip/types';
+import { defineComponent } from 'vue';
 import { olvidarTodo, pedidosDeIcono, traducir, vaciarElCatalogo } from './dobles';
 
 let mounted: VueWrapper | null = null;
@@ -272,5 +276,56 @@ describe('el pie del diálogo', () => {
 		// Lo que pasa quien lo usa va al elemento que se dibuja.
 		expect(inner.classList.contains('mt-4')).toBe(true);
 		expect(vista.classes()).not.toContain('mt-4');
+	});
+});
+
+describe('los contextos sueltos', () => {
+	/** Monta algo que pide el contexto sin que nadie lo provea, y lo devuelve. */
+	function loose<T>(use: () => T): T {
+		let context: T | undefined;
+		mount(
+			defineComponent({
+				setup() {
+					context = use();
+					return () => h('i');
+				},
+			})
+		);
+		return context as T;
+	}
+
+	test('un ítem de menú sin menú se abre y se cierra igual', () => {
+		// En una prueba o una vista previa se monta solo: tiene que andar.
+		const menu = loose(useMenu);
+		menu.show();
+		expect(menu.open.value).toBe(true);
+		menu.toggle();
+		expect(menu.open.value).toBe(false);
+		menu.toggle();
+		menu.close();
+		expect(menu.open.value).toBe(false);
+		menu.setLabel('x');
+		menu.setTrigger(null);
+	});
+
+	test('un tooltip sin raíz, también', () => {
+		const tooltip = loose(useTooltip);
+		tooltip.show();
+		expect(tooltip.open.value).toBe(true);
+		tooltip.hide();
+		expect(tooltip.open.value).toBe(false);
+		tooltip.setTrigger(null);
+	});
+
+	test('y un título de diálogo sin diálogo', () => {
+		const dialog = loose(useDialog);
+		expect(dialog.open.value).toBe(false);
+		dialog.close();
+		dialog.setTitle('x');
+		expect(dialog.titleId.value).toBeNull();
+	});
+
+	test('cada título lleva un id propio', () => {
+		expect(nextTitleId()).not.toBe(nextTitleId());
 	});
 });

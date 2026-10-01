@@ -22,7 +22,7 @@ const externos = [/^vue$/, /^vue-router$/, /^@tauri-apps\//, /^@vasakgroup\//];
  * `@import "tailwindcss"`. Compilarlo acá lo dejaría sin `@theme` y sin las
  * utilidades, que es justo lo que la aplicación necesita que traiga.
  */
-function publishTokens(): Plugin {
+export function publishTokens(): Plugin {
   return {
     name: 'vasak-publish-tokens',
     generateBundle() {

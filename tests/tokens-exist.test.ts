@@ -37,12 +37,24 @@ const TOKENS_CSS = fileURLToPath(new URL('../src/styles/tokens.css', import.meta
  */
 const MIGRATED = sources('**/*.vue');
 
-/** Sin comentarios: lo que se explica no es lo que se dibuja. */
+/**
+ * Sin comentarios: lo que se explica no es lo que se dibuja.
+ *
+ * Se repite hasta que el texto deja de cambiar: sacar un comentario puede
+ * juntar los pedazos de otro (`<!-<!-- -->-`), y una pasada sola lo dejaría
+ * entero.
+ */
 function stripComments(text: string): string {
-	return text
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.replace(/\/\*[\s\S]*?\*\//g, '')
-		.replace(/(^|[^:"'`])\/\/[^\n]*/g, '$1');
+	let previous: string;
+	let current = text;
+	do {
+		previous = current;
+		current = previous
+			.replace(/<!--[\s\S]*?-->/g, '')
+			.replace(/\/\*[\s\S]*?\*\//g, '')
+			.replace(/(^|[^:"'`])\/\/[^\n]*/g, '$1');
+	} while (current !== previous);
+	return current;
 }
 
 async function read(path: string): Promise<string> {
