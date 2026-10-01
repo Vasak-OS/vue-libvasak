@@ -223,6 +223,53 @@ for (const scheme of schemes) {
 	}
 }
 
+/**
+ * Lo que sumó la 2.2.0: el velo de peligro del menú, la tecla y el pie de la
+ * barra, las zonas de soltar.
+ */
+for (const scheme of schemes) {
+	for (const mode of ['light', 'dark'] as const) {
+		const palette = resolvePalette(scheme.colors[mode]);
+		const background = palette['ui-background'];
+		const panel = mix(palette['ui-surface'], 70, background);
+		const float = compose(palette, mixes['ui-float'] as Mix, background);
+		const label = `${scheme.id}, ${mode === 'light' ? 'claro' : 'oscuro'}`;
+
+		describe(`${label}: la 2.2.0`, () => {
+			test('el ítem peligroso se lee sobre su velo rojo, al pasar y al apretar', () => {
+				// `DropdownMenuItem` con `danger`: el texto queda en `tx-main`
+				// sobre el rojo al 10 % (encima) y al 15 % (apretado), en el
+				// panel flotante del menú.
+				for (const percent of [10, 15]) {
+					const veil = mix(palette['status-error'], percent, float);
+					expect(contrast(palette['text-main'], veil)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+				}
+			});
+
+			test('la tecla se lee sobre su velo, en la ventana, en un panel y en el menú', () => {
+				const selected = mixes['ui-selected'] as Mix;
+				for (const under of [background, panel, float]) {
+					expect(contrast(palette['text-main'], compose(palette, selected, under))).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+				}
+			});
+
+			test('la zona de soltar se lee activa y trabada, en la ventana y en un panel', () => {
+				const accent = mixes['ui-selected-accent'] as Mix;
+				for (const under of [background, panel]) {
+					expect(contrast(palette['text-main'], compose(palette, accent, under))).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+					expect(contrast(palette['text-main'], mix(palette['status-warning'], 15, under))).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+				}
+				// Y la tarjeta de encima va en `ui-float`, opaca.
+				expect(contrast(palette['text-main'], float)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+			});
+
+			test('el canto de la zona en reposo se percibe: 3:1', () => {
+				expect(contrast(palette['ui-border-strong'], background)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+			});
+		});
+	}
+}
+
 describe('la cuenta', () => {
 	test('reproduce las mediciones de la especificación', () => {
 		// `#dd7878` sobre `#eff1f5` da 2,64:1: por eso el foco no puede ser el

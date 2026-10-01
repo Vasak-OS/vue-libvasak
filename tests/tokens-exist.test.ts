@@ -223,7 +223,7 @@ describe('lo que la forma de Once UI deja afuera', () => {
 
 	test('la lista de migrados es la librería entera', () => {
 		// Si el disco no se leyera, la lista vacía haría pasar todo lo de arriba.
-		expect(MIGRATED.length).toBeGreaterThanOrEqual(63);
+		expect(MIGRATED.length).toBeGreaterThanOrEqual(76);
 		expect(MIGRATED).toContain('dropdown/DropdownMenuItem.vue');
 		// Los de la 2.1.0 entran solos por leerse del disco; se nombran para que
 		// moverlos de carpeta no los saque de la guardia sin que nadie lo note.
@@ -243,6 +243,19 @@ describe('lo que la forma de Once UI deja afuera', () => {
 			'layout/PageHeader.vue',
 			'layout/Panel.vue',
 			'dialog/DialogBody.vue',
+			// La 2.2.0.
+			'popover/PopoverContent.vue',
+			'text/Kbd.vue',
+			'identity/Avatar.vue',
+			'identity/IdentityBlock.vue',
+			'indicators/IconTile.vue',
+			'feedback/Skeleton.vue',
+			'media/CoverArt.vue',
+			'disclosure/Disclosure.vue',
+			'data/PropertyList.vue',
+			'data/StatTile.vue',
+			'data/CodeBlock.vue',
+			'feedback/DropZone.vue',
 		]) {
 			expect(MIGRATED).toContain(file);
 		}

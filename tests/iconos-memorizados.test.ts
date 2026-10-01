@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
 import { h, nextTick } from 'vue';
 import ThemeIcon from '../src/icons/ThemeIcon.vue';
-import { recargarLosIconosAhora, usarLaVersionDelTema } from '../src/internos/iconoDelTema';
+import { reloadIconsNow, useThemeVersion } from '../src/internal/themeIcon';
 import { cuantosOyentes, emitir, olvidarTodo, ponerEnElTema } from './dobles';
 
 async function asentar(vueltas = 8) {
@@ -63,7 +63,7 @@ function montar(props: Record<string, unknown>) {
  * acá es lo otro: que el icono termine siguiendo al tema.
  */
 async function esperarLaRecarga() {
-	recargarLosIconosAhora();
+	reloadIconsNow();
 	await asentar();
 }
 
@@ -234,7 +234,7 @@ describe('la versión del tema', () => {
 	/** Un componente cualquiera que la mira, como la haría la tienda. */
 	const QUIEN_RESUELVE_SOLO = {
 		setup() {
-			const version = usarLaVersionDelTema();
+			const version = useThemeVersion();
 			return () => h('span', String(version.value));
 		},
 	};

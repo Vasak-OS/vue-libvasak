@@ -1,5 +1,80 @@
 # Cambios de vue-libvasak
 
+## 2.2.0 — sin publicar
+
+Globos, teclas, identidad, carátulas, datos, plegables y soltar
+(`vue-libvasak#74`, decisión 1 del 01/10/2026; el relevamiento está en
+`docs/components-inventory.md`, §2 y §3). Quince componentes nuevos y las
+extensiones de medios, menú, bandeja y barra lateral. Es una minor: nada de lo
+que exporta la 2.1.0 cambia de nombre ni de comportamiento si no se pide lo
+nuevo. `WidgetFrame` no entra: queda en el escritorio hasta que aparezca una
+segunda copia (decisión 4).
+
+### Nuevo
+
+- **`Popover`, `PopoverTrigger`, `PopoverAnchor`, `PopoverContent`**: un
+  `dialog` no modal que cuelga de un botón o de otro elemento (el ancla).
+  `v-model:open`, `side`/`align`/`sideOffset` con la misma cuenta que el menú
+  (pasó a `shared/placement.ts`), foco al primer control al abrir, Escape y
+  clic afuera cierran, `trapFocus` opcional; sin él, salir con Tab cierra y
+  devuelve el foco. Se vuelve a ubicar con `ResizeObserver`, no con `resize`.
+- **`Kbd`**: una tecla o una combinación (`keys`), un `<kbd>` por tecla.
+- **`Avatar`** (foto, iniciales o el icono `avatar-default`; editable con
+  evento `edit`) e **`IdentityBlock`** (avatar, nombre, línea y ranura).
+- **`IconTile`**: el icono del tema en un recuadro con tono y estado en la
+  esquina, con un solo nombre accesible.
+- **`Skeleton`**: línea, bloque o círculo; quieto con movimiento reducido.
+- **`CoverArt`**: la carátula con respaldo de texto o de icono y evento
+  `error`. `SpinningCover` la usa por dentro.
+- **`Disclosure`**: un plegable con `aria-expanded`/`aria-controls`,
+  controlado o no, `plain` o `card`.
+- **`PropertyList`** (`<dl>` en grilla, filas o en línea; la grilla se apila
+  por su ancho), **`StatTile`**, **`CodeBlock`** (`text` o `lines` con tono en
+  el canto, `wrap`, `maxHeight`, `follow` que respeta a quien subió a leer,
+  `variant="log"`) y **`DropZone`** (en línea o encima, `locked`).
+- Textos con respaldo en el catálogo: `avatar.edit`, `media.progress`,
+  `tray.progress`, `dropZone.label`, `dropZone.locked`.
+
+### Extensiones
+
+- `DropdownMenuItem`: `checked` (`menuitemcheckbox`, o `menuitemradio` con
+  `toggle="radio"`) con `update:checked`; `inset`; `icon` y ranura `prefix`;
+  ranura `description`; `shortcut` (con `Kbd`) y su ranura; `danger`. El
+  teclado del menú recorre los tres roles (`MENU_ITEM_SELECTOR`).
+- `ToggleControl`: `indicator` (un `StatusDot` cuyo estado se suma al nombre),
+  `badge` y la ranura `overlay`.
+- `SpinningCover`: `progress` (un aro sin SVG, `conic-gradient` con máscara)
+  e `interactive` + `label` (un botón).
+- `TrayIconButton`: `progress` opcional (el de LauncherEntry), `fallbacks` y
+  `fallbackSrc`. Sólo se dibuja si viene: de dónde sale es del escritorio
+  (vasak-desktop#145).
+- `SideBar`: ranura `footer`. `SideButton`: `description` y ranura `icon`;
+  `SidebarItem` gana `description`.
+- `ThemeIcon`: `fallbacks` (nombres probados en orden) y `fallbackSrc` (el
+  dibujo de otra aplicación).
+
+### Nombres
+
+- `src/internos/iconoDelTema.ts` → `src/internal/themeIcon.ts`, con los
+  identificadores en inglés. Salen `forgetThemeIcons` y `useThemeVersion`;
+  `olvidarLosIconosDelTema` y `usarLaVersionDelTema` quedan como alias
+  obsoletos hasta la 3.0.
+
+### Arreglos
+
+- `SideBar` subía por cualquier antepasado que no fuera más ancho que ella
+  buscando el lugar que comparte, así que desplegada (288 px) en un panel de
+  240 llegaba a la página y no se plegaba. Ahora sólo sube por los que miden
+  lo mismo que ella o cero.
+- `ThemeIcon` tenía comentarios antes de la raíz de su plantilla: en
+  desarrollo eso la partía en un fragmento y las clases de quien lo usaba no
+  caían en ningún lado.
+
+### Dependencias
+
+- Todo al día salvo `typescript`, que sigue en 5.9 (ver
+  `vasak.bibliotecasAtrasadas`).
+
 ## 2.1.0 — sin publicar
 
 Formularios, selección, listas y cabeceras (`vue-libvasak#74`, decisión 1 del

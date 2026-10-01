@@ -19,10 +19,10 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import ThemeIcon from '../src/icons/ThemeIcon.vue';
 import {
-	cuantosIconosAnotados,
-	olvidarLosIconosDelTema,
-	recargarLosIconosAhora,
-} from '../src/internos/iconoDelTema';
+	countRegisteredIcons,
+	forgetThemeIcons,
+	reloadIconsNow,
+} from '../src/internal/themeIcon';
 import { emitir, olvidarTodo, pedidosDeIcono, ponerEnElTema } from './dobles';
 
 async function asentar(vueltas = 8) {
@@ -68,12 +68,12 @@ const vecesQueSePidio = (nombre: string) =>
 beforeEach(() => {
 	jest.useFakeTimers();
 	olvidarTodo();
-	olvidarLosIconosDelTema();
+	forgetThemeIcons();
 });
 
 afterEach(() => {
 	while (montados.length) montados.pop()?.unmount();
-	olvidarLosIconosDelTema();
+	forgetThemeIcons();
 	jest.useRealTimers();
 });
 
@@ -102,7 +102,7 @@ describe('la recarga no se dispara de una', () => {
 
 		await emitir('vicons:theme-changed');
 		await emitir('vicons:theme-changed');
-		recargarLosIconosAhora();
+		reloadIconsNow();
 		await asentar(40);
 
 		expect(vecesQueSePidio('app-0')).toBe(alMontar + 1);
@@ -118,7 +118,7 @@ describe('las tandas', () => {
 		pedidosDeIcono.length = 0;
 
 		await emitir('vicons:theme-changed');
-		recargarLosIconosAhora();
+		reloadIconsNow();
 		// Una vuelta corta: alcanza para la primera tanda y no para las otras,
 		// que esperan su pausa.
 		await asentar(4);
@@ -138,7 +138,7 @@ describe('las tandas', () => {
 		pedidosDeIcono.length = 0;
 
 		await emitir('vicons:theme-changed');
-		recargarLosIconosAhora();
+		reloadIconsNow();
 		await correrElReloj(300);
 
 		expect(pedidosDeIcono).toHaveLength(25);
@@ -159,13 +159,13 @@ describe('lo que se desmonta', () => {
 		// apretar la de las tandas.
 		const iconos = unaListaDe(25);
 		await asentar();
-		expect(cuantosIconosAnotados()).toBe(25);
+		expect(countRegisteredIcons()).toBe(25);
 
 		for (const icono of iconos) icono.unmount();
 		montados.length = 0;
 		await asentar();
 
-		expect(cuantosIconosAnotados()).toBe(0);
+		expect(countRegisteredIcons()).toBe(0);
 	});
 });
 
@@ -195,7 +195,7 @@ describe('a quién vigila', () => {
 			VigiaDeMentira;
 		// El vigía se crea a la primera y queda guardado: sin esto, el doble
 		// llegaría tarde.
-		olvidarLosIconosDelTema();
+		forgetThemeIcons();
 		return registro;
 	}
 
@@ -222,7 +222,7 @@ describe('a quién vigila', () => {
 		} finally {
 			(globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver =
 				original;
-			olvidarLosIconosDelTema();
+			forgetThemeIcons();
 		}
 	});
 });
