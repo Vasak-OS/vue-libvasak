@@ -49,6 +49,13 @@ describe('los iconos del banco salen del tema instalado', () => {
 		expect(resolveIcon(index, 'edit-paste', 'icon')).toEndWith('.svg');
 	});
 
+	test('un enlace roto en el tema se saltea', () => {
+		// VasakOS-dark trae enlaces a archivos que no están; el primero que se
+		// encontró tiraba abajo el servidor del banco.
+		expect(resolveIcon(index, 'broken-link', 'icon')).toBeUndefined();
+		expect(resolveIcon(index, 'edit-copy', 'icon')).toBeDefined();
+	});
+
 	test('un tema que no existe no rompe nada', () => {
 		expect(indexIcons(ICONS, ['NoExiste']).size).toBe(0);
 	});

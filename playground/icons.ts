@@ -32,7 +32,15 @@ function walk(dir: string, depth: number, found: Map<string, string>) {
 	if (depth > 4 || !existsSync(dir)) return;
 	for (const entry of readdirSync(dir).sort()) {
 		const path = join(dir, entry);
-		if (statSync(path).isDirectory()) {
+		let stats: ReturnType<typeof statSync>;
+		try {
+			stats = statSync(path);
+		} catch {
+			// Un enlace roto: los temas de iconos los traen (VasakOS-dark tiene
+			// varios del clima). Se saltea, como hace GTK.
+			continue;
+		}
+		if (stats.isDirectory()) {
 			walk(path, depth + 1, found);
 			continue;
 		}
