@@ -121,7 +121,7 @@ describe('lo que se usa existe', () => {
 		// compara, pasa siempre.
 		const tokens = await declaredTokens();
 
-		for (const color of ['ui-line', 'ui-line-weak', 'ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-scrim', 'ui-focus', 'primary', 'tx-main']) {
+		for (const color of ['ui-line', 'ui-line-weak', 'ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-scrim', 'ui-overlay', 'ui-focus', 'primary', 'tx-main']) {
 			expect(tokens.colors.has(color)).toBe(true);
 		}
 		for (const radius of ['corner-xs', 'corner-s', 'corner-m', 'corner-l', 'corner-xl', 'corner-full', 'corner', 'corner-sm', 'corner-window']) {
@@ -131,6 +131,7 @@ describe('lo que se usa existe', () => {
 			expect(tokens.shadow.has(shadow)).toBe(true);
 		}
 		expect(tokens.text.has('label-m')).toBe(true);
+		expect(tokens.text.has('heading-l')).toBe(true);
 		expect(tokens.ease.has('ui-out')).toBe(true);
 	});
 
@@ -222,8 +223,29 @@ describe('lo que la forma de Once UI deja afuera', () => {
 
 	test('la lista de migrados es la librería entera', () => {
 		// Si el disco no se leyera, la lista vacía haría pasar todo lo de arriba.
-		expect(MIGRATED.length).toBeGreaterThanOrEqual(48);
+		expect(MIGRATED.length).toBeGreaterThanOrEqual(63);
 		expect(MIGRATED).toContain('dropdown/DropdownMenuItem.vue');
+		// Los de la 2.1.0 entran solos por leerse del disco; se nombran para que
+		// moverlos de carpeta no los saque de la guardia sin que nadie lo note.
+		for (const file of [
+			'forms/OptionGroup.vue',
+			'forms/SegmentedControl.vue',
+			'forms/Checkbox.vue',
+			'forms/Slider.vue',
+			'forms/TextArea.vue',
+			'forms/NumberField.vue',
+			'layout/SettingRow.vue',
+			'list/ListRow.vue',
+			'list/ListGroup.vue',
+			'indicators/Badge.vue',
+			'indicators/StatusDot.vue',
+			'layout/SectionHeading.vue',
+			'layout/PageHeader.vue',
+			'layout/Panel.vue',
+			'dialog/DialogBody.vue',
+		]) {
+			expect(MIGRATED).toContain(file);
+		}
 	});
 
 	test('la guardia ve lo prohibido cuando lo hay', () => {

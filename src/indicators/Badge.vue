@@ -27,9 +27,11 @@
  * - `soft`: el relleno del tono al 15 %. La de siempre.
  * - `outline`: sólo el canto del tono, para lo que va al lado de otras
  *   insignias y no tiene que gritar (el origen de un paquete).
- * - `solid`: el relleno pleno del primario con su texto (`tone="accent"`), o
- *   el del tono al 25 % para los demás —un rojo pleno con texto encima no
- *   llega a 4,5:1 con ningún texto del esquema, igual que el botón `danger`—.
+ * - `solid`: el relleno pleno del primario con su texto (`tone="accent"`); en
+ *   los tonos de estado, el relleno al 15 % **más** el canto del tono. Un
+ *   relleno más fuerte no se puede: un rojo pleno con texto encima no llega a
+ *   4,5:1 con ningún texto del esquema (igual que el botón `danger`), y al 25 %
+ *   sobre un panel ya da 3,83:1. Lo que la distingue de `soft` es el canto.
  * - `overlay`: sobre una imagen o un vídeo, con el velo `ui-overlay`.
  *
  * `color` es para cuando el color **es un dato**: la etiqueta que eligió la
@@ -78,9 +80,9 @@ const FILL: Record<Exclude<Variant, 'overlay'>, Record<BadgeTone, string>> = {
 		neutral: 'bg-ui-pressed',
 		accent: 'bg-primary',
 		info: 'bg-primary',
-		success: 'bg-status-success/25',
-		warning: 'bg-status-warning/25',
-		error: 'bg-status-error/25',
+		success: 'bg-status-success/15',
+		warning: 'bg-status-warning/15',
+		error: 'bg-status-error/15',
 	},
 };
 

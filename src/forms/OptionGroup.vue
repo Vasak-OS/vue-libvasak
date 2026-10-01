@@ -97,8 +97,8 @@ function rowClasses(checked: boolean, disabled: boolean) {
 	const shape = isCard.value
 		? 'items-start gap-3 rounded-corner-l border p-3'
 		: props.size === 'sm'
-			? 'items-center gap-2 rounded-corner-m p-2'
-			: 'items-center gap-3 rounded-corner-m px-3 py-2';
+			? 'flex-wrap items-center gap-2 rounded-corner-m p-2'
+			: 'flex-wrap items-center gap-x-3 gap-y-1 rounded-corner-m px-3 py-2';
 	const state = checked
 		? isCard.value
 			? 'border-primary bg-ui-selected-accent'
@@ -148,7 +148,10 @@ function rowClasses(checked: boolean, disabled: boolean) {
         :type="option.iconType ?? 'symbol'"
         :size="size === 'sm' ? 16 : 24" />
 
-      <span class="flex min-w-0 flex-1 flex-col">
+      <!-- Un mínimo de 96 px para el texto: en un applet angosto la insignia baja
+           a la línea de abajo en vez de dejar el nombre en una columna de tres
+           letras. Es lo que hacía el selector del escritorio (`min-w-24`). -->
+      <span class="flex min-w-24 flex-1 flex-col">
         <slot name="option" :option="option" :checked="option.value === model">
           <span class="break-words" :class="[size === 'sm' ? 'text-label-s' : 'text-label-m', isCard ? 'font-semibold' : '']">{{ option.label }}</span>
           <span v-if="option.description" class="break-words text-body-xs text-tx-muted font-normal">{{ option.description }}</span>

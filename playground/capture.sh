@@ -11,11 +11,15 @@ out="${1:?falta la carpeta de salida}"
 prefix="${2:-}"
 url="${BENCH_URL:-http://localhost:5174}"
 mkdir -p "$out"
+# Un perfil propio: con el de siempre, un Chrome sin pantalla que ya esté
+# corriendo (otra sesión, otro banco) tiene el perfil tomado, y éste se queda
+# esperando para siempre sin escribir la captura.
+profile="${CHROME_PROFILE:-$(mktemp -d)}"
 for theme in light dark; do
   for section in ${SECTIONS:-dropdown inputs buttons tooltip listcard tabs sidebar}; do
     file="$out/${prefix}${section}-${theme}.png"
     google-chrome-stable --headless=new --disable-gpu --hide-scrollbars \
-      --window-size=1260,3000 --virtual-time-budget=6000 \
+      --user-data-dir="$profile" --window-size=1260,3000 --virtual-time-budget=6000 \
       --screenshot="$file" "$url/?only=$section&theme=$theme${BENCH_QUERY:-}" >/dev/null 2>&1
     magick "$file" -fuzz 1% -trim +repage -bordercolor "$(magick "$file" -format '%[pixel:p{1,1}]' info:)" -border 16 "$file"
     echo "$file"
@@ -26,7 +30,7 @@ for theme in light dark; do
     for section in ${WINDOW_SECTIONS:-dialog}; do
       file="$out/${prefix}${section}-${theme}-${width}.png"
       google-chrome-stable --headless=new --disable-gpu --hide-scrollbars \
-        --window-size="$width,720" --virtual-time-budget=6000 \
+        --user-data-dir="$profile" --window-size="$width,720" --virtual-time-budget=6000 \
         --screenshot="$file" "$url/?only=$section&theme=$theme&width=$width${BENCH_QUERY:-}" >/dev/null 2>&1
       echo "$file"
     done

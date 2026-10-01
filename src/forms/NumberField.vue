@@ -85,7 +85,7 @@ function clamp(value: number): number {
 /** Lo que el campo dice ahora, o `null` si no es un número. */
 function parse(raw: string): number | null {
 	if (raw.trim() === '') return null;
-	const value = Number.parseFloat(raw.replace(',', '.'));
+	const value = Number.parseFloat(raw);
 	return Number.isNaN(value) ? null : value;
 }
 

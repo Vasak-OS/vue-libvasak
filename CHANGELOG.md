@@ -1,5 +1,90 @@
 # Cambios de vue-libvasak
 
+## 2.1.0 — sin publicar
+
+Formularios, selección, listas y cabeceras (`vue-libvasak#74`, decisión 1 del
+01/10/2026; el relevamiento del taller está en `docs/components-inventory.md`).
+Quince componentes nuevos que salen de las copias que cada aplicación dibujaba
+a mano, y extensiones de los que ya estaban. Es una minor: nada de lo que
+exporta la 2.0.0 cambia de nombre ni de comportamiento si no se pide lo nuevo.
+
+### Nuevo
+
+- **`OptionGroup`**: elegir una de varias (`radiogroup`), en lista o en
+  tarjetas con icono. Un solo Tab para entrar y salir y las flechas eligen,
+  salteando lo apagado. Sale de las cuatro copias del selector de audio, las
+  preferencias del correo y la `OpcionRadio` del instalador.
+- **`SegmentedControl`**: pocas opciones lado a lado, en carril o en
+  pastillas; con `href` es una navegación con `aria-current="page"`. Insignia
+  por opción (el contador de la tienda).
+- **`Checkbox`**: un `input type="checkbox"` de verdad con la forma del
+  sistema, descripción atada y estado «a medias».
+- **`Slider`**: la vía y el pulgar de Once UI sobre un `input range`, con
+  `valueText`, `lazy` y etiquetas en los extremos. `SliderControl` lo usa por
+  dentro sin cambiar su API.
+- **`TextArea`**: el espejo de varias líneas de `TextInput`.
+- **`NumberField`**: nunca emite `NaN`, ajusta a los límites al salir y no en
+  cada tecla, redondea a las cifras del paso; botones − y + opcionales.
+- **`SettingRow`**: la fila de ajuste de Configuración, con la etiqueta atada
+  al control (antes un `<label>` sin `for`).
+- **`ListRow` y `ListGroup`**: la fila de lista con icono, título,
+  descripción, dato y ranuras; roles `button`, `option` y `link`; no impone su
+  alto (los desplazadores virtuales).
+- **`Badge`** y **`StatusDot`**: el texto de la insignia es siempre el
+  principal; el punto lleva el contorno de 3:1.
+- **`SectionHeading`**, **`PageHeader`** (con `size="lg"` para los títulos de
+  24 px de Configuración) y **`Panel`**.
+- **`DialogBody`**: el cuerpo que desplaza entre un encabezado y un pie
+  quietos; se vuelve tabulable sólo cuando no entra.
+- Tokens: `ui-overlay` (el velo sobre una imagen, 4,5:1 sobre negro o blanco
+  puro) y `text-heading-l`. La barra de desplazamiento de las aplicaciones pasa
+  a `tokens.css`, con el radio de la persona.
+- Textos con respaldo en el catálogo: `alert.close`, `dialog.close`,
+  `dialog.body`, `numberField.decrement`, `numberField.increment`.
+
+### Extensiones
+
+- `ActionButton`: `pressed` (`aria-pressed`), `href`/`target` (un `<a>`),
+  `variant="overlay"`, `title`.
+- `AlertMessage`: ranura `actions`, `dismissible` + `close`, `variant="banner"`,
+  `icon="auto"` (el icono del tono).
+- `EmptyState`: `size="sm"`; `icon=""` ya no deja un hueco.
+- `LoadingState`: `size="sm"`, la fila.
+- `ProgressBar`: `size` (`xs`/`sm`/`md`), `showValue`, `decimals`, ranura `label`.
+- `SelectField`: `options`, objetos o cadenas.
+- `FormGroup`: `help`, `error` (atados por `aria-describedby`, el error
+  anunciado), `variant="eyebrow"`, y la ranura recibe `id`, `describedBy`,
+  `invalid`.
+- `SearchField`: `size="lg"`, `bare`. `TextInput`: `size`, `bare`,
+  `type="datetime-local"`.
+- `DialogHeader`: `closable`, `closeLabel`, `closeStyle`. `DialogContent`:
+  `size="sm"` (420 px).
+- `ToastArea`: `ToastNotice` gana `title`, `description`, `progress` y
+  `action`, con el evento `action`; la ranura pasa el aviso como `toast` y
+  sigue pasándolo como `aviso`.
+- `ConfigSection`: `description`, `iconType`, `as`, ranuras `header`, `aside`
+  y `actions`.
+
+### Arreglos
+
+- `ConfigSection` escribía el **nombre** del icono delante del título; ahora
+  dibuja el icono del tema.
+- La guardia de colores no veía `rgba(` dentro de un valor arbitrario
+  (`drop-shadow-[0_2px_rgba(…)]`): el `\b` no corta entre `_` y `r`. Pasa a
+  `(?<![a-zA-Z])`.
+- `SearchField` empezaba su plantilla con un comentario, que la partía en un
+  fragmento y dejaba sin caer los atributos de quien lo usaba.
+- El velo del diálogo se dibuja también en el tamaño `sm`.
+- Una prueba del diálogo buscaba el primer `<p>` del documento y no el del
+  panel: fallaba en la suite entera según qué quedara de otra prueba.
+- `playground/capture.sh` usa un perfil de Chrome propio: con el de siempre
+  tomado por otro Chrome sin pantalla, se quedaba esperando sin escribir nada.
+
+### Dependencias
+
+- `vite` 8.3.1 → 8.3.2. `typescript` sigue en 5.9 (ver
+  `vasak.bibliotecasAtrasadas`).
+
 ## 2.0.0 — sin publicar
 
 La forma de Once UI en los 48 componentes, sobre los colores del esquema del

@@ -93,7 +93,7 @@ function surfacesOf(palette: ResolvedPalette): Record<string, Rgb | string> {
 describe('los tokens se leyeron', () => {
 	test('cada mezcla que se mide está en tokens.css', () => {
 		// Sin esto, una mezcla renombrada deja la prueba midiendo `undefined`.
-		for (const name of ['ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'use-ui-focus']) {
+		for (const name of ['ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-overlay', 'use-ui-focus']) {
 			expect(mixes[name]).toBeDefined();
 		}
 		expect(schemes.map((scheme) => scheme.id)).toContain('vasak-default');
@@ -141,6 +141,83 @@ for (const scheme of schemes) {
 
 				expect(contrast(focus, surfaces['el fondo de la ventana'] as string)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
 				expect(contrast(focus, surfaces['ui-float'] as Rgb)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+			});
+		});
+	}
+}
+
+/**
+ * Lo que sumó la 2.1.0: el velo de medios, los rellenos de las insignias y el
+ * contorno del punto de estado.
+ *
+ * Los rellenos de tono con modificador (`bg-status-success/15`) Tailwind los
+ * mezcla en `oklab`, no en `srgb`; acá se cuentan en `srgb`, que para un
+ * velo de 15 % sobre un fondo casi blanco o casi negro da lo mismo a la
+ * centésima. La diferencia es menor que el margen que deja cada medición.
+ */
+const BLACK = '#000000';
+const WHITE = '#ffffff';
+const TONES = ['status-success', 'status-warning', 'status-error', 'primary'] as const;
+
+for (const scheme of schemes) {
+	for (const mode of ['light', 'dark'] as const) {
+		const palette = resolvePalette(scheme.colors[mode]);
+		const background = palette['ui-background'];
+		/** La superficie de un `Panel` o una sección: `ui-surface` al 70 % sobre la ventana. */
+		const panel = mix(palette['ui-surface'], 70, background);
+		const label = `${scheme.id}, ${mode === 'light' ? 'claro' : 'oscuro'}`;
+
+		describe(`${label}: la 2.1.0`, () => {
+			test('el texto sobre el velo de medios llega a 4,5:1 sobre una foto negra o blanca', () => {
+				// Sobre una imagen no hay fondo conocido: se mide contra los dos
+				// extremos, que son el peor caso para un texto claro y uno oscuro.
+				const overlay = mixes['ui-overlay'] as Mix;
+				expect(overlay).toBeDefined();
+				for (const photo of [BLACK, WHITE]) {
+					expect(contrast(palette['text-main'], compose(palette, overlay, photo))).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+				}
+			});
+
+			test('el texto de una insignia llega a 4,5:1 sobre cada relleno de tono, en la ventana y en un panel', () => {
+				const short: string[] = [];
+				for (const tone of TONES) {
+					// `soft` y la `solid` de estado usan el mismo relleno al 15 %; la
+					// segunda suma el canto. Al 25 % el rojo sobre un panel daba 3,83:1.
+					for (const [fill, percent] of [['soft y solid', 15]] as const) {
+						for (const [where, under] of [
+							['ventana', background],
+							['panel', panel],
+						] as const) {
+							const ratio = contrast(palette['text-main'], mix(palette[tone], percent, under));
+							if (ratio < TEXT_MINIMUM) short.push(`${tone} ${fill} en ${where}: ${ratio.toFixed(2)}`);
+						}
+					}
+				}
+				expect(short).toEqual([]);
+			});
+
+			test('el contorno del punto de estado llega a 3:1 en la ventana y en un panel', () => {
+				// Es lo que deja ver el punto cuando su relleno no llega: el verde
+				// y el amarillo del esquema de fábrica, en claro.
+				expect(contrast(palette['ui-border-strong'], background)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+				expect(contrast(palette['ui-border-strong'], panel)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+			});
+
+			test('el error del campo se lee: el texto principal sobre un panel, y el canto rojo a 3:1', () => {
+				// El rojo como **texto** sobre una sección no llega en todos los
+				// esquemas (3,88:1 con el de fábrica en claro): por eso `FormGroup`
+				// escribe el error en `tx-main` con un icono, y deja el rojo para
+				// el canto del campo, que como contorno pide 3:1.
+				expect(contrast(palette['text-main'], panel)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+				expect(contrast(palette['status-error'], background)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+				expect(contrast(palette['status-error'], panel)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+			});
+
+			test('el texto de la casilla y la opción elegidas se lee sobre el primario', () => {
+				// La tilde de la casilla y el centro del punto de la opción van en
+				// `tx-on-primary` sobre `primary`: 3:1 alcanza (son formas), y el
+				// config-manager los elige para texto, así que sobra.
+				expect(contrast(palette['text-on-primary'], palette.primary)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
 			});
 		});
 	}

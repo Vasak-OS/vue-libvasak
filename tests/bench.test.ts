@@ -145,6 +145,6 @@ describe('la compilación publica tokens.css tal cual', () => {
 		const manifest = await Bun.file(new URL('../package.json', import.meta.url)).json();
 
 		expect(manifest.exports['./tokens.css']).toBe('./dist/tokens.css');
-		expect(manifest.version).toBe('2.0.0');
+		expect(manifest.version).toBe('2.1.0');
 	});
 });

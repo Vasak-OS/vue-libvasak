@@ -23,6 +23,12 @@ import SearchField from '../src/search/SearchField.vue';
 import SideBar from '../src/sidebar/SideBar.vue';
 import TabBar from '../src/tabs/TabBar.vue';
 import TabItem from '../src/tabs/TabItem.vue';
+import OptionGroup from '../src/forms/OptionGroup.vue';
+import SegmentedControl from '../src/forms/SegmentedControl.vue';
+import ListGroup from '../src/list/ListGroup.vue';
+import ListRow from '../src/list/ListRow.vue';
+import Panel from '../src/layout/Panel.vue';
+import Badge from '../src/indicators/Badge.vue';
 import { nextTitleId, useDialog } from '../src/dialog/types';
 import { useMenu } from '../src/dropdown/types';
 import { useTooltip } from '../src/tooltip/types';
@@ -327,5 +333,50 @@ describe('los contextos sueltos', () => {
 
 	test('cada título lleva un id propio', () => {
 		expect(nextTitleId()).not.toBe(nextTitleId());
+	});
+});
+
+describe('la forma de la 2.1.0', () => {
+	test('el anidado de Once UI: carril l con p-0.5/p-1 y lo de adentro m', () => {
+		// Un contenedor con relleno alrededor de ítems `m` lleva `l`, y así las
+		// dos curvas quedan concéntricas (docs/once-ui.md, §2.1).
+		const carril = mount(SegmentedControl, {
+			props: { options: [{ value: 'a', label: 'A' }], label: 'x' },
+		});
+		const grupo = mount(ListGroup, { props: { divided: false }, slots: { default: () => h(ListRow, { title: 'x' }) } });
+
+		expect(carril.classes()).toEqual(expect.arrayContaining(['rounded-corner-l', 'p-0.5']));
+		expect(carril.find('[role="radio"]').classes()).toContain('rounded-corner-m');
+		expect(grupo.classes()).toEqual(expect.arrayContaining(['rounded-corner-l', 'p-1']));
+		expect(grupo.findComponent(ListRow).classes()).toContain('rounded-corner-m');
+	});
+
+	test('lo que se apoya en la ventana: canto fino, superficie al 70 %, sin sombra', () => {
+		for (const vista of [mount(Panel), mount(ListGroup)]) {
+			expect(vista.classes()).toEqual(expect.arrayContaining(['border-ui-line', 'bg-ui-surface/70']));
+			expect(vista.classes().join(' ')).not.toMatch(/shadow-/);
+		}
+	});
+
+	test('pasar por encima es el velo neutro y lo elegido el de acento, nunca el relleno pleno', () => {
+		const opciones = [
+			{ value: 'a', label: 'A' },
+			{ value: 'b', label: 'B' },
+		];
+		const [elegida, otra] = mount(OptionGroup, { props: { options: opciones, label: 'x', modelValue: 'a' } }).findAll(
+			'[role="radio"]'
+		);
+
+		expect(otra?.classes()).toContain('hover:bg-ui-hover');
+		expect(elegida?.classes()).toContain('bg-ui-selected-accent');
+		expect(`${elegida?.classes().join(' ')} ${otra?.classes().join(' ')}`).not.toMatch(
+			/(hover:)?bg-primary(\s|$)|text-tx-on-primary/
+		);
+	});
+
+	test('la insignia es una pastilla del radio de la persona, del alto de la de SideButton', () => {
+		expect(mount(Badge, { props: { label: '3' } }).classes()).toEqual(
+			expect.arrayContaining(['rounded-corner-full', 'min-h-5', 'text-label-xs', 'font-semibold'])
+		);
 	});
 });
