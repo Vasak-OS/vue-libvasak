@@ -103,7 +103,9 @@
   --radius-corner-m: var(--corner-radius);
   --radius-corner-l: calc(var(--corner-radius) + min(var(--corner-radius), 4px));
   --radius-corner-xl: calc(var(--corner-radius) + min(var(--corner-radius), 8px));
-  --radius-corner-full: 9999px;
+  /* Redondo del todo, pero también del radio de la persona: con radio 0, hasta
+     el interruptor y el avatar son rectos, que es el `sharp` de Once UI. */
+  --radius-corner-full: calc(var(--corner-radius) * 999);
   /* Los nombres de antes, como alias: nadie tiene que tocar nada para subir.
      `corner-sm` era r / 2,5, que es exactamente r × 0,4. */
   --radius-corner: var(--radius-corner-m);

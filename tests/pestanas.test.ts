@@ -104,7 +104,7 @@ describe('los cambios sin guardar', () => {
 		// Sólo lo tenía el editor de texto.
 		const vista = montarLaBarra();
 
-		expect(vista.findAllComponents(TabItem)[1].find('.rounded-full').exists()).toBe(true);
+		expect(vista.findAllComponents(TabItem)[1].find('[data-tab-dirty]').exists()).toBe(true);
 	});
 
 	test('y el punto deja su lugar al botón cuando se lo va a usar', async () => {
@@ -114,7 +114,7 @@ describe('los cambios sin guardar', () => {
 
 		await pestana.trigger('mouseenter');
 
-		expect(pestana.find('.rounded-full').exists()).toBe(false);
+		expect(pestana.find('[data-tab-dirty]').exists()).toBe(false);
 		expect(pestana.find('button').exists()).toBe(true);
 	});
 });

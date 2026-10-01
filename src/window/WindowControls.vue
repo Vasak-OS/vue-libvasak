@@ -82,9 +82,9 @@ const { t } = useI18n();
  * de pasar la etiqueta sin haber puesto la clave lo ve en el tooltip, que es lo
  * mismo que hace `t()` en todo el sistema.
  */
-const etiquetaDeMinimizar = computed(() => props.minimizeLabel ?? t('ventana.minimizar'));
-const etiquetaDeMaximizar = computed(() => props.maximizeLabel ?? t('ventana.maximizar'));
-const etiquetaDeCerrar = computed(() => props.closeLabel ?? t('ventana.cerrar'));
+const minimizeText = computed(() => props.minimizeLabel ?? t('ventana.minimizar'));
+const maximizeText = computed(() => props.maximizeLabel ?? t('ventana.maximizar'));
+const closeText = computed(() => props.closeLabel ?? t('ventana.cerrar'));
 
 const emit = defineEmits<{
 	minimize: [];
@@ -94,7 +94,7 @@ const emit = defineEmits<{
 
 const { vertical } = usarLaBarra();
 
-const lleva = computed(() => ({
+const has = computed(() => ({
 	minimize: props.controls.includes('minimize'),
 	maximize: props.controls.includes('maximize'),
 	close: props.controls.includes('close'),
@@ -107,7 +107,7 @@ const lleva = computed(() => ({
  * pruebas y vistas previas. Pedirla en el momento del clic deja que el resto se
  * dibuje igual.
  */
-function laVentana() {
+function currentWindow() {
 	return getCurrentWindow();
 }
 
@@ -120,29 +120,35 @@ function laVentana() {
  * aplicación se hace cargo», y la diferencia importa: emitir *y* cerrar deja al
  * reproductor apagando el audio de una ventana que ya no está.
  */
-const instancia = getCurrentInstance();
+const instance = getCurrentInstance();
 
-function escuchan(evento: 'Minimize' | 'Maximize' | 'Close') {
-	return Boolean(instancia?.vnode.props?.[`on${evento}`]);
+function isListened(event: 'Minimize' | 'Maximize' | 'Close') {
+	return Boolean(instance?.vnode.props?.[`on${event}`]);
 }
 
-function minimizar() {
-	if (escuchan('Minimize')) return emit('minimize');
-	laVentana().minimize();
+function minimize() {
+	if (isListened('Minimize')) return emit('minimize');
+	currentWindow().minimize();
 }
 
-function maximizar() {
-	if (escuchan('Maximize')) return emit('maximize');
-	laVentana().toggleMaximize();
+function maximize() {
+	if (isListened('Maximize')) return emit('maximize');
+	currentWindow().toggleMaximize();
 }
 
-function cerrar() {
-	if (escuchan('Close')) return emit('close');
-	laVentana().close();
+function close() {
+	if (isListened('Close')) return emit('close');
+	currentWindow().close();
 }
 
-const CLASES =
-	'flex items-center justify-center rounded-corner border border-ui-border bg-ui-bg/80 p-1 transition-colors';
+/**
+ * Botones sin borde de Once UI (vue-libvasak#74): 32 de lado, `rounded-corner-m`
+ * y el velo `ui-hover`. El de cerrar se tiñe de error al pasar, que es lo único
+ * que avisa que ése cierra. Antes cada uno llevaba borde, fondo de ventana y un
+ * relleno pleno de color al pasar —verde, ámbar, rojo—.
+ */
+const CLASSES =
+	'flex size-8 items-center justify-center rounded-corner-m text-tx-main transition-colors duration-200 ease-ui active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus';
 </script>
 
 <template>
@@ -152,31 +158,31 @@ const CLASES =
     :class="vertical ? 'flex-col' : ''"
     data-tauri-drag-region>
     <button
-      v-if="lleva.minimize"
+      v-if="has.minimize"
       type="button"
-      :class="[CLASES, 'hover:bg-status-success']"
-      :title="etiquetaDeMinimizar"
-      :aria-label="etiquetaDeMinimizar"
-      @click="minimizar()">
-      <ThemeIcon name="window-minimize" type="symbol" :size="24" />
+      :class="[CLASSES, 'hover:bg-ui-hover active:bg-ui-pressed']"
+      :title="minimizeText"
+      :aria-label="minimizeText"
+      @click="minimize()">
+      <ThemeIcon name="window-minimize" type="symbol" :size="16" />
     </button>
     <button
-      v-if="lleva.maximize"
+      v-if="has.maximize"
       type="button"
-      :class="[CLASES, 'hover:bg-status-warning']"
-      :title="etiquetaDeMaximizar"
-      :aria-label="etiquetaDeMaximizar"
-      @click="maximizar()">
-      <ThemeIcon name="window-maximize" type="symbol" :size="24" />
+      :class="[CLASSES, 'hover:bg-ui-hover active:bg-ui-pressed']"
+      :title="maximizeText"
+      :aria-label="maximizeText"
+      @click="maximize()">
+      <ThemeIcon name="window-maximize" type="symbol" :size="16" />
     </button>
     <button
-      v-if="lleva.close"
+      v-if="has.close"
       type="button"
-      :class="[CLASES, 'hover:bg-status-error']"
-      :title="etiquetaDeCerrar"
-      :aria-label="etiquetaDeCerrar"
-      @click="cerrar()">
-      <ThemeIcon name="window-close" type="symbol" :size="24" />
+      :class="[CLASSES, 'hover:bg-status-error/15 active:bg-status-error/25']"
+      :title="closeText"
+      :aria-label="closeText"
+      @click="close()">
+      <ThemeIcon name="window-close" type="symbol" :size="16" />
     </button>
   </div>
 </template>

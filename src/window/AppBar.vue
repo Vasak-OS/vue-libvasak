@@ -22,6 +22,9 @@
  * En la barra y en el hueco del contenido: sin decoración del compositor, esto
  * es lo único que deja mover la ventana arrastrándola. Va en los contenedores y
  * no en los botones, que tienen que poder apretarse.
+ *
+ * La forma (vue-libvasak#74): el título va en `text-label-m`; los controles de
+ * ventana son los botones sin borde de `WindowControls`.
  */
 import { computed, provide } from 'vue';
 import {
@@ -64,9 +67,9 @@ defineEmits<{
 	close: [];
 }>();
 
-const delMarco = usarLaBarra();
-const posicion = computed<PosicionDeLaBarra>(() => props.position ?? delMarco.posicion.value);
-const vertical = computed(() => posicion.value === 'left' || posicion.value === 'right');
+const fromFrame = usarLaBarra();
+const barPosition = computed<PosicionDeLaBarra>(() => props.position ?? fromFrame.posicion.value);
+const vertical = computed(() => barPosition.value === 'left' || barPosition.value === 'right');
 
 // Puesta a mano, la barra manda sobre lo que diga el marco: así una ventana
 // puede tener la barra fija aunque el resto del escritorio siga la preferencia.
@@ -77,7 +80,7 @@ const vertical = computed(() => posicion.value === 'left' || posicion.value === 
 // condicionado al orden de las llamadas de `setup`, que es justo lo que Vue
 // pide no hacer.
 provide(CLAVE_DE_LA_BARRA, {
-	posicion,
+	posicion: barPosition,
 	orientacion: computed(() => (vertical.value ? 'vertical' : 'horizontal')),
 	vertical,
 });
@@ -97,7 +100,7 @@ provide(CLAVE_DE_LA_BARRA, {
          dice el gestor de ventanas igual. -->
     <p
       v-if="($slots.titulo || title) && !vertical"
-      class="min-w-0 shrink truncate text-sm"
+      class="min-w-0 shrink truncate text-label-m"
       data-tauri-drag-region>
       <slot name="titulo">{{ title }}</slot>
     </p>

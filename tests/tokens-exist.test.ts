@@ -29,53 +29,13 @@ const SOURCE = fileURLToPath(new URL('../src/', import.meta.url));
 const TOKENS_CSS = fileURLToPath(new URL('../src/styles/tokens.css', import.meta.url));
 
 /**
- * Los componentes que ya tienen la forma de Once UI.
+ * Los componentes que tienen la forma de Once UI: desde la 2.0.0, todos.
  *
- * La primera tanda de vue-libvasak#74. Lo que entra acá tiene que cumplir las
- * prohibiciones de abajo; lo que no, todavía no.
+ * vue-libvasak#74 los pasó por grupos y esta lista creció con cada uno; con el
+ * último ya es la librería entera, así que se lee del disco. Un componente
+ * nuevo entra solo, que es lo que tiene que pasar.
  */
-const MIGRATED = [
-	'dropdown/DropdownMenu.vue',
-	'dropdown/DropdownMenuContent.vue',
-	'dropdown/DropdownMenuItem.vue',
-	'dropdown/DropdownMenuLabel.vue',
-	'dropdown/DropdownMenuSeparator.vue',
-	'dropdown/DropdownMenuTrigger.vue',
-	'forms/TextInput.vue',
-	'search/SearchField.vue',
-	'controls/ActionButton.vue',
-	'tooltip/Tooltip.vue',
-	'tooltip/TooltipContent.vue',
-	'tooltip/TooltipTrigger.vue',
-	'cards/ListCard.vue',
-	'tabs/TabBar.vue',
-	'tabs/TabItem.vue',
-	'sidebar/SideBar.vue',
-	'sidebar/SideButton.vue',
-	'sidebar/SideGroup.vue',
-	'forms/FormGroup.vue',
-	'forms/SelectField.vue',
-	'forms/SwitchTrack.vue',
-	'forms/SwitchToggle.vue',
-	'forms/SwitchRow.vue',
-	'forms/ProgressBar.vue',
-	'forms/SliderControl.vue',
-	'controls/ToggleControl.vue',
-	'search/SearchSelect.vue',
-	'tray/TrayIconButton.vue',
-	'cards/DeviceCard.vue',
-	'feedback/AlertMessage.vue',
-	'feedback/ToastArea.vue',
-	'feedback/EmptyState.vue',
-	'feedback/LoadingState.vue',
-	'layout/ConfigSection.vue',
-	'dialog/Dialog.vue',
-	'dialog/DialogContent.vue',
-	'dialog/DialogTitle.vue',
-	'dialog/DialogDescription.vue',
-	'dialog/DialogHeader.vue',
-	'dialog/DialogFooter.vue',
-];
+const MIGRATED = sources('**/*.vue');
 
 /** Sin comentarios: lo que se explica no es lo que se dibuja. */
 function stripComments(text: string): string {
@@ -190,7 +150,7 @@ describe('lo que se usa existe', () => {
 	});
 });
 
-describe('lo que la forma de Once UI deja afuera, en los componentes ya migrados', () => {
+describe('lo que la forma de Once UI deja afuera', () => {
 	const FORBIDDEN: Array<[string, RegExp]> = [
 		['sombras de Tailwind en vez de shadow-surface-*', /(?<![\w-])(?:[a-z-]+:)*shadow(?:-(?:sm|md|lg|xl|2xl))?(?![\w-])/g],
 		['radios de Tailwind en vez de rounded-corner-*', /(?<![\w-])(?:[a-z-]+:)*rounded(?:-[trblse]{1,2})?(?:-(?:sm|md|lg|xl|2xl|3xl))?(?![\w-])/g],
@@ -203,9 +163,16 @@ describe('lo que la forma de Once UI deja afuera, en los componentes ya migrados
 		['el fondo de la ventana sobre la ventana', /(?<![\w-])(?:[a-z-]+:)*bg-ui-bg(?![\w-])|(?<![\w-])background(?=["'\s])/g],
 	];
 
+	/** El marco de la ventana **es** la ventana: el único que lleva su fondo. */
+	const WINDOW_BACKGROUND_ALLOWED = ['window/WindowFrame.vue'];
+
 	for (const [what, regex] of FORBIDDEN) {
 		test(`sin ${what}`, async () => {
-			expect(await findAll(MIGRATED, regex)).toEqual([]);
+			const files =
+				what === 'el fondo de la ventana sobre la ventana'
+					? MIGRATED.filter((file) => !WINDOW_BACKGROUND_ALLOWED.includes(file))
+					: MIGRATED;
+			expect(await findAll(files, regex)).toEqual([]);
 		});
 	}
 
@@ -217,11 +184,10 @@ describe('lo que la forma de Once UI deja afuera, en los componentes ya migrados
 		expect(found).toEqual([]);
 	});
 
-	test('la lista de migrados existe de verdad', async () => {
-		// Un nombre mal escrito en la lista es un componente que nadie revisa.
-		for (const file of MIGRATED) {
-			expect(await Bun.file(SOURCE + file).exists()).toBe(true);
-		}
+	test('la lista de migrados es la librería entera', () => {
+		// Si el disco no se leyera, la lista vacía haría pasar todo lo de arriba.
+		expect(MIGRATED.length).toBeGreaterThanOrEqual(48);
+		expect(MIGRATED).toContain('dropdown/DropdownMenuItem.vue');
 	});
 
 	test('la guardia ve lo prohibido cuando lo hay', () => {
@@ -275,6 +241,28 @@ describe('en toda la librería', () => {
 			/(?<![\w@-])(?:max-|min-)?(?:sm|md|lg|xl|2xl)(?:\/[a-z]+)?:[a-z-]|(?<![\w@-])(?:max|min)-\[[^\]]+\]:|matchMedia\(\s*[`'"]\(?\s*(?:max|min)-(?:width|height)/g;
 
 		expect(await findAll(sources('**/*.{vue,ts}'), viewport)).toEqual([]);
+	});
+
+	test('ningún radio fijo: todos salen del radio que eligió la persona', async () => {
+		// Los radios son la escala `rounded-corner-*`, derivada con `calc()` de
+		// `--corner-radius`, que escribe el config-manager desde `vasak.conf`.
+		// Ni los de Tailwind (`rounded-md`, `rounded-full`, `rounded` a secas),
+		// ni uno arbitrario (`rounded-[6px]`), ni un `border-radius` escrito a
+		// mano en un estilo.
+		const fixed =
+			/(?<![\w-])(?:[a-z0-9@[\]-]+:)*rounded(?:-[trblse]{1,2})?(?:-(?:none|xs|sm|md|lg|xl|2xl|3xl|4xl|full|\[[^\]]*\]))?(?![\w-])|border-radius\s*:|borderRadius\s*:/g;
+
+		expect(await findAll(sources('**/*.{vue,ts}'), fixed)).toEqual([]);
+	});
+
+	test('y la escala de tokens.css se deriva toda de --corner-radius', async () => {
+		const css = await read(TOKENS_CSS);
+		const radii = [...css.matchAll(/--radius-([a-z0-9-]+):\s*([^;]+);/g)];
+
+		expect(radii.length).toBeGreaterThanOrEqual(9);
+		for (const [, name, value] of radii) {
+			expect(`${name}: ${value}`).toMatch(/var\(--(?:corner-radius|radius-corner[a-z-]*)\)/);
+		}
 	});
 
 	test('la guardia de puntos de corte deja pasar los de contenedor', () => {

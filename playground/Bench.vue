@@ -33,6 +33,7 @@ import {
 } from '../src';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
+import BenchWindow from './BenchWindow.vue';
 import VerticalTabs from './VerticalTabs.vue';
 
 const props = defineProps<{ widths: number[]; only: string }>();
@@ -49,7 +50,11 @@ const sections = [
 	'devices',
 	'feedback',
 	'dialog',
+	'window',
+	'media',
+	'frame',
 ] as const;
+const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
 const FEEDBACK = ['feedback', 'dialog'];
 const shown = computed(() =>
@@ -138,7 +143,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="flex flex-col gap-8 p-4 text-tx-main">
+  <!-- El marco de la ventana es la ventana: se dibuja solo, sin el banco
+       alrededor, y se captura con la ventana de cada ancho. -->
+  <BenchWindow v-if="only === 'frame'" section="frame" :width="0" first />
+  <main v-else class="flex flex-col gap-8 p-4 text-tx-main">
     <section v-for="section in shown" :key="section" class="flex flex-col gap-4">
       <h1 class="font-semibold text-lg">{{ section }}</h1>
 
@@ -239,6 +247,11 @@ onMounted(async () => {
           </div>
 
           <BenchForms v-else-if="FORMS.includes(section)" :section="section" :width="width" />
+          <BenchWindow
+            v-else-if="WINDOW.includes(section)"
+            :section="section"
+            :width="width"
+            :first="width === widths[0]" />
           <BenchFeedback
             v-else-if="FEEDBACK.includes(section)"
             :section="section"

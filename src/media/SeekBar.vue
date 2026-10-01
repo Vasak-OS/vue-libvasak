@@ -31,6 +31,10 @@
  * `position`, `duration` y `step` van en la misma unidad, la que sea: MPRIS
  * cuenta en microsegundos y un reproductor propio en segundos. `format` es lo
  * único que tiene que saberla; por omisión, segundos.
+ *
+ * La forma (vue-libvasak#74): la vía en `ui-line`, que se ve sobre cualquier
+ * superficie, lo recorrido en `primary`, el tirador con `shadow-surface-xs` y
+ * el anillo de foco con `ui-focus` alrededor de la vía.
  */
 import { useI18n } from '@vasakgroup/tauri-plugin-i18n';
 import { computed, ref, watch } from 'vue';
@@ -107,19 +111,19 @@ function onChange(event: Event): void {
 <template>
   <div
     v-if="hasBar"
-    class="flex w-full items-center gap-2 text-xs text-tx-muted tabular-nums"
+    class="flex w-full min-w-0 items-center gap-2 text-body-xs text-tx-muted tabular-nums"
     data-seek-bar>
     <span class="shrink-0" data-elapsed>{{ elapsed }}</span>
 
     <div
-      class="group relative flex h-4 min-w-0 flex-1 items-center rounded-full has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-primary"
+      class="group relative flex h-4 min-w-0 flex-1 items-center rounded-corner-full has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-ui-focus"
       :class="seekable ? 'cursor-pointer' : 'opacity-60'">
-      <div class="h-1 w-full overflow-hidden rounded-full bg-ui-surface">
-        <div class="h-full rounded-full bg-primary" :style="{ width: percent }" data-played></div>
+      <div class="h-1 w-full overflow-hidden rounded-corner-full bg-ui-line">
+        <div class="h-full rounded-corner-full bg-primary" :style="{ width: percent }" data-played></div>
       </div>
       <div
         v-if="seekable"
-        class="pointer-events-none absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary opacity-0 transition-opacity group-hover:opacity-100 group-has-[input:focus-visible]:opacity-100"
+        class="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-corner-full bg-primary opacity-0 shadow-surface-xs transition-opacity duration-200 ease-ui group-hover:opacity-100 group-has-[input:focus-visible]:opacity-100"
         :class="{ 'opacity-100': dragging !== null }"
         :style="{ left: percent }"
         data-thumb></div>

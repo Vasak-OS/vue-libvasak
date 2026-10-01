@@ -263,7 +263,7 @@ onBeforeUnmount(cancelPress);
          único lugar que queda. -->
     <span
       v-if="showsDot"
-      class="size-2 shrink-0 rounded-full bg-current"
+      class="size-2 shrink-0 rounded-corner-full bg-current" data-tab-dirty
       :class="vertical ? 'absolute right-0.5 top-0.5' : ''"
       aria-hidden="true" />
 
@@ -302,7 +302,7 @@ onBeforeUnmount(cancelPress);
           @focusout="onExpandedFocusout">
           <span class="min-w-0 break-words" data-tab-expanded-label>{{ tab.label }}</span>
 
-          <span v-if="tab.dirty" class="size-2 shrink-0 rounded-full bg-current" aria-hidden="true" />
+          <span v-if="tab.dirty" class="size-2 shrink-0 rounded-corner-full bg-current" data-tab-dirty aria-hidden="true" />
 
           <button
             v-if="closable"

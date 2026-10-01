@@ -30,10 +30,16 @@
  * El `mousedown.prevent` de la lupa es lo que la deja cerrar: sin eso, apretarla
  * con el campo enfocado disparaba primero la salida del foco —que cierra— y
  * después el clic —que vuelve a abrir—, así que el botón no podía plegar nunca.
+ *
+ * La forma (vue-libvasak#74): plegada es un botón sin borde de 32; lo que
+ * despliega es un panel flotante (`ui-float`, `rounded-corner-l`,
+ * `shadow-surface-m`) que nunca es más ancho que la ventana. El nombre de la
+ * lupa sale de la propiedad, del catálogo (`search.label`) o es «Search».
  */
 import { computed, nextTick, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import SearchField from '../search/SearchField.vue';
+import { useLabels } from '../shared/labels';
 import { usarLaBarra } from '../window/tipos';
 
 const props = withDefaults(
@@ -55,7 +61,7 @@ const props = withDefaults(
 	{
 		modelValue: '',
 		placeholder: '',
-		label: 'Search',
+		label: undefined,
 		collapsed: false,
 		disabled: false,
 		debounce: 0,
@@ -63,41 +69,45 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-	'update:modelValue': [valor: string];
-	search: [valor: string];
+	'update:modelValue': [value: string];
+	search: [value: string];
 	open: [];
 	close: [];
 }>();
 
-const { vertical, posicion } = usarLaBarra();
+const { vertical, posicion: barPosition } = usarLaBarra();
+const translate = useLabels();
+/** Sin pasarla, `search.label` del catálogo de la aplicación, o «Search». */
+const labelText = computed(() => props.label ?? translate('search.label', 'Search'));
 
-const abierto = ref(false);
-const campo = ref<InstanceType<typeof SearchField> | null>(null);
+const isOpen = ref(false);
+const field = ref<InstanceType<typeof SearchField> | null>(null);
 
 /** Vertical no hay opción; horizontal decide la aplicación. */
-const sePliega = computed(() => vertical.value || props.collapsed);
-const muestraElCampo = computed(() => !sePliega.value || abierto.value);
+const folds = computed(() => vertical.value || props.collapsed);
+const showsField = computed(() => !folds.value || isOpen.value);
 
 /** De qué lado sale el campo cuando la barra está a un costado. */
-const clasesDelDesplegado = computed(() => {
-	if (!sePliega.value) return '';
-	const base = 'absolute z-40 w-64 rounded-corner border border-ui-border bg-ui-surface/95 p-1 shadow-lg';
-	if (posicion.value === 'left') return `${base} left-full top-0 ml-1`;
-	if (posicion.value === 'right') return `${base} right-full top-0 mr-1`;
-	if (posicion.value === 'bottom') return `${base} bottom-full right-0 mb-1`;
+const popoverClasses = computed(() => {
+	if (!folds.value) return '';
+	const base =
+		'absolute z-40 w-64 max-w-[calc(100vw-16px)] rounded-corner-l border border-ui-line bg-ui-float p-1 shadow-surface-m';
+	if (barPosition.value === 'left') return `${base} left-full top-0 ml-1`;
+	if (barPosition.value === 'right') return `${base} right-full top-0 mr-1`;
+	if (barPosition.value === 'bottom') return `${base} bottom-full right-0 mb-1`;
 	return `${base} top-full right-0 mt-1`;
 });
 
-async function abrir() {
-	abierto.value = true;
+async function open() {
+	isOpen.value = true;
 	emit('open');
 	await nextTick();
-	campo.value?.enfocar();
+	field.value?.focus();
 }
 
-function cerrar() {
-	if (!abierto.value) return;
-	abierto.value = false;
+function close() {
+	if (!isOpen.value) return;
+	isOpen.value = false;
 	emit('close');
 }
 
@@ -108,36 +118,36 @@ function cerrar() {
  * no se oye. Y sin mirar a dónde fue el foco, pasar del campo a la cruz de
  * vaciarlo plegaría la búsqueda en el medio del gesto.
  */
-function alSalirElFoco(evento: FocusEvent) {
-	const destino = evento.relatedTarget as Node | null;
-	if (destino && (evento.currentTarget as HTMLElement).contains(destino)) return;
-	cerrar();
+function onFocusout(event: FocusEvent) {
+	const target = event.relatedTarget as Node | null;
+	if (target && (event.currentTarget as HTMLElement).contains(target)) return;
+	close();
 }
 </script>
 
 <template>
-  <div class="relative flex shrink-0 items-center" @focusout="alSalirElFoco">
+  <div class="relative flex shrink-0 items-center" @focusout="onFocusout">
     <button
-      v-if="sePliega"
+      v-if="folds"
       type="button"
-      class="flex size-7 items-center justify-center rounded-corner border border-ui-border bg-ui-bg/80 hover:bg-ui-surface/70"
-      :title="label"
-      :aria-label="label"
-      :aria-expanded="abierto"
+      class="flex size-8 items-center justify-center rounded-corner-m text-tx-main transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+      :title="labelText"
+      :aria-label="labelText"
+      :aria-expanded="isOpen"
       @mousedown.prevent
-      @click="abierto ? cerrar() : abrir()">
-      <ThemeIcon name="system-search" type="symbol" :size="14" />
+      @click="isOpen ? close() : open()">
+      <ThemeIcon name="system-search" type="symbol" :size="16" />
     </button>
 
-    <div v-if="muestraElCampo" :class="clasesDelDesplegado" @keydown.esc="cerrar">
+    <div v-if="showsField" :class="popoverClasses" @keydown.esc="close">
       <SearchField
-        ref="campo"
+        ref="field"
         :model-value="modelValue"
         :placeholder="placeholder"
-        :label="label"
+        :label="labelText"
         :disabled="disabled"
         :debounce="debounce"
-        :class="sePliega ? '' : 'w-48'"
+        :class="folds ? '' : 'w-48 max-w-full'"
         @update:model-value="emit('update:modelValue', $event)"
         @search="emit('search', $event)" />
     </div>
