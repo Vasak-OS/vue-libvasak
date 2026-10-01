@@ -1,6 +1,6 @@
 {
 	"name": "@vasakgroup/vue-libvasak",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"description": "Vue componenets for VSK Applications",
 	"main": "./dist/vue-libvasak.umd.js",
 	"module": "./dist/vue-libvasak.es.js",
@@ -17,6 +17,7 @@
 		},
 		"./style.css": "./dist/vue-libvasak.css",
 		"./tokens.css": "./dist/tokens.css",
+		"./scrollbar.css": "./dist/scrollbar.css",
 		"./package.json": "./package.json"
 	},
 	"keywords": [
@@ -65,7 +66,7 @@
 		"happy-dom": "^20.14.5",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3",
-		"vite": "^8.3.1",
+		"vite": "^8.3.2",
 		"vue": "^3.5.43",
 		"vue-router": "^5.3.1",
 		"vue-tsc": "^3.3.11"

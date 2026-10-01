@@ -136,15 +136,19 @@ describe('la compilación publica tokens.css tal cual', () => {
 		generate.call({ emitFile: (file: { fileName: string; source: string }) => emitted.push(file) });
 
 		const original = await Bun.file(new URL('../src/styles/tokens.css', import.meta.url)).text();
-		expect(emitted).toHaveLength(1);
-		expect(emitted[0]?.fileName).toBe('tokens.css');
+		const scrollbar = await Bun.file(new URL('../src/styles/scrollbar.css', import.meta.url)).text();
+		expect(emitted.map((file) => file.fileName)).toEqual(['tokens.css', 'scrollbar.css']);
 		expect(emitted[0]?.source).toBe(original);
+		expect(emitted[1]?.source).toBe(scrollbar);
+		// Las reglas globales de la barra no viajan con los tokens.
+		expect(original).not.toContain('::-webkit-scrollbar');
 	});
 
 	test('y el manifiesto lo exporta', async () => {
 		const manifest = await Bun.file(new URL('../package.json', import.meta.url)).json();
 
 		expect(manifest.exports['./tokens.css']).toBe('./dist/tokens.css');
-		expect(manifest.version).toBe('2.0.0');
+		expect(manifest.exports['./scrollbar.css']).toBe('./dist/scrollbar.css');
+		expect(manifest.version).toBe('2.1.0');
 	});
 });

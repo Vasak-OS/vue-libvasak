@@ -29,8 +29,29 @@
  * ventana y sobre una tarjeta por igual; la superficie al 70 % desaparecía
  * dentro de una tarjeta de superficie— con el relleno del tono. Avanza en
  * 300 ms con `ease-ui`.
+ *
+ * ── `size` y `showValue` (2.1.0) ────────────────────────────────────────────
+ *
+ * `md` es la de 8 de siempre. `sm` (6) y `xs` (4) son las barras finas que se
+ * dibujaban a mano: el medidor del OSD, la del centro de estado del gestor de
+ * archivos, la de la tienda y el medidor de fuerza de la contraseña del
+ * instalador.
+ *
+ * `showValue` es lo que la capa `ProgressBar` de Configuración ponía encima:
+ * la fila con la etiqueta a la izquierda y el porcentaje a la derecha, con
+ * `decimals` cifras (Configuración usa una, para el disco y la memoria). La
+ * etiqueta visible es `label`, o la ranura `label` si hace falta algo más que
+ * texto; el número es el mismo valor recortado que dibuja la barra, para que
+ * no digan cosas distintas. Indeterminada no muestra número: no lo hay.
+ *
+ * Con la fila, la raíz es la columna y la barra va adentro; sin ella, la raíz
+ * es la barra, como en la 2.0.0, para que una clase de quien la usa caiga donde
+ * caía. La fila no se lee aparte (`aria-hidden`): la barra ya dice su nombre y
+ * su valor. (Este comentario va acá y no en la plantilla: uno arriba de la raíz
+ * la parte en un fragmento.)
  */
 import { computed } from 'vue';
+import ProgressTrack from './ProgressTrack.vue';
 
 const props = withDefaults(
 	defineProps<{
@@ -51,9 +72,21 @@ const props = withDefaults(
 		 * cinco barras, que es justo lo que hace un monitor.
 		 */
 		tone?: 'normal' | 'warning' | 'critical';
+		size?: 'xs' | 'sm' | 'md';
+		/** La fila de arriba con la etiqueta y el porcentaje. */
+		showValue?: boolean;
+		/** Las cifras decimales del porcentaje. */
+		decimals?: number;
 	}>(),
-	{ tone: 'normal' }
+	{ tone: 'normal', size: 'md', showValue: false, decimals: 0 }
 );
+
+defineSlots<{
+	/** La etiqueta visible de la fila de `showValue`, si no alcanza con el texto. */
+	label?: () => unknown;
+}>();
+
+const HEIGHT = { xs: 'h-1', sm: 'h-1.5', md: 'h-2' } as const;
 
 const TONE_COLOR: Record<'normal' | 'warning' | 'critical', string> = {
 	normal: 'bg-primary',
@@ -64,26 +97,17 @@ const TONE_COLOR: Record<'normal' | 'warning' | 'critical', string> = {
 const clamped = computed(() =>
 	props.value === null ? null : Math.max(0, Math.min(100, props.value))
 );
+
+const shownValue = computed(() => (clamped.value === null ? '' : `${clamped.value.toFixed(props.decimals)}%`));
 </script>
 
 <template>
-  <div
-    role="progressbar"
-    :aria-label="label"
-    :aria-valuenow="clamped ?? undefined"
-    aria-valuemin="0"
-    aria-valuemax="100"
-    class="h-2 w-full overflow-hidden rounded-corner-full bg-ui-line">
-    <div
-      v-if="clamped !== null"
-      class="h-full rounded-corner-full transition-[width] duration-300 ease-ui"
-      :class="TONE_COLOR[tone]"
-      :style="{ width: `${clamped}%` }"></div>
-    <!-- Indeterminado: el ancho completo, latiendo. No dice cuánto falta porque
-         no se sabe, pero sí que algo sigue pasando. Con menos movimiento pedido
-         deja de latir y queda atenuada, que tampoco se lee como una fracción. -->
-    <div
-      v-else
-      class="h-full w-full animate-pulse rounded-corner-full bg-primary motion-reduce:animate-none motion-reduce:bg-primary/40"></div>
+  <div v-if="showValue" class="flex w-full min-w-0 flex-col gap-2">
+    <div aria-hidden="true" class="flex min-w-0 items-center justify-between gap-3 text-label-xs text-tx-muted">
+      <span class="min-w-0 break-words"><slot name="label">{{ label }}</slot></span>
+      <span class="shrink-0 tabular-nums">{{ shownValue }}</span>
+    </div>
+    <ProgressTrack :value="clamped" :label="label" :height="HEIGHT[size]" :fill="TONE_COLOR[tone]" />
   </div>
+  <ProgressTrack v-else :value="clamped" :label="label" :height="HEIGHT[size]" :fill="TONE_COLOR[tone]" />
 </template>

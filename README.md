@@ -81,6 +81,8 @@ Tailwind, y le dice a Tailwind que mire las clases de la librería:
 ```css
 @import "tailwindcss";
 @import "@vasakgroup/vue-libvasak/tokens.css";
+/* opcional (2.1.0): la barra de desplazamiento con los tokens, en lugar de la copia propia */
+@import "@vasakgroup/vue-libvasak/scrollbar.css";
 
 @source "../../node_modules/@vasakgroup/vue-libvasak/dist";
 ```
@@ -112,6 +114,26 @@ aplicación, y si la clave no está, del respaldo de la librería:
 | `sidebar.collapse` / `sidebar.expand` | el botón de plegar de `SideBar` | «Collapse» / «Expand» |
 | `ventana.minimizar` / `ventana.maximizar` / `ventana.cerrar` | `WindowControls` | la clave |
 | `media.*` | el reproductor | la clave |
+| `alert.close` | la cruz de `AlertMessage` con `dismissible` | «Cerrar» |
+| `dialog.close` | el cerrar de `DialogHeader` con `closable` | «Cerrar» |
+| `dialog.body` | el nombre de `DialogBody` cuando desplaza | «Contenido» |
+| `numberField.decrement` / `numberField.increment` | los botones de `NumberField` con `stepper` | «Restar» / «Sumar» |
+
+## Qué componente para qué (2.1.0)
+
+Los de formularios, selección y listas que suman la 2.1.0, y de qué copias
+salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
+
+- elegir una de varias: `OptionGroup` (lista o tarjetas) o `SegmentedControl`
+  (pocas, lado a lado; con `href`, una navegación);
+- sí o no que se aplica después: `Checkbox`; que se aplica al tocar:
+  `SwitchToggle`;
+- una fila «texto a la izquierda, control a la derecha»: `SettingRow`; una
+  fila de lista: `ListRow` dentro de un `ListGroup`;
+- la columna de una vista: `Panel`; la cabecera de una página: `PageHeader`;
+  el título de un tramo: `SectionHeading`;
+- un campo con su etiqueta, ayuda y error: `FormGroup`, cuya ranura recibe
+  `id`, `describedBy` e `invalid` para pasárselos al campo.
 
 ## Reproductor
 

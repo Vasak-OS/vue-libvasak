@@ -46,6 +46,22 @@ import TrayIconButton from "./tray/TrayIconButton.vue";
 import NowPlayingCard from "./media/NowPlayingCard.vue";
 import SeekBar from "./media/SeekBar.vue";
 import SpinningCover from "./media/SpinningCover.vue";
+/* 2.1.0: formularios, selección, listas, cabeceras y el cuerpo del diálogo. */
+import OptionGroup from "./forms/OptionGroup.vue";
+import SegmentedControl from "./forms/SegmentedControl.vue";
+import Checkbox from "./forms/Checkbox.vue";
+import Slider from "./forms/Slider.vue";
+import TextArea from "./forms/TextArea.vue";
+import NumberField from "./forms/NumberField.vue";
+import SettingRow from "./layout/SettingRow.vue";
+import ListRow from "./list/ListRow.vue";
+import ListGroup from "./list/ListGroup.vue";
+import Badge from "./indicators/Badge.vue";
+import StatusDot from "./indicators/StatusDot.vue";
+import SectionHeading from "./layout/SectionHeading.vue";
+import PageHeader from "./layout/PageHeader.vue";
+import Panel from "./layout/Panel.vue";
+import DialogBody from "./dialog/DialogBody.vue";
 import type { App } from "vue";
 
 const components = [
@@ -97,6 +113,21 @@ const components = [
   NowPlayingCard,
   SeekBar,
   SpinningCover,
+  OptionGroup,
+  SegmentedControl,
+  Checkbox,
+  Slider,
+  TextArea,
+  NumberField,
+  SettingRow,
+  ListRow,
+  ListGroup,
+  Badge,
+  StatusDot,
+  SectionHeading,
+  PageHeader,
+  Panel,
+  DialogBody,
 ];
 
 export default {
@@ -156,9 +187,27 @@ export {
   NowPlayingCard,
   SeekBar,
   SpinningCover,
+  OptionGroup,
+  SegmentedControl,
+  Checkbox,
+  Slider,
+  TextArea,
+  NumberField,
+  SettingRow,
+  ListRow,
+  ListGroup,
+  Badge,
+  StatusDot,
+  SectionHeading,
+  PageHeader,
+  Panel,
+  DialogBody,
 };
 
 export type { PlaybackState } from "./media/playback";
+export type { OptionGroupOption, SegmentedOption, SelectOption } from "./forms/types";
+export type { BadgeTone } from "./indicators/Badge.vue";
+export type { StatusDotTone } from "./indicators/StatusDot.vue";
 export { formatPlaybackTime } from "./media/playback";
 export type { AvisoTransitorio, ToastNotice } from "./feedback/ToastArea.vue";
 export type { NoticeTone } from "./feedback/tones";

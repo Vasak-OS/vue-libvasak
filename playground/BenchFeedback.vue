@@ -12,6 +12,7 @@ import {
 	AlertMessage,
 	ConfigSection,
 	Dialog,
+	DialogBody,
 	DialogContent,
 	DialogDescription,
 	DialogFooter,
@@ -35,7 +36,10 @@ const toasts = [
 	{ id: 1, message: 'Se copió la carpeta', tone: 'success' as const },
 	{ id: 2, message: 'No se pudo conectar con el servidor de correo', tone: 'error' as const },
 	{ id: 3, message: 'Hay una actualización', tone: 'info' as const },
+	{ id: 4, title: 'Copiando 3 archivos', message: 'A Documentos', description: 'Quedan unos 2 minutos', progress: 40, action: { label: 'Cancelar' } },
+	{ id: 5, message: 'El mensaje sale en 8 segundos', action: { label: 'Deshacer' } },
 ];
+const recipe = Array.from({ length: 40 }, (_, i) => `línea ${i + 1} de la receta del paquete`);
 </script>
 
 <template>
@@ -49,6 +53,41 @@ const toasts = [
     </ConfigSection>
     <EmptyState title="No hay nada acá" note="Arrastrá archivos para empezar" icon="folder-open" bordered />
     <LoadingState label="Cargando fotos…" bordered />
+  </div>
+
+  <div v-else-if="section === 'dialog-body' && first">
+    <Dialog v-model:open="open">
+      <DialogContent size="lg">
+        <DialogHeader closable>
+          <DialogTitle>Receta de «firefox»</DialogTitle>
+          <DialogDescription>El cuerpo desplaza solo; el encabezado y el pie quedan quietos.</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <p v-for="line in recipe" :key="line" class="m-0 font-mono text-body-xs">{{ line }}</p>
+        </DialogBody>
+        <DialogFooter>
+          <ActionButton label="Cerrar" variant="secondary" />
+          <ActionButton label="Instalar" />
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
+
+  <div v-else-if="section === 'dialog-sm' && first">
+    <Dialog v-model:open="open">
+      <DialogContent size="sm">
+        <DialogHeader close-label="Cerrar" close-style="label">
+          <DialogTitle>Carpeta nueva</DialogTitle>
+        </DialogHeader>
+        <div class="py-4">
+          <TextInput v-model="name" aria-label="Nombre" />
+        </div>
+        <DialogFooter>
+          <ActionButton label="Cancelar" variant="secondary" />
+          <ActionButton label="Crear" />
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 
   <div v-else-if="section === 'dialog' && first">

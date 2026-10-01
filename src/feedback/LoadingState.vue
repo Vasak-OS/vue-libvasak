@@ -19,6 +19,13 @@
  * `aria-atomic` hace que se lea entero cuando el texto cambia —de «Cargando
  * fotos…» a «Explorando 300 de 1200»— y no sólo el pedazo que cambió.
  *
+ * # `size="sm"` (2.1.0)
+ *
+ * La fila: el aro de 16 px al lado del texto, en vez del aro grande arriba.
+ * Es el `IndicadorDeCarga` de la tienda y los «Cargando…» sueltos de las
+ * listas del correo y los contactos, donde el aro de 40 era más grande que la
+ * lista que estaba por llegar.
+ *
  * El comentario va acá y no arriba de la raíz de la plantilla: un comentario
  * antes del elemento raíz convierte la plantilla en un fragmento, y ahí se
  * pierde la raíz —los atributos dejan de caer y las pruebas ven otra cosa—.
@@ -29,8 +36,9 @@ withDefaults(
 		label: string;
 		/** Con borde punteado, para una caja dentro de una sección. */
 		bordered?: boolean;
+		size?: 'sm' | 'md';
 	}>(),
-	{ bordered: false }
+	{ bordered: false, size: 'md' }
 );
 </script>
 
@@ -38,13 +46,17 @@ withDefaults(
   <div
     role="status"
     aria-atomic="true"
-    class="flex flex-col items-center justify-center gap-4 px-8 py-12 text-center"
-    :class="bordered ? 'rounded-corner-l border border-dashed border-ui-line' : ''">
+    class="flex min-w-0 items-center justify-center text-center"
+    :class="[
+      size === 'sm' ? 'flex-row gap-3 px-4 py-4' : 'flex-col gap-4 px-8 py-12',
+      bordered ? 'rounded-corner-l border border-dashed border-ui-line' : '',
+    ]">
     <!-- El anillo se queda quieto con el movimiento reducido. Ahí no informa de
          nada —el texto de abajo ya lo dice— y girar sin parar es justo lo que
          esa preferencia pide que no pase. -->
     <span
-      class="size-10 animate-spin rounded-corner-full border-4 border-ui-line border-t-primary motion-reduce:animate-none" />
+      class="shrink-0 animate-spin rounded-corner-full border-ui-line border-t-primary motion-reduce:animate-none"
+      :class="size === 'sm' ? 'size-4 border-2' : 'size-10 border-4'" />
     <p class="text-body-s text-tx-muted">{{ label }}</p>
   </div>
 </template>

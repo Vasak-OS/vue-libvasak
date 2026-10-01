@@ -41,11 +41,27 @@
  * `icon` es un **nombre del tema** de iconos del sistema, y se dibuja con
  * `ThemeIcon`, que lo vuelve a resolver cuando la persona cambia de tema.
  * `iconSrc` recibía una ruta ya resuelta y queda como obsoleto.
+ *
+ * # Lo que sumó la 2.1.0
+ *
+ * - **`pressed`**: un botón que se queda apretado —aleatorio y repetir en el
+ *   reproductor, la vista previa del gestor de archivos—. Es lo que sabía el
+ *   `TransportButton` de resonance. Va como `aria-pressed`, que es lo que
+ *   hace que un lector de pantalla diga «activado» en vez de leer un botón
+ *   más, y se ve con el velo de acento de lo elegido (decisión 4). Sin la
+ *   propiedad, el botón no es de alternar y no lleva `aria-pressed`.
+ * - **`href`**: un enlace con la forma de un botón («Sitio del proyecto» en
+ *   la tienda). Es un `<a>` de verdad —abre en otra pestaña, se copia la
+ *   dirección, el lector lo anuncia como enlace— y no un botón que navega.
+ * - **`variant="overlay"`**: sobre una imagen o un vídeo (los controles del
+ *   visor de fotos), con el velo `ui-overlay`, que sostiene el texto a 4,5:1
+ *   sea cual sea la foto de abajo. Reemplaza los `bg-black/50` de la galería,
+ *   que eran negro escrito a mano.
  */
 import { computed, onMounted } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'overlay';
 type Size = 'sm' | 'md' | 'lg';
 
 interface Props {
@@ -67,6 +83,17 @@ interface Props {
 	type?: 'button' | 'submit' | 'reset';
 	stopPropagation?: boolean;
 	preventDefault?: boolean;
+	/** Botón de alternar: `true` apretado, `false` suelto. Sin esto no alterna. */
+	pressed?: boolean;
+	/** La dirección: con esto es un enlace (`<a>`) con la forma del botón. */
+	href?: string;
+	/** Dónde abre el enlace. Con `_blank` va además `rel="noopener noreferrer"`. */
+	target?: string;
+	/**
+	 * El globo nativo. Para el botón de sólo icono que no tiene `Tooltip`
+	 * alrededor: el nombre accesible ya lo da `iconAlt`, esto es para quien ve.
+	 */
+	title?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -84,6 +111,10 @@ const props = withDefaults(defineProps<Props>(), {
 	type: 'button',
 	stopPropagation: false,
 	preventDefault: false,
+	pressed: undefined,
+	href: undefined,
+	target: undefined,
+	title: undefined,
 });
 
 const emit = defineEmits<{
@@ -96,7 +127,16 @@ const variantClasses: Record<Variant, string> = {
 		'border-ui-line bg-transparent text-tx-main hover:border-ui-border-strong hover:bg-ui-hover active:bg-ui-pressed',
 	ghost: 'border-transparent bg-transparent text-tx-main hover:bg-ui-hover active:bg-ui-pressed',
 	danger: 'border-transparent bg-status-error text-tx-on-primary hover:bg-status-error/90 active:bg-status-error/80',
+	overlay:
+		'border-transparent bg-ui-overlay text-tx-main hover:bg-linear-to-r hover:from-ui-hover hover:to-ui-hover active:from-ui-pressed active:to-ui-pressed',
 };
+
+/**
+ * Apretado: el velo de acento de lo elegido, encima de lo que tenga la
+ * variante. Va como imagen de fondo y no como color para no competir con el
+ * relleno de la variante en el mismo atributo.
+ */
+const PRESSED = 'bg-linear-to-r from-ui-selected-accent to-ui-selected-accent';
 
 /**
  * El de 24 se ve de 24 pero se apunta en 32: un seudoelemento transparente
@@ -121,13 +161,35 @@ const hasIcon = computed(() => Boolean(props.icon || props.iconSrc));
 const iconOnly = computed(() => hasIcon.value && !props.label);
 const iconName = computed(() => props.iconAlt || props.label);
 
+const isLink = computed(() => props.href !== undefined);
+const inactive = computed(() => props.disabled || props.loading);
+
 const handleClick = (event: Event) => {
 	if (props.stopPropagation) event.stopPropagation();
 	if (props.preventDefault) event.preventDefault();
-	if (!props.disabled && !props.loading) {
+	// Un enlace apagado no tiene `disabled`: el navegador lo seguiría igual.
+	if (isLink.value && inactive.value) {
+		event.preventDefault();
+		return;
+	}
+	if (!inactive.value) {
 		emit('click');
 	}
 };
+
+/** Lo que cambia entre el botón y el enlace. */
+const elementAttrs = computed(() => {
+	if (!isLink.value) {
+		return { type: props.type, disabled: inactive.value };
+	}
+	return {
+		href: inactive.value ? undefined : props.href,
+		target: props.target,
+		rel: props.target === '_blank' ? 'noopener noreferrer' : undefined,
+		'aria-disabled': inactive.value ? 'true' : undefined,
+		role: inactive.value ? 'link' : undefined,
+	};
+});
 
 onMounted(() => {
 	if (props.iconSrc && !props.icon) {
@@ -139,17 +201,20 @@ onMounted(() => {
 </script>
 
 <template>
-  <button
-    :type="props.type"
-    class="inline-flex min-w-0 items-center justify-center gap-2 rounded-corner-m border py-1 text-center font-semibold transition-[background-color,border-color,color,opacity] duration-200 ease-ui active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
+  <component
+    :is="isLink ? 'a' : 'button'"
+    v-bind="elementAttrs"
+    :title="props.title"
+    class="inline-flex min-w-0 items-center justify-center gap-2 rounded-corner-m border py-1 text-center font-semibold no-underline transition-[background-color,border-color,color,opacity] duration-200 ease-ui active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
     :class="[
       variantClasses[props.variant],
       iconOnly ? iconOnlyClasses[props.size] : sizeClasses[props.size],
       props.fullWidth ? 'w-full' : '',
+      props.pressed ? PRESSED : '',
       customClass,
     ]"
     :aria-label="iconOnly ? iconName || undefined : undefined"
-    :disabled="props.disabled || props.loading"
+    :aria-pressed="props.pressed === undefined || isLink ? undefined : props.pressed"
     @click="handleClick">
     <!-- La rueda ocupa el lugar del icono: el ancho no cambia mientras carga. -->
     <ThemeIcon
@@ -167,5 +232,5 @@ onMounted(() => {
       <ThemeIcon v-if="props.icon" :name="props.icon" :type="props.iconType" :size="16" />
       <img v-else :src="props.iconSrc" :alt="iconOnly ? '' : props.iconAlt" class="size-4 shrink-0" />
     </template>
-  </button>
+  </component>
 </template>

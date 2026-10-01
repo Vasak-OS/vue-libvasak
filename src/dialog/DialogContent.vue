@@ -75,8 +75,13 @@ const props = withDefaults(
 		 *
 		 * El velo tampoco se tiñe en `full`: el panel lo tapa entero, y las dos
 		 * capas de color se sumaban a un gris que nadie pidió.
+		 *
+		 * `sm` (2.1.0) es la caja angosta de 420 px de una pregunta corta:
+		 * renombrar, crear una carpeta, comprimir. El gestor de archivos la
+		 * conseguía pisando el ancho con `w-[420px]` en cuatro diálogos, que es
+		 * justo lo que no es estable (ver arriba).
 		 */
-		size?: 'md' | 'lg' | 'full';
+		size?: 'sm' | 'md' | 'lg' | 'full';
 		/**
 		 * Cómo se llama el diálogo cuando no hay un `DialogTitle` visible.
 		 *
@@ -119,8 +124,16 @@ const otherAttrs = computed(() => {
  * emitido después en la hoja, que no depende de esto. La única forma estable de
  * que quien lo usa mande es que acá no esté la clase que compite.
  */
+/*
+ * Con un `DialogBody` adentro, el panel pasa a columna y deja de desplazar él:
+ * el que desplaza es el cuerpo, y el encabezado y el pie se quedan quietos. Se
+ * reconoce con `:has()` sobre el atributo del cuerpo, así que quien lo usa no
+ * tiene que pasar nada y los diálogos que no lo usan no cambian.
+ */
 const BOX =
-	'relative z-10 max-h-full w-full overflow-y-auto rounded-corner-xl border border-ui-line bg-ui-float p-6 text-tx-main shadow-surface-xl outline-none';
+	'relative z-10 max-h-full w-full overflow-y-auto rounded-corner-xl border border-ui-line bg-ui-float p-6 text-tx-main shadow-surface-xl outline-none has-[>[data-dialog-body]]:flex has-[>[data-dialog-body]]:flex-col has-[>[data-dialog-body]]:overflow-hidden';
+
+const WIDTH = { sm: 'max-w-[420px]', md: 'max-w-lg', lg: 'max-w-2xl' } as const;
 
 const panelShape = computed(() => {
 	if (props.size === 'full') {
@@ -131,7 +144,7 @@ const panelShape = computed(() => {
 		// hereda ese recorte porque se teletransporta al `body`.
 		return 'relative z-10 h-full w-full overflow-hidden rounded-corner-window text-tx-main';
 	}
-	return `${BOX} ${props.size === 'lg' ? 'max-w-2xl' : 'max-w-lg'}`;
+	return `${BOX} ${WIDTH[props.size]}`;
 });
 
 const dialog = useDialog();
@@ -268,7 +281,7 @@ onUnmounted(() => {
              píxeles de gris en cada esquina, fuera del marco y sobre lo que
              haya detrás. `WindowFrame` usa el mismo radio. -->
         <div
-          v-if="props.size === 'md'"
+          v-if="props.size === 'md' || props.size === 'sm'"
           class="absolute inset-0 rounded-corner-window bg-ui-scrim"></div>
         <div
           ref="panel"

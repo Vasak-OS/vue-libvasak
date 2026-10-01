@@ -25,15 +25,37 @@
  *
  * La de `TextInput`: 32 de alto, `rounded-corner-m`, el borde de 3:1 y el
  * anillo de foco de 2 px. La etiqueta, `text-label-s` en `tx-muted`.
+ *
+ * # `options` (2.1.0)
+ *
+ * Las opciones se pueden pasar como lista en vez de escribir los `<option>` en
+ * la ranura: objetos `{ label, value, disabled? }` o, cuando la etiqueta es el
+ * valor, cadenas sueltas. Es lo que hacía el `SelectInput` de Configuración en
+ * sus 26 usos, y lo único que tenía de más (además de su flecha, que era un
+ * SVG empotrado en un `data:`). Con las dos cosas, gana la lista y la ranura
+ * se ignora.
  */
 import { computed, useAttrs, useId } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
+import type { SelectOption } from './types';
 
 // Los atributos van al `select` y no al contenedor: si no, un `@change` o un
 // `aria-label` quedan colgados de un `div` y no hacen nada.
 defineOptions({ inheritAttrs: false });
 
-const props = defineProps<{ label?: string }>();
+const props = defineProps<{
+	label?: string;
+	/** Las opciones, en vez de la ranura. Una cadena es etiqueta y valor a la vez. */
+	options?: Array<SelectOption<T> | (T & string)>;
+}>();
+
+const normalized = computed<SelectOption<T>[] | null>(() =>
+	props.options
+		? props.options.map((option) =>
+				typeof option === 'object' ? option : { label: String(option), value: option as T }
+			)
+		: null
+);
 const attrs = useAttrs();
 
 // El `id` propio sólo si hace falta uno y quien lo usa no trajo el suyo.
@@ -84,7 +106,12 @@ const [model, modifiers] = defineModel<T>({
         class="h-8 min-w-0 flex-1 appearance-none truncate rounded-corner-m border border-ui-border-strong bg-ui-surface/70 pr-8 pl-3 text-label-m text-tx-main transition-colors duration-200 ease-ui hover:border-tx-main focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
         v-bind="attrs"
         @change="emit('change', $event)">
-        <slot />
+        <template v-if="normalized">
+          <option v-for="option in normalized" :key="option.value" :value="option.value" :disabled="option.disabled">
+            {{ option.label }}
+          </option>
+        </template>
+        <slot v-else />
       </select>
       <ThemeIcon
         name="pan-down-symbolic"
