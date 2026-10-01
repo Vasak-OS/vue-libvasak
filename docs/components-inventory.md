@@ -1,5 +1,3 @@
-No escribí `/home/pato/VasakOS/.worktrees/components-inventory.md`. Mi rol es sólo planificar y no puedo escribir archivos, así que el documento entero va abajo, listo para pegar en esa ruta. Todo se leyó en `origin/main` después de `git fetch` en los 18 repos.
-
 ## Resumen con los números
 
 - **Librería en `origin/main`:** `vue-libvasak` 2.0.0, publicada en npm, con 48 componentes exportados (contados en `src/index.ts`).
