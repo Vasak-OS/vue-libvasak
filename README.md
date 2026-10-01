@@ -70,6 +70,49 @@ import * as VasakLib from 'vue-libvasak';
 app.use(VasakLib);
 ```
 
+## La forma: `tokens.css`
+
+Desde la 2.0.0 los componentes se dibujan con los tokens de
+`@vasakgroup/vue-libvasak/tokens.css` (radios, bordes, velos de estado,
+superficies, sombras, roles de texto y curvas, con el criterio de Once UI; ver
+`docs/once-ui.md`). La aplicación lo importa en su `main.css` **después** de
+Tailwind, y le dice a Tailwind que mire las clases de la librería:
+
+```css
+@import "tailwindcss";
+@import "@vasakgroup/vue-libvasak/tokens.css";
+
+@source "../../node_modules/@vasakgroup/vue-libvasak/dist";
+```
+
+Los colores no viven ahí: `tokens.css` los deriva con `color-mix` de las
+variables `--use-*` que ya declara el piso de cada aplicación y pisa el
+config-manager con el esquema elegido, así que cambiar de esquema cambia todo
+sin tocar nada. El radio sale de `--corner-radius` (el que se elige en
+Configuración) y la escala `rounded-corner-xs…xl` se deriva de él. Los nombres
+de siempre (`rounded-corner`, `-sm`, `-window`, los colores `primary`,
+`ui-bg`, `tx-main`…) siguen valiendo.
+
+Hay un banco con cada componente en todos sus estados, en claro y en oscuro y a
+240, 360, 600 y 1200 px: `bun run bench` (puerto 5174), y
+`playground/capture.sh <carpeta>` para sacar las capturas con Chrome sin
+pantalla.
+
+## Textos
+
+Los textos entran por propiedad. Sin pasarlos salen del catálogo de la
+aplicación, y si la clave no está, del respaldo de la librería:
+
+| clave | dónde | respaldo |
+|---|---|---|
+| `search.clear` | la cruz de `SearchField` | «Vaciar» |
+| `search.label` | la lupa de `BarSearch` | «Search» |
+| `tabs.close` | el botón de cerrar de `TabItem` | «Close» |
+| `tabs.unsaved` | la pestaña con cambios sin guardar | «Unsaved changes» |
+| `sidebar.collapse` / `sidebar.expand` | el botón de plegar de `SideBar` | «Collapse» / «Expand» |
+| `ventana.minimizar` / `ventana.maximizar` / `ventana.cerrar` | `WindowControls` | la clave |
+| `media.*` | el reproductor | la clave |
+
 ## Reproductor
 
 `NowPlayingCard`, `SpinningCover` y `SeekBar` dibujan lo que suena sin saber de
