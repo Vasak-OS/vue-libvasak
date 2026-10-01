@@ -7,19 +7,22 @@
  * nombrarlo desde afuera. Eso último es lo que no se puede pasar por
  * propiedades: el `aria-labelledby` del diálogo apunta al `id` de un título que
  * escribió quien lo usa, y que puede no existir.
+ *
+ * Hasta la 1.x los nombres estaban en castellano (`ContextoDelDialogo`,
+ * `usarElDialogo`…). Siguen exportados como alias obsoletos desde `index.ts`.
  */
 
 import { computed, inject, type InjectionKey, ref, type Ref } from 'vue';
 
-export interface ContextoDelDialogo {
-	abierto: Ref<boolean>;
-	cerrar: () => void;
+export interface DialogContext {
+	open: Ref<boolean>;
+	close: () => void;
 	/** El `id` del título, si hay uno, para el `aria-labelledby` del diálogo. */
-	idDelTitulo: Ref<string | null>;
-	ponerElTitulo: (id: string | null) => void;
+	titleId: Ref<string | null>;
+	setTitle: (id: string | null) => void;
 }
 
-export const CLAVE_DEL_DIALOGO: InjectionKey<ContextoDelDialogo> = Symbol('diálogo de vasak');
+export const DIALOG_KEY: InjectionKey<DialogContext> = Symbol('diálogo de vasak');
 
 /**
  * El diálogo que envuelve a este componente.
@@ -28,29 +31,27 @@ export const CLAVE_DEL_DIALOGO: InjectionKey<ContextoDelDialogo> = Symbol('diál
  * título o un pie montados solos —en una prueba, en una vista previa— tienen
  * que dibujarse igual.
  */
-export function usarElDialogo(): ContextoDelDialogo {
-	const contexto = inject(CLAVE_DEL_DIALOGO, null);
-	if (contexto) return contexto;
+export function useDialog(): DialogContext {
+	const context = inject(DIALOG_KEY, null);
+	if (context) return context;
 
-	const abierto = ref(false);
+	const open = ref(false);
 	return {
-		abierto: computed(() => abierto.value) as Ref<boolean>,
-		cerrar: () => {
-			abierto.value = false;
+		open: computed(() => open.value) as Ref<boolean>,
+		close: () => {
+			open.value = false;
 		},
-		idDelTitulo: ref(null),
-		ponerElTitulo: () => {},
+		titleId: ref(null),
+		setTitle: () => {},
 	};
 }
 
 /**
- * Un identificador por título montado.
- *
- * Tiene que ser único en el documento: dos diálogos con el mismo `id` rompen el
- * `aria-labelledby` de los dos.
+ * Un `id` por título montado: dos diálogos con el mismo rompen el
+ * `aria-labelledby` de los dos. Con un contador y no con azar.
  */
-let contador = 0;
-export function siguienteIdDeTitulo(): string {
-	contador += 1;
-	return `vsk-dialogo-titulo-${contador}`;
+let counter = 0;
+export function nextTitleId(): string {
+	counter += 1;
+	return `vsk-dialog-title-${counter}`;
 }

@@ -1,0 +1,68 @@
+/*
+ * El piso del banco: lo mismo que el `main.css` de una aplicación.
+ *
+ * Tailwind, después los tokens de la librería —en ese orden, que es el que se
+ * le pide a cada aplicación— y las asignaciones `--use-*` que eligen claro u
+ * oscuro según la clase `.dark`. Los colores de verdad no están acá: los pone
+ * `main.ts` en `:root` a partir del esquema, como hace el config-manager.
+ */
+@import "tailwindcss";
+@import "./app-floor.css";
+@import "../src/styles/tokens.css";
+
+@source "../src";
+@source "./";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --corner-radius: 10px;
+  --vsk-font-apps: "Noto Sans", sans-serif;
+  --vsk-font-title: "Noto Sans", sans-serif;
+
+  --use-primary: var(--primary);
+  --use-secondary: var(--secondary);
+  --use-ui-background: var(--ui-background);
+  --use-ui-surface: var(--ui-surface);
+  --use-ui-border: var(--ui-border);
+  --use-ui-border-strong: var(--ui-border-strong);
+  --use-text-main: var(--text-main);
+  --use-text-muted: var(--text-muted);
+  --use-text-on-primary: var(--text-on-primary);
+  --use-text-on-secondary: var(--text-on-secondary);
+  --use-status-error: var(--status-error);
+  --use-status-success: var(--status-success);
+  --use-status-warning: var(--status-warning);
+}
+
+.dark {
+  --use-primary: var(--primary-dark);
+  --use-secondary: var(--secondary-dark);
+  --use-ui-background: var(--ui-background-dark);
+  --use-ui-surface: var(--ui-surface-dark);
+  --use-ui-border: var(--ui-border-dark);
+  --use-ui-border-strong: var(--ui-border-strong-dark);
+  --use-text-main: var(--text-main-dark);
+  --use-text-muted: var(--text-muted-dark);
+  --use-text-on-primary: var(--text-on-primary-dark);
+  --use-text-on-secondary: var(--text-on-secondary-dark);
+  --use-status-error: var(--status-error-dark);
+  --use-status-success: var(--status-success-dark);
+  --use-status-warning: var(--status-warning-dark);
+}
+
+@theme {
+  --font-sans: var(--vsk-font-apps);
+  --font-title: var(--vsk-font-title);
+}
+
+/* Lo que las aplicaciones todavía declaran y la versión vieja de `ListCard`
+   usaba; sin esto el «antes» del banco no se parecería al de verdad. */
+.background {
+  @apply bg-ui-bg/80;
+}
+
+body {
+  @apply bg-ui-bg text-tx-main;
+  margin: 0;
+}

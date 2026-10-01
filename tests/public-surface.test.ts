@@ -2,7 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import * as library from '../src/index';
 
 /**
- * Lo que la librería exporta es lo que la 1.0 se comprometió a no romper.
+ * Lo que la librería exporta es lo que se comprometió a no romper.
+ *
+ * En la 2.0.0 se sumaron los nombres en inglés de los contextos del menú y del
+ * tooltip (`MENU_KEY`, `useMenu`, `TOOLTIP_KEY`, `useTooltip`); los de la 1.x
+ * siguen acá como alias obsoletos hasta la 3.0.
  *
  * Desde la 1.0 el acento hace lo que todo el mundo cree que hace: una minor
  * llega sola a las diecisiete aplicaciones que la usan. Eso es lo bueno del
@@ -19,14 +23,17 @@ const PUBLIC_SURFACE = [
 	'AlertMessage',
 	'AppBar',
 	'BarSearch',
+	'buscarOpciones',
 	'CLASES_POR_TONO',
+	'CLAVE_DE_LA_BARRA',
 	'CLAVE_DEL_DIALOGO',
 	'CLAVE_DEL_MENU',
 	'CLAVE_DEL_TOOLTIP',
-	'CLAVE_DE_LA_BARRA',
 	'ConfigSection',
+	'default',
 	'DeviceCard',
 	'Dialog',
+	'DIALOG_KEY',
 	'DialogContent',
 	'DialogDescription',
 	'DialogFooter',
@@ -39,13 +46,20 @@ const PUBLIC_SURFACE = [
 	'DropdownMenuSeparator',
 	'DropdownMenuTrigger',
 	'EmptyState',
+	'esPosicion',
+	'formatPlaybackTime',
 	'FormGroup',
-	'LOS_TRES_CONTROLES',
 	'ListCard',
 	'LoadingState',
+	'LOS_TRES_CONTROLES',
+	'MENU_KEY',
 	'NowPlayingCard',
+	'olvidarLosIconosDelTema',
+	'orientacionDe',
+	'posicionDe',
 	'POSICIONES',
 	'ProgressBar',
+	'rolDelTono',
 	'SearchField',
 	'SearchSelect',
 	'SeekBar',
@@ -62,31 +76,30 @@ const PUBLIC_SURFACE = [
 	'TabItem',
 	'TextInput',
 	'ThemeIcon',
+	'TOAST_TONE_CLASSES',
 	'ToastArea',
 	'ToggleControl',
+	'TONE_CLASSES',
+	'toneRole',
 	'Tooltip',
+	'TOOLTIP_KEY',
 	'TooltipContent',
 	'TooltipTrigger',
 	'TrayIconButton',
-	'WindowControls',
-	'WindowFrame',
-	'buscarOpciones',
-	'default',
-	'esPosicion',
-	'formatPlaybackTime',
-	'olvidarLosIconosDelTema',
-	'orientacionDe',
-	'posicionDe',
-	'rolDelTono',
 	'usarElDialogo',
 	'usarElMenu',
 	'usarElTooltip',
 	'usarLaBarra',
 	'usarLaPosicionDeLaBarra',
 	'usarLaVersionDelTema',
+	'useDialog',
+	'useMenu',
+	'useTooltip',
+	'WindowControls',
+	'WindowFrame',
 ];
 
-describe('la superficie pública de la 1.0', () => {
+describe('la superficie pública', () => {
 	test('no se va nada de lo que estaba', () => {
 		// Sacar o renombrar algo de esta lista es una **mayor**, no una minor.
 		// Si esta prueba molesta porque el cambio es deliberado, el número de

@@ -196,7 +196,7 @@ describe('el campo', () => {
 
 describe('el desplegable', () => {
 	function armar(props: Record<string, unknown> = {}) {
-		ponerEnElTema('go-down', 'datos-de-la-flecha');
+		ponerEnElTema('pan-down-symbolic', 'datos-de-la-flecha');
 		return mount(SearchSelect, {
 			props: { modelValue: '', options: TECLADOS, label: 'Teclado', emptyText: 'Nada', ...props },
 			attachTo: document.body,

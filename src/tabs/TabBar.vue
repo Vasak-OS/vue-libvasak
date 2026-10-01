@@ -17,22 +17,30 @@
  * los dos ejes, no suma una dependencia y es lo que ya usaba el editor. Lo que
  * se emite es la lista nueva, no un par de índices: así quien la recibe no
  * tiene que reimplementar el movimiento.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * Las pestañas del control segmentado de Once UI, sin el contenedor: el carril
+ * no gana borde ni relleno, para que la barra mida lo mismo que antes en las
+ * tres aplicaciones. El botón de pestaña nueva es un botón sin borde de 32,
+ * como las pestañas. Arrastrando, una barra fina en `ui-focus` marca dónde cae.
  */
 import { computed, nextTick, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
-import { usarLaBarra } from '../window/tipos';
+import { usarLaBarra as useBar } from '../window/tipos';
 import TabItem from './TabItem.vue';
-import type { ElementoDePestana } from './tipos';
+import type { TabEntry } from './types';
 
 const props = withDefaults(
 	defineProps<{
-		tabs: ElementoDePestana[];
+		tabs: TabEntry[];
 		/** El identificador de la activa. */
 		modelValue?: string;
 		/** Sin esto no se dibuja el botón de pestaña nueva. */
 		newLabel?: string;
+		/** Lo que se oye en el botón de cerrar. Sin esto, `tabs.close` del catálogo o «Close». */
 		closeLabel?: string;
-		/** Lo que se oye en una pestaña con cambios sin guardar. */
+		/** Lo que se oye en una pestaña con cambios sin guardar. Sin esto, `tabs.unsaved` o «Unsaved changes». */
 		dirtyLabel?: string;
 		/** Para una barra que no deja reordenar. */
 		fixedOrder?: boolean;
@@ -40,8 +48,8 @@ const props = withDefaults(
 	{
 		modelValue: '',
 		newLabel: '',
-		closeLabel: 'Close',
-		dirtyLabel: 'Unsaved changes',
+		closeLabel: undefined,
+		dirtyLabel: undefined,
 		fixedOrder: false,
 	}
 );
@@ -51,13 +59,13 @@ const emit = defineEmits<{
 	select: [id: string];
 	close: [id: string];
 	new: [];
-	reorder: [tabs: ElementoDePestana[]];
-	menu: [carga: { id: string; x: number; y: number }];
+	reorder: [tabs: TabEntry[]];
+	menu: [payload: { id: string; x: number; y: number }];
 }>();
 
-const { vertical } = usarLaBarra();
+const { vertical } = useBar();
 
-const carril = ref<HTMLElement | null>(null);
+const rail = ref<HTMLElement | null>(null);
 /**
  * Cuál pestaña entra en el orden de tabulación.
  *
@@ -65,36 +73,36 @@ const carril = ref<HTMLElement | null>(null);
  * alcanzable con Tab y adentro se navega con las flechas. Con todas en el orden
  * de tabulación, salir de una barra de nueve pestañas cuesta nueve pulsaciones.
  */
-const enfocada = ref(0);
-const arrastrada = ref<number | null>(null);
-const encimaDe = ref<number | null>(null);
+const focused = ref(0);
+const dragged = ref<number | null>(null);
+const over = ref<number | null>(null);
 
-function elegir(id: string) {
+function choose(id: string) {
 	emit('update:modelValue', id);
 	emit('select', id);
 }
 
 /** Mueve el foco con las flechas, dando la vuelta en los extremos. */
-async function navegar(desde: number, a: 'anterior' | 'siguiente' | 'primera' | 'ultima') {
-	const ultima = props.tabs.length - 1;
-	if (ultima < 0) return;
+async function navigate(from: number, a: 'anterior' | 'siguiente' | 'primera' | 'ultima') {
+	const last = props.tabs.length - 1;
+	if (last < 0) return;
 
-	const destino =
+	const target =
 		a === 'primera'
 			? 0
 			: a === 'ultima'
-				? ultima
+				? last
 				: a === 'anterior'
-					? (desde - 1 + props.tabs.length) % props.tabs.length
-					: (desde + 1) % props.tabs.length;
+					? (from - 1 + props.tabs.length) % props.tabs.length
+					: (from + 1) % props.tabs.length;
 
-	enfocada.value = destino;
+	focused.value = target;
 	await nextTick();
 	// El nodo y no el componente: lo que recibe el foco es el `div` con
 	// `tabindex`, y buscarlo por posición es lo que deja que esto no dependa de
 	// una referencia por pestaña.
-	const nodos = carril.value?.querySelectorAll<HTMLElement>('[role="tab"]');
-	nodos?.[destino]?.focus();
+	const nodes = rail.value?.querySelectorAll<HTMLElement>('[role="tab"]');
+	nodes?.[target]?.focus();
 }
 
 /**
@@ -103,17 +111,17 @@ async function navegar(desde: number, a: 'anterior' | 'siguiente' | 'primera' | 
  * El arrastre nativo es de puntero y nada más: sin esto, reordenar no se puede
  * hacer sin mouse.
  */
-function mover(desde: number, cuanto: -1 | 1) {
+function move(from: number, amount: -1 | 1) {
 	if (props.fixedOrder) return;
-	const hasta = desde + cuanto;
-	if (hasta < 0 || hasta >= props.tabs.length) return;
+	const to = from + amount;
+	if (to < 0 || to >= props.tabs.length) return;
 
-	const lista = [...props.tabs];
-	const [movida] = lista.splice(desde, 1);
-	if (!movida) return;
-	lista.splice(hasta, 0, movida);
-	enfocada.value = hasta;
-	emit('reorder', lista);
+	const list = [...props.tabs];
+	const [moved] = list.splice(from, 1);
+	if (!moved) return;
+	list.splice(to, 0, moved);
+	focused.value = to;
+	emit('reorder', list);
 }
 
 /**
@@ -123,57 +131,78 @@ function mover(desde: number, cuanto: -1 | 1) {
  * es lo que dejaba las pestañas de más inalcanzables sin un mouse con rueda
  * horizontal.
  */
-function rueda(evento: WheelEvent) {
-	const nodo = carril.value;
-	if (!nodo) return;
-	const cuanto = evento.deltaY || evento.deltaX || 0;
-	const antes = vertical.value ? nodo.scrollTop : nodo.scrollLeft;
+function onWheel(event: WheelEvent) {
+	const node = rail.value;
+	if (!node) return;
+	const amount = event.deltaY || event.deltaX || 0;
+	const before = vertical.value ? node.scrollTop : node.scrollLeft;
 
 	if (vertical.value) {
-		nodo.scrollTop += cuanto;
+		node.scrollTop += amount;
 	} else {
-		nodo.scrollLeft += cuanto;
+		node.scrollLeft += amount;
 	}
 
 	// Sólo se queda el evento si el carril de verdad se movió. Sin esto, una
 	// barra con dos pestañas —o una ya en el tope— se comía el desplazamiento
 	// de lo que hubiera debajo.
-	const despues = vertical.value ? nodo.scrollTop : nodo.scrollLeft;
-	if (despues !== antes) evento.preventDefault();
+	const after = vertical.value ? node.scrollTop : node.scrollLeft;
+	if (after !== before) event.preventDefault();
 }
 
-function comenzar(indice: number, evento: DragEvent) {
+function onDragstart(index: number, event: DragEvent) {
 	if (props.fixedOrder) return;
-	arrastrada.value = indice;
-	evento.dataTransfer?.setData('text/plain', String(indice));
-	if (evento.dataTransfer) evento.dataTransfer.effectAllowed = 'move';
+	dragged.value = index;
+	event.dataTransfer?.setData('text/plain', String(index));
+	if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
 }
 
-function sobre(indice: number, evento: DragEvent) {
-	if (props.fixedOrder || arrastrada.value === null) return;
-	evento.preventDefault();
-	encimaDe.value = indice;
-	if (evento.dataTransfer) evento.dataTransfer.dropEffect = 'move';
+function onDragover(index: number, event: DragEvent) {
+	if (props.fixedOrder || dragged.value === null) return;
+	event.preventDefault();
+	over.value = index;
+	if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
 }
 
-function soltar(indice: number) {
-	const desde = arrastrada.value;
-	terminar();
-	if (props.fixedOrder || desde === null || desde === indice) return;
+function onDrop(index: number) {
+	const from = dragged.value;
+	onDragend();
+	if (props.fixedOrder || from === null || from === index) return;
 
-	const lista = [...props.tabs];
-	const [movida] = lista.splice(desde, 1);
-	if (!movida) return;
-	lista.splice(indice, 0, movida);
-	emit('reorder', lista);
+	const list = [...props.tabs];
+	const [moved] = list.splice(from, 1);
+	if (!moved) return;
+	list.splice(index, 0, moved);
+	emit('reorder', list);
 }
 
-function terminar() {
-	arrastrada.value = null;
-	encimaDe.value = null;
+function onDragend() {
+	dragged.value = null;
+	over.value = null;
 }
 
-const clasesDelCarril = computed(() =>
+/**
+ * La marca de dónde cae la pestaña que se arrastra.
+ *
+ * Una barra de 2 px en `ui-focus` sobre el borde por el que entra, y no un
+ * anillo alrededor de la pestaña de destino: el anillo decía «sobre ésta», y
+ * lo que pasa al soltar es «entre éstas». Si la arrastrada viene de antes, cae
+ * después del destino; si viene de después, antes.
+ */
+function dropMarker(index: number): string {
+	if (over.value !== index || dragged.value === null || dragged.value === index) return '';
+	const after = dragged.value < index;
+	if (vertical.value) {
+		return after
+			? 'after:absolute after:inset-x-1 after:-bottom-0.5 after:h-0.5 after:rounded-corner-full after:bg-ui-focus'
+			: 'after:absolute after:inset-x-1 after:-top-0.5 after:h-0.5 after:rounded-corner-full after:bg-ui-focus';
+	}
+	return after
+		? 'after:absolute after:inset-y-1 after:-right-0.5 after:w-0.5 after:rounded-corner-full after:bg-ui-focus'
+		: 'after:absolute after:inset-y-1 after:-left-0.5 after:w-0.5 after:rounded-corner-full after:bg-ui-focus';
+}
+
+const railClasses = computed(() =>
 	vertical.value
 		// `items-center` y no `items-stretch`: con la barra a un costado las
 		// pestañas son del tamaño de un botón y el nombre aparece encima del
@@ -189,42 +218,39 @@ const clasesDelCarril = computed(() =>
     :class="vertical ? 'w-full flex-col' : 'h-full'"
     role="tablist"
     :aria-orientation="vertical ? 'vertical' : 'horizontal'">
-    <div ref="carril" :class="clasesDelCarril" @wheel="rueda">
+    <div ref="rail" :class="railClasses" @wheel="onWheel">
       <div
-        v-for="(tab, indice) in tabs"
+        v-for="(tab, index) in tabs"
         :key="tab.id"
-        class="transition-opacity"
-        :class="[
-          arrastrada === indice ? 'opacity-40' : '',
-          encimaDe === indice && arrastrada !== indice ? 'ring-2 ring-secondary rounded-corner' : '',
-        ]"
+        class="relative transition-opacity duration-150 ease-ui"
+        :class="[dragged === index ? 'opacity-40' : '', dropMarker(index)]"
         :draggable="!fixedOrder"
-        @dragstart="comenzar(indice, $event)"
-        @dragover="sobre(indice, $event)"
-        @drop.prevent="soltar(indice)"
-        @dragend="terminar">
+        @dragstart="onDragstart(index, $event)"
+        @dragover="onDragover(index, $event)"
+        @drop.prevent="onDrop(index)"
+        @dragend="onDragend">
         <TabItem
           :tab="tab"
           :active="tab.id === modelValue"
           :close-label="closeLabel"
           :dirty-label="dirtyLabel"
-          :tabindex="indice === enfocada ? 0 : -1"
-          @select="elegir(tab.id)"
+          :tabindex="index === focused ? 0 : -1"
+          @select="choose(tab.id)"
           @close="emit('close', tab.id)"
-          @menu="(posicion) => emit('menu', { id: tab.id, ...posicion })"
-          @navegar="(a) => navegar(indice, a)"
-          @mover="(cuanto) => mover(indice, cuanto)" />
+          @menu="(position) => emit('menu', { id: tab.id, ...position })"
+          @navegar="(a) => navigate(index, a)"
+          @mover="(amount) => move(index, amount)" />
       </div>
     </div>
 
     <button
       v-if="newLabel"
       type="button"
-      class="flex size-7 shrink-0 items-center justify-center rounded-corner border border-ui-border bg-ui-bg/80 hover:bg-ui-surface/70"
+      class="flex size-8 shrink-0 items-center justify-center rounded-corner-m text-tx-main transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
       :title="newLabel"
       :aria-label="newLabel"
       @click="emit('new')">
-      <ThemeIcon name="gtk-add" type="symbol" :size="14" />
+      <ThemeIcon name="gtk-add" type="symbol" :size="16" />
     </button>
   </div>
 </template>

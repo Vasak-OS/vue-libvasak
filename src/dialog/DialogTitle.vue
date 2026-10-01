@@ -7,19 +7,19 @@
  * no ve la pantalla no sabe qué le están preguntando.
  */
 import { onMounted, onUnmounted } from 'vue';
-import { siguienteIdDeTitulo, usarElDialogo } from './tipos';
+import { nextTitleId, useDialog } from './types';
 
-const dialogo = usarElDialogo();
-const id = siguienteIdDeTitulo();
+const dialog = useDialog();
+const id = nextTitleId();
 
-onMounted(() => dialogo.ponerElTitulo(id));
+onMounted(() => dialog.setTitle(id));
 // Al desmontarse deja de nombrarlo: si no, el diálogo siguiente apuntaría a un
 // `id` que ya no está en el documento.
-onUnmounted(() => dialogo.ponerElTitulo(null));
+onUnmounted(() => dialog.setTitle(null));
 </script>
 
 <template>
-  <h2 :id="id" class="font-semibold text-lg leading-none tracking-tight">
+  <h2 :id="id" class="font-semibold text-heading-s text-tx-main">
     <slot />
   </h2>
 </template>

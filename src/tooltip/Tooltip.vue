@@ -11,7 +11,7 @@
  * hace que salir se sienta inmediato.
  */
 import { computed, provide, ref } from 'vue';
-import { CLAVE_DEL_TOOLTIP } from './tipos';
+import { TOOLTIP_KEY } from './types';
 
 const props = withDefaults(
 	defineProps<{
@@ -23,33 +23,33 @@ const props = withDefaults(
 	{ disabled: false, delayDuration: 200 }
 );
 
-const abierto = ref(false);
-const disparador = ref<HTMLElement | null>(null);
-let temporizador: ReturnType<typeof setTimeout> | null = null;
+const open = ref(false);
+const trigger = ref<HTMLElement | null>(null);
+let timer: ReturnType<typeof setTimeout> | null = null;
 
-function abrir() {
+function show() {
 	if (props.disabled) return;
-	temporizador = setTimeout(() => {
-		abierto.value = true;
+	timer = setTimeout(() => {
+		open.value = true;
 	}, props.delayDuration);
 }
 
-function cerrar() {
+function hide() {
 	// El temporizador se limpia siempre, también cuando no llegó a abrir: si no,
 	// salir antes de tiempo deja el tooltip apareciendo sobre lo que sea que el
 	// puntero esté mirando después.
-	if (temporizador) clearTimeout(temporizador);
-	abierto.value = false;
+	if (timer) clearTimeout(timer);
+	open.value = false;
 }
 
-provide(CLAVE_DEL_TOOLTIP, {
-	abierto: computed(() => abierto.value && !props.disabled) as typeof abierto,
-	disparador,
-	ponerElDisparador: (elemento: HTMLElement | null) => {
-		disparador.value = elemento;
+provide(TOOLTIP_KEY, {
+	open: computed(() => open.value && !props.disabled) as typeof open,
+	trigger,
+	setTrigger: (element: HTMLElement | null) => {
+		trigger.value = element;
 	},
-	abrir,
-	cerrar,
+	show,
+	hide,
 });
 </script>
 

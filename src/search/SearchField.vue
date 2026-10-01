@@ -21,10 +21,21 @@
  * Enter **cancela** el rebote pendiente. Sin eso, apretar Enter busca y
  * doscientos milisegundos después el temporizador busca otra vez con el mismo
  * texto — el error estaba escrito como advertencia en la copia de la tienda.
+ *
+ * ── La forma (vue-libvasak#74) ───────────────────────────────────────────────
+ *
+ * La del `TextInput`, con la lupa y la cruz a 16 px y `pl-8`/`pr-8` para que el
+ * texto no pase por debajo. La cruz es un botón sin borde de 24 px con
+ * `rounded-corner-s` y el velo `ui-hover`, como el `tertiary` de Once UI. La
+ * ruedita de carga es `process-working`, el nombre de la especificación de
+ * iconos de freedesktop, que traen `VasakOS-light` y `VasakOS-dark` mismos;
+ * `content-loading` no es del estándar y en `VasakOS-light` sólo llegaba
+ * heredado de Breeze. Es la misma que usa `ActionButton`.
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import TextInput from '../forms/TextInput.vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
+import { useLabels } from '../shared/labels';
 
 const props = withDefaults(
 	defineProps<{
@@ -74,6 +85,11 @@ const props = withDefaults(
 		activeOptionId?: string;
 		/** Si la lista está desplegada. */
 		expanded?: boolean;
+		/**
+		 * Lo que se oye en la cruz. Sin esto sale del catálogo (`search.clear`), y
+		 * si la aplicación no tiene la clave, «Vaciar».
+		 */
+		clearLabel?: string;
 	}>(),
 	{
 		modelValue: '',
@@ -88,8 +104,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-	'update:modelValue': [valor: string];
-	search: [valor: string];
+	'update:modelValue': [value: string];
+	search: [value: string];
 	clear: [];
 	/**
 	 * Las teclas, para que quien lo usa pueda atender las suyas.
@@ -101,13 +117,20 @@ const emit = defineEmits<{
 	 * comprueba. Declararlo lo saca de `$attrs`, así que reenviarlo abajo no es
 	 * opcional: sin eso el campo enmudece y nada avisa.
 	 */
-	keydown: [evento: KeyboardEvent];
+	keydown: [event: KeyboardEvent];
 }>();
 
-const campo = ref<InstanceType<typeof TextInput> | null>(null);
-let temporizador: ReturnType<typeof setTimeout> | undefined;
+const translate = useLabels();
+const field = ref<InstanceType<typeof TextInput> | null>(null);
+let timer: ReturnType<typeof setTimeout> | undefined;
 
-const hayTexto = computed(() => props.modelValue.length > 0);
+const hasText = computed(() => props.modelValue.length > 0);
+
+/** «Buscar: vaciar» cuando hay etiqueta, para saber qué se vacía. */
+const clearName = computed(() => {
+	const clear = props.clearLabel ?? translate('search.clear', 'Vaciar');
+	return props.label ? `${props.label}: ${clear}` : clear;
+});
 
 /**
  * El cableado de combobox, puesto en un solo lugar y pasado en bloque.
@@ -117,7 +140,7 @@ const hayTexto = computed(() => props.modelValue.length > 0);
  * propiedades de un patrón que no es suyo. Caen igual sobre el `input`, que es
  * su raíz.
  */
-const cableadoDeLaLista = computed(() =>
+const listWiring = computed(() =>
 	props.listboxId
 		? {
 				role: 'combobox',
@@ -128,30 +151,30 @@ const cableadoDeLaLista = computed(() =>
 			}
 		: {}
 );
-const muestraLaCruz = computed(() => props.clearable && hayTexto.value && !props.disabled);
+const showsClear = computed(() => props.clearable && hasText.value && !props.disabled);
 
-function cancelarElRebote() {
-	clearTimeout(temporizador);
-	temporizador = undefined;
+function cancelDebounce() {
+	clearTimeout(timer);
+	timer = undefined;
 }
 
-function escribir(valor: string) {
-	emit('update:modelValue', valor);
+function write(value: string) {
+	emit('update:modelValue', value);
 	if (props.debounce <= 0) return;
-	cancelarElRebote();
-	temporizador = setTimeout(() => emit('search', valor), props.debounce);
+	cancelDebounce();
+	timer = setTimeout(() => emit('search', value), props.debounce);
 }
 
-function buscarYa() {
-	cancelarElRebote();
+function searchNow() {
+	cancelDebounce();
 	emit('search', props.modelValue);
 }
 
-function vaciar() {
-	cancelarElRebote();
+function clear() {
+	cancelDebounce();
 	emit('update:modelValue', '');
 	emit('clear');
-	enfocar();
+	focus();
 }
 
 /**
@@ -166,27 +189,33 @@ function vaciar() {
  *
  * Devuelve si el foco llegó: dentro de un panel `hidden` no llega y tampoco
  * falla, y quien llama necesita saberlo para mostrar el panel y reintentar.
+ *
+ * `enfocar` es el nombre de la 1.x y queda como alias obsoleto.
  */
-function enfocar(): boolean {
-	return campo.value?.enfocar() ?? false;
+function focus(): boolean {
+	return field.value?.focus() ?? false;
 }
 
-defineExpose({ enfocar });
+defineExpose({
+	focus,
+	/** @deprecated Usá `focus()`. Se va en la 3.0. */
+	enfocar: focus,
+});
 
 onMounted(async () => {
 	if (!props.autofocus) return;
 	await nextTick();
-	enfocar();
+	focus();
 });
 
 // Un rebote pendiente sobre un componente que ya no está busca contra una vista
 // desmontada. La copia de la tienda también tenía que acordarse de esto.
-onUnmounted(cancelarElRebote);
+onUnmounted(cancelDebounce);
 
 watch(
 	() => props.disabled,
-	(apagado) => {
-		if (apagado) cancelarElRebote();
+	(off) => {
+		if (off) cancelDebounce();
 	}
 );
 </script>
@@ -201,39 +230,39 @@ watch(
        barra, salir de la vista— y ésa no es una decisión del campo. Se reenvían
        desde el campo y no desde acá para no reinterpretar a mano lo que el
        modificador `.enter` de Vue ya decide bien. -->
-  <div class="relative flex items-center" @keydown.enter="buscarYa">
+  <div class="relative flex min-w-0 items-center" @keydown.enter="searchNow">
     <!-- La lupa —o la ruedita mientras busca— no se lee: la etiqueta del campo
          ya dice qué es esto, y un lector de pantalla que diga «imagen, buscar»
          antes de «buscar, campo de texto» repite. -->
     <span class="pointer-events-none absolute left-2 flex items-center">
       <ThemeIcon
-        :name="busy ? 'content-loading' : 'system-search'"
+        :name="busy ? 'process-working-symbolic' : 'system-search'"
         type="symbol"
-        :size="14"
+        :size="16"
         :class="busy ? 'animate-spin opacity-70' : 'opacity-60'" />
     </span>
 
     <TextInput
-      ref="campo"
+      ref="field"
       type="search"
       :model-value="modelValue"
       :placeholder="placeholder || label"
       :ariaLabel="label || undefined"
-      v-bind="cableadoDeLaLista"
+      v-bind="listWiring"
       :disabled="disabled"
-      class="pl-7 [&::-webkit-search-cancel-button]:appearance-none"
-      :class="muestraLaCruz ? 'pr-8' : ''"
-      @update:model-value="escribir"
+      class="truncate pl-8 [&::-webkit-search-cancel-button]:appearance-none"
+      :class="showsClear ? 'pr-8' : ''"
+      @update:model-value="write"
       @keydown="emit('keydown', $event)" />
 
     <button
-      v-if="muestraLaCruz"
+      v-if="showsClear"
       type="button"
-      class="absolute right-1 flex size-6 items-center justify-center rounded-corner text-tx-muted hover:bg-ui-surface"
-      :aria-label="label ? `${label}: vaciar` : 'Vaciar'"
+      class="absolute right-1 flex size-6 items-center justify-center rounded-corner-s text-tx-muted transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100"
+      :aria-label="clearName"
       @mousedown.prevent
-      @click="vaciar">
-      <ThemeIcon name="gtk-close" type="symbol" :size="12" alt="" />
+      @click="clear">
+      <ThemeIcon name="gtk-close" type="symbol" :size="16" alt="" />
     </button>
   </div>
 </template>

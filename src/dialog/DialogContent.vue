@@ -18,9 +18,20 @@
  * devuelve a lo que estaba enfocado antes, que casi siempre es el botón que lo
  * abrió. Sin lo último, cerrar deja el foco en el `body` y el teclado empieza
  * de nuevo desde arriba de la página.
+ *
+ * ── La forma (vue-libvasak#74) ───────────────────────────────────────────────
+ *
+ * El diálogo de Once UI: superficie flotante opaca, canto `ui-line`,
+ * `rounded-corner-xl` y `shadow-surface-xl`; el velo es `ui-scrim`, sin
+ * desenfoque. Con dieciséis píxeles de aire contra el borde de la
+ * ventana y el alto topado a lo que entra, con desplazamiento adentro: en una
+ * ventana angosta o baja la caja ya no toca los bordes ni se sale. El panel
+ * recibe el foco al abrir para que el lector de pantalla entre al diálogo, pero
+ * no dibuja anillo: no es un control, y un anillo alrededor de la caja entera
+ * no dice dónde está parado nadie.
  */
 import { computed, nextTick, onUnmounted, ref, useAttrs, watch } from 'vue';
-import { usarElDialogo } from './tipos';
+import { useDialog } from './types';
 
 /**
  * Los atributos de quien lo usa, puestos a mano sobre el panel.
@@ -92,11 +103,11 @@ const props = withDefaults(
 	{ size: 'md' }
 );
 
-const atributos = useAttrs();
-const claseDeQuienLoUsa = computed(() => (atributos.class as string | undefined) ?? '');
-const restoDeLosAtributos = computed(() => {
-	const { class: _clase, ...resto } = atributos;
-	return resto;
+const attrs = useAttrs();
+const callerClass = computed(() => (attrs.class as string | undefined) ?? '');
+const otherAttrs = computed(() => {
+	const { class: _class, ...rest } = attrs;
+	return rest;
 });
 
 /**
@@ -108,10 +119,10 @@ const restoDeLosAtributos = computed(() => {
  * emitido después en la hoja, que no depende de esto. La única forma estable de
  * que quien lo usa mande es que acá no esté la clase que compite.
  */
-const CAJA =
-	'relative z-10 w-full rounded-corner border border-ui-border bg-ui-bg/80 p-6 text-tx-main shadow-lg';
+const BOX =
+	'relative z-10 max-h-full w-full overflow-y-auto rounded-corner-xl border border-ui-line bg-ui-float p-6 text-tx-main shadow-surface-xl outline-none';
 
-const formaDelPanel = computed(() => {
+const panelShape = computed(() => {
 	if (props.size === 'full') {
 		// `overflow-hidden` además del redondeo: el radio recorta lo que pinta
 		// **este** elemento —su fondo, su `backdrop-filter`— y no lo que pinten
@@ -120,58 +131,58 @@ const formaDelPanel = computed(() => {
 		// hereda ese recorte porque se teletransporta al `body`.
 		return 'relative z-10 h-full w-full overflow-hidden rounded-corner-window text-tx-main';
 	}
-	return `${CAJA} ${props.size === 'lg' ? 'max-w-2xl' : 'max-w-lg'}`;
+	return `${BOX} ${props.size === 'lg' ? 'max-w-2xl' : 'max-w-lg'}`;
 });
 
-const dialogo = usarElDialogo();
-const abierto = computed(() => dialogo.abierto.value);
-const velo = ref<HTMLElement | null>(null);
+const dialog = useDialog();
+const open = computed(() => dialog.open.value);
+const scrim = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
 
 /** Lo que estaba enfocado antes de abrir, para devolvérselo al cerrar. */
-let enfocadoAntes: HTMLElement | null = null;
+let focusedBefore: HTMLElement | null = null;
 
 /** Lo que el Tab puede alcanzar dentro del panel, en el orden en que aparece. */
-function alcanzables(): HTMLElement[] {
+function reachable(): HTMLElement[] {
 	if (!panel.value) return [];
 	const selector =
 		'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 	return [...panel.value.querySelectorAll<HTMLElement>(selector)];
 }
 
-function alTeclear(evento: KeyboardEvent) {
-	if (evento.key === 'Escape') {
-		dialogo.cerrar();
+function onKeydown(event: KeyboardEvent) {
+	if (event.key === 'Escape') {
+		dialog.close();
 		return;
 	}
-	if (evento.key !== 'Tab') return;
+	if (event.key !== 'Tab') return;
 
-	const elementos = alcanzables();
+	const elements = reachable();
 	// Sin nada alcanzable adentro, el Tab no tiene a dónde ir: se queda en el
 	// panel en vez de escaparse a lo de atrás.
-	if (elementos.length === 0) {
-		evento.preventDefault();
+	if (elements.length === 0) {
+		event.preventDefault();
 		panel.value?.focus();
 		return;
 	}
 
-	const primero = elementos[0];
-	const ultimo = elementos[elementos.length - 1];
-	const enfocado = document.activeElement;
+	const first = elements[0];
+	const last = elements[elements.length - 1];
+	const focused = document.activeElement;
 
-	if (evento.shiftKey && (enfocado === primero || enfocado === panel.value)) {
-		evento.preventDefault();
-		ultimo.focus();
-	} else if (!evento.shiftKey && enfocado === ultimo) {
-		evento.preventDefault();
-		primero.focus();
+	if (event.shiftKey && (focused === first || focused === panel.value)) {
+		event.preventDefault();
+		last.focus();
+	} else if (!event.shiftKey && focused === last) {
+		event.preventDefault();
+		first.focus();
 	}
 }
 
-function alVelo(evento: MouseEvent) {
+function onScrimClick(event: MouseEvent) {
 	// Sólo el velo: un clic que empezó dentro del panel y terminó afuera no
 	// tiene que cerrar —pasa al seleccionar texto y arrastrar de más—.
-	if (evento.target === evento.currentTarget) dialogo.cerrar();
+	if (event.target === event.currentTarget) dialog.close();
 }
 
 /**
@@ -185,13 +196,13 @@ function alVelo(evento: MouseEvent) {
  *
  * La guarda es lo que evita atender dos veces la misma tecla.
  */
-function alTeclearSuelto(evento: KeyboardEvent) {
-	if (velo.value?.contains(evento.target as Node)) return;
-	alTeclear(evento);
+function onDocumentKeydown(event: KeyboardEvent) {
+	if (scrim.value?.contains(event.target as Node)) return;
+	onKeydown(event);
 }
 
-function soltarElTeclado() {
-	document.removeEventListener('keydown', alTeclearSuelto);
+function releaseKeyboard() {
+	document.removeEventListener('keydown', onDocumentKeydown);
 }
 
 /**
@@ -201,26 +212,26 @@ function soltarElTeclado() {
  * botón de una lista que el propio diálogo terminó borrando, y enfocar algo
  * desconectado no hace nada más que dejar el foco perdido en el `body`.
  */
-function restaurarElFoco() {
-	const destino = enfocadoAntes;
-	enfocadoAntes = null;
-	if (destino?.isConnected) destino.focus();
+function restoreFocus() {
+	const target = focusedBefore;
+	focusedBefore = null;
+	if (target?.isConnected) target.focus();
 }
 
 watch(
-	abierto,
-	async (seAbrio) => {
-		if (seAbrio) {
-			enfocadoAntes = document.activeElement as HTMLElement | null;
-			document.addEventListener('keydown', alTeclearSuelto);
+	open,
+	async (opened) => {
+		if (opened) {
+			focusedBefore = document.activeElement as HTMLElement | null;
+			document.addEventListener('keydown', onDocumentKeydown);
 			await nextTick();
 			// Al panel y no al primer botón: así un lector de pantalla lee el
 			// título y la descripción antes que la primera acción.
 			panel.value?.focus();
 			return;
 		}
-		soltarElTeclado();
-		restaurarElFoco();
+		releaseKeyboard();
+		restoreFocus();
 	},
 	// `watch` no corre para el valor inicial, y un diálogo se puede montar ya
 	// abierto —una vista que arranca preguntando algo—. Sin esto, ése no recibe
@@ -232,24 +243,25 @@ watch(
 // siempre, cerrando diálogos ajenos con cada Escape. Y su panel se va con él,
 // así que el foco tiene que volver de donde salió o se queda en el `body`.
 onUnmounted(() => {
-	soltarElTeclado();
-	restaurarElFoco();
+	releaseKeyboard();
+	restoreFocus();
 });
 </script>
 
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition-opacity duration-200 ease-out"
-      leave-active-class="transition-opacity duration-150 ease-in"
+      enter-active-class="transition-opacity duration-200 ease-ui-out"
+      leave-active-class="transition-opacity duration-150 ease-ui"
       enter-from-class="opacity-0"
       leave-to-class="opacity-0">
       <div
-        v-if="abierto"
-        ref="velo"
+        v-if="open"
+        ref="scrim"
         class="fixed inset-0 z-50 flex items-center justify-center"
-        @click="alVelo"
-        @keydown="alTeclear">
+        :class="props.size === 'full' ? '' : 'p-4'"
+        @click="onScrimClick"
+        @keydown="onKeydown">
         <!-- La tinta va redondeada como la ventana. El velo es `fixed inset-0`,
              o sea la pantalla entera, y la ventana es transparente con las
              esquinas redondeadas: un rectángulo recto asoma tres o cuatro
@@ -257,16 +269,16 @@ onUnmounted(() => {
              haya detrás. `WindowFrame` usa el mismo radio. -->
         <div
           v-if="props.size === 'md'"
-          class="absolute inset-0 rounded-corner-window bg-ui-border/40"></div>
+          class="absolute inset-0 rounded-corner-window bg-ui-scrim"></div>
         <div
           ref="panel"
           tabindex="-1"
           role="dialog"
           aria-modal="true"
-          :aria-labelledby="dialogo.idDelTitulo.value ?? undefined"
-          :aria-label="dialogo.idDelTitulo.value ? undefined : ariaLabel"
-          v-bind="restoDeLosAtributos"
-          :class="[claseDeQuienLoUsa, formaDelPanel]">
+          :aria-labelledby="dialog.titleId.value ?? undefined"
+          :aria-label="dialog.titleId.value ? undefined : ariaLabel"
+          v-bind="otherAttrs"
+          :class="[callerClass, panelShape]">
           <slot />
         </div>
       </div>

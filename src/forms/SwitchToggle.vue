@@ -48,9 +48,9 @@ const props = withDefaults(
 	{ disabled: false, size: 'small' }
 );
 
-const emit = defineEmits<{ 'update:modelValue': [valor: boolean] }>();
+const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 
-function alternar() {
+function toggle() {
 	emit('update:modelValue', !props.modelValue);
 }
 </script>
@@ -62,8 +62,8 @@ function alternar() {
     :aria-checked="modelValue"
     :aria-label="label"
     :disabled="disabled"
-    class="rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-    @click="alternar">
+    class="rounded-corner-full transition-opacity duration-200 ease-ui disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+    @click="toggle">
     <SwitchTrack :on="modelValue" :size="size" />
   </button>
 </template>

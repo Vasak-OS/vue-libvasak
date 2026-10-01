@@ -33,6 +33,11 @@
  * `media.seek`, `media.byArtist`, `media.nothingPlaying`). `media.byArtist`
  * lleva `{0}` donde va el artista; si la aplicación no la tiene, se muestra el
  * artista solo en lugar de la clave cruda.
+ *
+ * La forma (vue-libvasak#74): título en `text-heading-xs` peso 600 —nada en
+ * 700—, los botones laterales sin borde con el velo `ui-hover` y el de
+ * reproducir con el relleno del primario, que es lo que actúa. Nada escala al
+ * pasar por encima.
  */
 import { useI18n } from '@vasakgroup/tauri-plugin-i18n';
 import { computed } from 'vue';
@@ -142,7 +147,7 @@ function toggle(): void {
 }
 
 const SIDE_BUTTON =
-	'flex h-10 w-10 items-center justify-center rounded-full text-tx-main transition-colors hover:bg-ui-surface/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent';
+	'flex size-10 items-center justify-center rounded-corner-full text-tx-main transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent';
 </script>
 
 <template>
@@ -157,13 +162,13 @@ const SIDE_BUTTON =
         @error="emit('coverError')" />
 
       <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <p class="line-clamp-2 text-base font-bold text-tx-main" :title="shownTitle" data-title>
+        <p class="line-clamp-2 font-semibold text-heading-xs text-tx-main" :title="shownTitle" data-title>
           {{ shownTitle }}
         </p>
-        <p v-if="artistLine" class="truncate text-sm text-tx-muted" :title="artist" data-artist>
+        <p v-if="artistLine" class="truncate text-body-s text-tx-muted" :title="artist" data-artist>
           {{ artistLine }}
         </p>
-        <p v-if="album" class="truncate text-xs text-tx-muted" :title="album" data-album>
+        <p v-if="album" class="truncate text-body-xs text-tx-muted" :title="album" data-album>
           {{ album }}
         </p>
         <div v-if="$slots.details" class="mt-1 flex min-w-0 flex-wrap gap-1">
@@ -195,7 +200,7 @@ const SIDE_BUTTON =
 
       <button
         type="button"
-        class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-tx-on-primary transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-default disabled:opacity-40 disabled:hover:scale-100 motion-reduce:transition-none"
+        class="flex size-12 items-center justify-center rounded-corner-full bg-primary text-tx-on-primary transition-colors duration-200 ease-ui hover:bg-primary/90 active:bg-primary/80 active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-default disabled:opacity-50"
         :disabled="!canPlayPause"
         :title="labels.toggle"
         :aria-label="labels.toggle"
@@ -222,7 +227,7 @@ const SIDE_BUTTON =
     <!-- `$slots` en la plantilla y no en un `computed`: el objeto de
          `useSlots()` no es reactivo, y un ecualizador que aparece después del
          montaje no se dibujaría nunca. -->
-    <div v-if="$slots.footer" class="border-t border-ui-border pt-3" data-footer>
+    <div v-if="$slots.footer" class="border-t border-ui-line-weak pt-3" data-footer>
       <slot name="footer" />
     </div>
   </div>

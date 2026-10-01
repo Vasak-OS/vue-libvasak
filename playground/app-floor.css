@@ -1,0 +1,19 @@
+/*
+ * El piso de foco que traen hoy las aplicaciones en su `main.css`, con el
+ * primario. Va antes de los tokens: `tokens.css` trae el suyo con `ui-focus`,
+ * y a igual especificidad gana el que se importa último, igual que en una
+ * aplicación que lo adopte.
+ */
+:where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

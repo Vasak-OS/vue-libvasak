@@ -1,109 +1,171 @@
 <script setup lang="ts">
+/**
+ * El botón de acción del sistema.
+ *
+ * # Las variantes (vue-libvasak#74, decisión 6 del 30/09/2026)
+ *
+ * - `primary`: el relleno de la marca, plano —el `solidStyle: "flat"` de Once
+ *   UI—. Es lo único que lleva el acento: la acción principal de la vista.
+ * - `secondary`: **cambió en la 2.0.0**. Era el relleno del color secundario
+ *   del esquema; ahora es el `secondary` de Once UI, el botón neutro con
+ *   contorno: transparente, canto `ui-line` y el velo `ui-hover` al pasar por
+ *   encima, con el canto que sube a `ui-border-strong`. Al lado de un
+ *   `primary` ya no compiten dos colores de marca por la misma atención.
+ * - `ghost`: nuevo. El `tertiary` de Once UI: sin borde ni fondo en reposo,
+ *   para las barras de herramientas y los controles de ventana.
+ * - `danger`: el relleno del error.
+ *
+ * Apretar es `ui-pressed` (o el relleno un poco más transparente) en 100 ms;
+ * nada escala ni se mueve. El foco es el anillo de 2 px separado 2 px con
+ * `ui-focus`.
+ *
+ * # El texto de cada relleno
+ *
+ * Cada relleno lleva el token de texto que corresponde a **su** fondo: el
+ * `primary` va con `text-tx-on-primary`, que calcula el config-manager contra
+ * WCAG. `danger` todavía no tiene el suyo: `#1e1e2e` sobre `#d20f39` da 3,02:1
+ * en claro. Hace falta `--text-on-danger`, y el config-manager no puede
+ * derivarlo mientras el esquema no declare los colores de estado. Hay una
+ * prueba marcada como `failing` que lo recuerda.
+ *
+ * # Tamaños
+ *
+ * 24, 32 y 40 de alto (`sm`, `md`, `lg`), que son los `xs`, `s` y `m` de Once
+ * UI; en el escritorio el de omisión es el de 32. Es un **mínimo**: una
+ * etiqueta que no entra en el ancho que le dan se parte en dos líneas en vez de
+ * cortarse, y ningún botón baja de 32 de objetivo: el de 24 agranda su zona de clic sin
+ * agrandar el dibujo.
+ *
+ * # El icono
+ *
+ * `icon` es un **nombre del tema** de iconos del sistema, y se dibuja con
+ * `ThemeIcon`, que lo vuelve a resolver cuando la persona cambia de tema.
+ * `iconSrc` recibía una ruta ya resuelta y queda como obsoleto.
+ */
+import { computed, onMounted } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
+
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Size = 'sm' | 'md' | 'lg';
+
 interface Props {
-  label: string;
-  disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
-  loading?: boolean;
-  customClass?: string | Record<string, boolean>;
-  size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
-  iconSrc?: string;
-  iconAlt?: string;
-  iconRight?: boolean;
-  type?: 'button' | 'submit' | 'reset';
-  stopPropagation?: boolean;
-  preventDefault?: boolean;
+	label: string;
+	disabled?: boolean;
+	variant?: Variant;
+	loading?: boolean;
+	customClass?: string | Record<string, boolean>;
+	size?: Size;
+	fullWidth?: boolean;
+	/** El nombre del icono en el tema del sistema, como `document-save`. */
+	icon?: string;
+	/** `symbol` para la variante simbólica, que sigue el color del texto del tema. */
+	iconType?: 'icon' | 'symbol';
+	/** @deprecated La ruta ya resuelta. Usá `icon`. Se va en la 3.0. */
+	iconSrc?: string;
+	iconAlt?: string;
+	iconRight?: boolean;
+	type?: 'button' | 'submit' | 'reset';
+	stopPropagation?: boolean;
+	preventDefault?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  disabled: false,
-  variant: 'primary',
-  loading: false,
-  customClass: () => ({}),
-  size: 'md',
-  fullWidth: false,
-  iconSrc: '',
-  iconAlt: '',
-  iconRight: false,
-  type: 'button',
-  stopPropagation: false,
-  preventDefault: false,
+	disabled: false,
+	variant: 'primary',
+	loading: false,
+	customClass: () => ({}),
+	size: 'md',
+	fullWidth: false,
+	icon: '',
+	iconType: 'symbol',
+	iconSrc: '',
+	iconAlt: '',
+	iconRight: false,
+	type: 'button',
+	stopPropagation: false,
+	preventDefault: false,
 });
 
 const emit = defineEmits<{
-  click: [];
+	click: [];
 }>();
 
-/**
- * Cada tono lleva el token de texto que corresponde a **su** fondo.
- *
- * El `secondary` usaba `text-tx-on-primary`, y no se puede leer: ese token es
- * `#1e1e2e` —un casi negro— y sobre `--secondary: #8839ef` da 3.03:1, contra el
- * 4.5:1 de WCAG 1.4.3 para texto normal. El color de texto sobre una marca
- * depende de la marca: el secundario de VasakOS es un violeta saturado, mucho
- * más oscuro que el `#dd7878` del primario, así que el casi negro que funciona
- * sobre el primario no funciona sobre el secundario. Por eso existe
- * `text-tx-on-secondary`, y el commentario del config-manager que lo escribe
- * dice exactamente eso: «el secundario no se parece al primario, así que el
- * color de texto tiene que ser propio».
- *
- * `text-tx-on-secondary` da 4.79:1 sobre `#8839ef`. El modo oscuro no tenía el
- * problema —ahí el secundario es `#cba6f7`, claro, y el casi negro da 8.07:1—
- * pero el token es el correcto en los dos modos, así que va en los dos.
- *
- * `danger` queda fuera de lo que arregla este cambio, y es a propósito: también
- * se leía mal en claro (3.02:1 sobre `#d20f39`), pero no hay token que lo
- * arregle. Habría que escribir `--text-on-danger`, y el config-manager no puede
- * derivarlo porque el esquema no declara los colores de estado —`--status-error`
- * está a mano en cada `main.css`, no sale de `vasak-default.json`. Ese token
- * viene con el trabajo de los esquemas, no con este.
- */
-const variantClasses: Record<string, string> = {
-  primary: 'bg-primary text-tx-on-primary hover:bg-primary/90',
-  secondary: 'bg-secondary text-tx-on-secondary hover:bg-secondary/80',
-  danger: 'bg-status-error text-tx-on-primary hover:bg-status-error/90',
+const variantClasses: Record<Variant, string> = {
+	primary: 'border-transparent bg-primary text-tx-on-primary hover:bg-primary/90 active:bg-primary/80',
+	secondary:
+		'border-ui-line bg-transparent text-tx-main hover:border-ui-border-strong hover:bg-ui-hover active:bg-ui-pressed',
+	ghost: 'border-transparent bg-transparent text-tx-main hover:bg-ui-hover active:bg-ui-pressed',
+	danger: 'border-transparent bg-status-error text-tx-on-primary hover:bg-status-error/90 active:bg-status-error/80',
 };
 
-const sizeClasses: Record<'sm' | 'md' | 'lg', string> = {
-  sm: 'px-2 py-1 text-xs',
-  md: 'px-3 py-1 text-sm',
-  lg: 'px-4 py-2 text-base',
+/**
+ * El de 24 se ve de 24 pero se apunta en 32: un seudoelemento transparente
+ * agranda la zona que recibe el clic cuatro píxeles arriba y abajo.
+ */
+const HIT_AREA = "relative after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']";
+
+const sizeClasses: Record<Size, string> = {
+	sm: `min-h-6 px-2 text-label-s ${HIT_AREA}`,
+	md: 'min-h-8 px-3 text-label-m',
+	lg: 'min-h-10 px-4 text-label-m',
 };
+
+/** Sólo icono: cuadrado, del alto de su tamaño. */
+const iconOnlyClasses: Record<Size, string> = {
+	sm: `min-h-6 min-w-6 px-0 ${HIT_AREA} after:-inset-x-1`,
+	md: 'min-h-8 min-w-8 px-0',
+	lg: 'min-h-10 min-w-10 px-0',
+};
+
+const hasIcon = computed(() => Boolean(props.icon || props.iconSrc));
+const iconOnly = computed(() => hasIcon.value && !props.label);
+const iconName = computed(() => props.iconAlt || props.label);
 
 const handleClick = (event: Event) => {
-  if (props.stopPropagation) event.stopPropagation();
-  if (props.preventDefault) event.preventDefault();
-  if (!props.disabled && !props.loading) {
-    emit('click');
-  }
+	if (props.stopPropagation) event.stopPropagation();
+	if (props.preventDefault) event.preventDefault();
+	if (!props.disabled && !props.loading) {
+		emit('click');
+	}
 };
+
+onMounted(() => {
+	if (props.iconSrc && !props.icon) {
+		console.warn(
+			'[ActionButton] «iconSrc» está obsoleto y se va en la 3.0: recibe una ruta ya resuelta. Usá «icon» con el nombre del icono del tema.'
+		);
+	}
+});
 </script>
 
 <template>
   <button
     :type="props.type"
-    @click="handleClick"
-    class="rounded-corner transition-[background-color,opacity] duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    class="inline-flex min-w-0 items-center justify-center gap-2 rounded-corner-m border py-1 text-center font-semibold transition-[background-color,border-color,color,opacity] duration-200 ease-ui active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
     :class="[
       variantClasses[props.variant],
-      sizeClasses[props.size],
+      iconOnly ? iconOnlyClasses[props.size] : sizeClasses[props.size],
       props.fullWidth ? 'w-full' : '',
-      props.iconSrc && !props.label ? 'px-2 py-2' : '',
       customClass,
     ]"
+    :aria-label="iconOnly ? iconName || undefined : undefined"
     :disabled="props.disabled || props.loading"
-  >
-    <span v-if="loading" class="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-    <template v-if="props.iconSrc && !props.iconRight">
-      <img :src="props.iconSrc" :alt="props.iconAlt || props.label" class="w-4 h-4" />
+    @click="handleClick">
+    <!-- La rueda ocupa el lugar del icono: el ancho no cambia mientras carga. -->
+    <ThemeIcon
+      v-if="loading"
+      name="process-working-symbolic"
+      type="symbol"
+      :size="16"
+      class="animate-spin" />
+    <template v-else-if="hasIcon && !props.iconRight">
+      <ThemeIcon v-if="props.icon" :name="props.icon" :type="props.iconType" :size="16" />
+      <img v-else :src="props.iconSrc" :alt="iconOnly ? '' : props.iconAlt" class="size-4 shrink-0" />
     </template>
-    <span v-if="props.label">{{ props.label }}</span>
-    <template v-if="props.iconSrc && props.iconRight">
-      <img :src="props.iconSrc" :alt="props.iconAlt || props.label" class="w-4 h-4" />
+    <span v-if="props.label" class="min-w-0 break-words">{{ props.label }}</span>
+    <template v-if="!loading && hasIcon && props.iconRight">
+      <ThemeIcon v-if="props.icon" :name="props.icon" :type="props.iconType" :size="16" />
+      <img v-else :src="props.iconSrc" :alt="iconOnly ? '' : props.iconAlt" class="size-4 shrink-0" />
     </template>
   </button>
 </template>
-
-<style scoped>
-/* Ningún estilo adicional requerido */
-</style>

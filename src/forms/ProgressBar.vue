@@ -22,6 +22,13 @@
  * Por eso lo indeterminado va al **ancho completo**: ni animado ni quieto se
  * confunde con una fracción. Lo encontró vasak-installer, que era el único que
  * se lo había planteado; acá vale para los tres que tenían una barra.
+ *
+ * ── La forma (vue-libvasak#74) ──────────────────────────────────────────────
+ *
+ * Una vía fina de `rounded-corner-full` en `ui-line` —que se ve sobre la
+ * ventana y sobre una tarjeta por igual; la superficie al 70 % desaparecía
+ * dentro de una tarjeta de superficie— con el relleno del tono. Avanza en
+ * 300 ms con `ease-ui`.
  */
 import { computed } from 'vue';
 
@@ -48,13 +55,13 @@ const props = withDefaults(
 	{ tone: 'normal' }
 );
 
-const COLOR: Record<'normal' | 'warning' | 'critical', string> = {
+const TONE_COLOR: Record<'normal' | 'warning' | 'critical', string> = {
 	normal: 'bg-primary',
 	warning: 'bg-status-warning',
 	critical: 'bg-status-error',
 };
 
-const acotado = computed(() =>
+const clamped = computed(() =>
 	props.value === null ? null : Math.max(0, Math.min(100, props.value))
 );
 </script>
@@ -63,20 +70,20 @@ const acotado = computed(() =>
   <div
     role="progressbar"
     :aria-label="label"
-    :aria-valuenow="acotado ?? undefined"
+    :aria-valuenow="clamped ?? undefined"
     aria-valuemin="0"
     aria-valuemax="100"
-    class="h-2 w-full overflow-hidden rounded-corner bg-ui-surface/70">
+    class="h-2 w-full overflow-hidden rounded-corner-full bg-ui-line">
     <div
-      v-if="acotado !== null"
-      class="h-full rounded-corner transition-[width] duration-300 ease-out"
-      :class="COLOR[tone]"
-      :style="{ width: `${acotado}%` }"></div>
+      v-if="clamped !== null"
+      class="h-full rounded-corner-full transition-[width] duration-300 ease-ui"
+      :class="TONE_COLOR[tone]"
+      :style="{ width: `${clamped}%` }"></div>
     <!-- Indeterminado: el ancho completo, latiendo. No dice cuánto falta porque
          no se sabe, pero sí que algo sigue pasando. Con menos movimiento pedido
          deja de latir y queda atenuada, que tampoco se lee como una fracción. -->
     <div
       v-else
-      class="h-full w-full animate-pulse rounded-corner bg-primary motion-reduce:animate-none motion-reduce:bg-primary/40"></div>
+      class="h-full w-full animate-pulse rounded-corner-full bg-primary motion-reduce:animate-none motion-reduce:bg-primary/40"></div>
   </div>
 </template>

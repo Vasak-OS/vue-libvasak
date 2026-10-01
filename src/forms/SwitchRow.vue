@@ -30,6 +30,13 @@
  * veinte píxeles a la izquierda. Un margen que sigue la disposición de otro
  * componente se desincroniza en cuanto ese componente cambia, y nadie se
  * entera.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * La fila es una opción de Once UI: `rounded-corner-m`, `px-3 py-2`, el velo
+ * `ui-hover` al pasar y el anillo de foco con `ui-focus`. El recuadro del icono
+ * pasa de llevar el canto secundario y el relleno del primario a llevar el
+ * velo de acento cuando está encendida (decisión 4), y canto fino apagada.
  */
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import SwitchTrack from './SwitchTrack.vue';
@@ -49,7 +56,7 @@ const props = withDefaults(
 	{ iconType: 'icon', disabled: false }
 );
 
-const emit = defineEmits<{ 'update:modelValue': [valor: boolean] }>();
+const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 </script>
 
 <template>
@@ -58,7 +65,7 @@ const emit = defineEmits<{ 'update:modelValue': [valor: boolean] }>();
     role="switch"
     :aria-checked="modelValue"
     :disabled="disabled"
-    class="flex w-full items-start gap-3 rounded-corner p-2 text-left transition-colors hover:bg-ui-surface/60 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    class="flex w-full min-w-0 items-start gap-3 rounded-corner-m px-3 py-2 text-left text-tx-main transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
     @click="emit('update:modelValue', !props.modelValue)">
     <SwitchTrack :on="modelValue" class="mt-0.5" />
 
@@ -67,15 +74,15 @@ const emit = defineEmits<{ 'update:modelValue': [valor: boolean] }>();
          estado, así que no se lee. -->
     <span
       v-if="icon"
-      class="flex size-10 shrink-0 items-center justify-center rounded-corner border"
-      :class="modelValue ? 'border-secondary bg-primary/20' : 'border-ui-border bg-ui-surface/40'"
+      class="flex size-10 shrink-0 items-center justify-center rounded-corner-m border transition-colors duration-200 ease-ui"
+      :class="modelValue ? 'border-transparent bg-ui-selected-accent' : 'border-ui-line bg-ui-surface/70'"
       aria-hidden="true">
       <ThemeIcon :name="icon" :type="iconType" :size="24" alt="" />
     </span>
 
     <span class="min-w-0 flex-1">
-      <span class="block font-medium text-sm text-tx-main">{{ label }}</span>
-      <span v-if="description" class="mt-0.5 block text-tx-muted text-xs">{{ description }}</span>
+      <span class="block font-medium text-label-m text-tx-main">{{ label }}</span>
+      <span v-if="description" class="mt-0.5 block text-body-xs text-tx-muted">{{ description }}</span>
       <slot name="pie" />
     </span>
   </button>

@@ -14,12 +14,17 @@
  * lo hace `textoSobre` en `@vasakgroup/plugin-config-manager`—. Por eso el
  * `secondary` tiene el suyo aunque su valor actual coincida con el del
  * primario: lo que se compara es el color de fondo, no el tono.
+ *
+ * Desde la 2.0.0 el `secondary` ya no es un relleno: es el botón con contorno
+ * de Once UI, transparente, y su texto es el de la superficie donde se apoya
+ * (`text-tx-main`), igual que el `ghost` nuevo.
  */
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
 import ActionButton from '../src/controls/ActionButton.vue';
-import { olvidarTodo } from './dobles';
+import { olvidarTodo, ponerEnElTema } from './dobles';
+import { nextTick } from 'vue';
 
 beforeEach(() => {
 	olvidarTodo();
@@ -30,10 +35,7 @@ const fondos = (clases: string[]) =>
 	clases.filter((c) => c.startsWith('bg-')).filter((c) => !c.includes(':'));
 
 describe('el texto del botón se lee sobre su fondo', () => {
-	for (const [tono, color] of [
-		['primary', 'primary'],
-		['secondary', 'secondary'],
-	] as const) {
+	for (const [tono, color] of [['primary', 'primary']] as const) {
 		test(`el ${tono} se pinta con el token de su propio color`, () => {
 			const boton = mount(ActionButton, {
 				props: { label: 'Aceptar', variant: tono },
@@ -49,6 +51,77 @@ describe('el texto del botón se lee sobre su fondo', () => {
 			expect(texto).toBe(`text-tx-on-${color}`);
 		});
 	}
+});
+
+describe('las variantes sin relleno', () => {
+	for (const variante of ['secondary', 'ghost'] as const) {
+		test(`el ${variante} es transparente y lleva el texto de la superficie`, () => {
+			const clases = mount(ActionButton, { props: { label: 'Cancelar', variant: variante } })
+				.get('button')
+				.classes();
+
+			expect(clases).toContain('bg-transparent');
+			expect(clases).toContain('text-tx-main');
+			expect(clases).toContain('hover:bg-ui-hover');
+			// Ningún color de marca, ni en reposo ni al pasar por encima.
+			expect(clases.join(' ')).not.toMatch(/(bg|border|text)-(primary|secondary)\b/);
+		});
+	}
+
+	test('el secondary tiene contorno fino y el ghost no', () => {
+		const contorno = mount(ActionButton, { props: { label: 'a', variant: 'secondary' } })
+			.get('button')
+			.classes();
+		const fantasma = mount(ActionButton, { props: { label: 'a', variant: 'ghost' } })
+			.get('button')
+			.classes();
+
+		expect(contorno).toContain('border-ui-line');
+		expect(fantasma).toContain('border-transparent');
+	});
+});
+
+describe('la forma', () => {
+	test('apretar no escala: cambia el fondo', () => {
+		const clases = mount(ActionButton, { props: { label: 'a' } }).get('button').classes().join(' ');
+
+		expect(clases).not.toMatch(/scale-/);
+		expect(clases).toContain('active:bg-primary/80');
+	});
+
+	test('el de 24 se apunta en 32', () => {
+		// Se ve de 24, pero el seudoelemento agranda cuatro píxeles arriba y
+		// abajo la zona que recibe el clic.
+		const clases = mount(ActionButton, { props: { label: 'a', size: 'sm' } }).get('button').classes();
+
+		expect(clases).toContain('min-h-6');
+		expect(clases).toContain('after:-inset-y-1');
+	});
+
+	test('el icono sale del tema del sistema por su nombre', async () => {
+		ponerEnElTema('document-save-symbolic', 'data:image/png;base64,GUARDAR');
+		ponerEnElTema('document-save', 'data:image/png;base64,GUARDAR');
+		const vista = mount(ActionButton, { props: { label: 'Guardar', icon: 'document-save' } });
+		await new Promise((listo) => setTimeout(listo, 0));
+		await nextTick();
+
+		expect(vista.find('img').attributes('src')).toBe('data:image/png;base64,GUARDAR');
+	});
+
+	test('cargando, la rueda ocupa el lugar del icono', async () => {
+		const vista = mount(ActionButton, { props: { label: 'Guardar', icon: 'document-save', loading: true } });
+		await nextTick();
+
+		// Un solo dibujo: la rueda, no la rueda más el icono.
+		expect(vista.findAll('.animate-spin')).toHaveLength(1);
+		expect(vista.findAllComponents({ name: 'ThemeIcon' })).toHaveLength(1);
+	});
+
+	test('sólo icono, el nombre va al botón', () => {
+		const vista = mount(ActionButton, { props: { label: '', icon: 'edit-delete', iconAlt: 'Borrar' } });
+
+		expect(vista.get('button').attributes('aria-label')).toBe('Borrar');
+	});
 });
 
 describe('lo que este archivo todavía no arregla', () => {

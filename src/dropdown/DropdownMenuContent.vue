@@ -32,9 +32,26 @@
  * Sin esto, un menú más alto que la pantalla se cortaba en el borde y lo que
  * quedaba abajo era inalcanzable: no había barra de desplazamiento, y la rueda
  * tampoco hacía nada porque no había nada que desplazar.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * El panel de un desplegable de Once UI: superficie flotante opaca
+ * (`ui-float`), canto `ui-line`, `rounded-corner-l` alrededor de ítems
+ * `rounded-corner-m` con `p-1` —las dos curvas concéntricas— y
+ * `shadow-surface-m`. Sin `backdrop-blur`: lo de atrás se veía sin desenfocar,
+ * que es lo peor de las dos cosas.
+ *
+ * Entra en 200 ms con `ease-ui-out`, de `scale(.96)` y transparente, **desde la
+ * esquina que toca al disparador** según el lado que resultó —hoy crecía desde
+ * el centro—, y sale en 150 ms. Sólo `opacity` y `scale`: se compone, no rehace
+ * el maquetado. Once UI escala desde 0,9; en un menú de 300 px eso se lee como
+ * un salto.
+ *
+ * Nunca más ancho que la ventana menos el aire de los dos lados: un ítem largo
+ * se parte en dos líneas en vez de mandar medio menú afuera.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { usarElMenu } from './tipos';
+import { useMenu } from './types';
 
 const props = withDefaults(
 	defineProps<{
@@ -51,103 +68,123 @@ const props = withDefaults(
 
 defineOptions({ inheritAttrs: false });
 
-const menu = usarElMenu();
-const { idDelMenu, idDeLaEtiqueta } = menu;
-const disparador = computed(() => menu.disparador.value);
-const abierto = computed(() => menu.abierto.value);
+const menu = useMenu();
+const { menuId, labelId } = menu;
+const trigger = computed(() => menu.trigger.value);
+const open = computed(() => menu.open.value);
 
-const contenido = ref<HTMLElement | null>(null);
-/** Dónde va y hasta dónde puede crecer. Sin techo mientras no haga falta. */
-const posicion = ref<{ top: number; left: number; techo: number | null }>({
+type Side = 'top' | 'bottom' | 'left' | 'right';
+
+const content = ref<HTMLElement | null>(null);
+/** Dónde va, hasta dónde puede crecer y de qué lado quedó. Sin techo mientras no haga falta. */
+const position = ref<{ top: number; left: number; ceiling: number | null; side: Side }>({
 	top: 0,
 	left: 0,
-	techo: null,
+	ceiling: null,
+	side: 'bottom',
 });
 
 /** El aire que se le deja al borde de la ventana. */
-const MARGEN = 8;
+const MARGIN = 8;
 
-type Lado = 'top' | 'bottom' | 'left' | 'right';
-
-const DE_ENFRENTE: Record<Lado, Lado> = {
+const OPPOSITE: Record<Side, Side> = {
 	top: 'bottom',
 	bottom: 'top',
 	left: 'right',
 	right: 'left',
 };
 
-/** Lo que hay entre el disparador y el borde de la ventana, de ese lado. */
-function espacioDe(lado: Lado, desde: DOMRect): number {
-	const aire = props.sideOffset + MARGEN;
-	switch (lado) {
+/**
+ * La esquina desde la que crece: la que toca al disparador.
+ *
+ * Abajo del disparador crece desde arriba; arriba, desde abajo; a un costado,
+ * desde el borde que da al disparador. En el otro eje manda la alineación.
+ */
+const transformOrigin = computed(() => {
+	const { side } = position.value;
+	const alongX = props.align === 'start' ? 'left' : props.align === 'end' ? 'right' : 'center';
+	switch (side) {
 		case 'bottom':
-			return window.innerHeight - desde.bottom - aire;
+			return `top ${alongX}`;
 		case 'top':
-			return desde.top - aire;
+			return `bottom ${alongX}`;
 		case 'right':
-			return window.innerWidth - desde.right - aire;
+			return 'top left';
 		case 'left':
-			return desde.left - aire;
+			return 'top right';
+	}
+	return 'top left';
+});
+
+/** Lo que hay entre el disparador y el borde de la ventana, de ese lado. */
+function spaceOn(side: Side, from: DOMRect): number {
+	const gap = props.sideOffset + MARGIN;
+	switch (side) {
+		case 'bottom':
+			return window.innerHeight - from.bottom - gap;
+		case 'top':
+			return from.top - gap;
+		case 'right':
+			return window.innerWidth - from.right - gap;
+		case 'left':
+			return from.left - gap;
 	}
 }
 
-function acotar(valor: number, minimo: number, maximo: number): number {
-	if (maximo < minimo) return minimo;
-	return Math.min(Math.max(valor, minimo), maximo);
+function clamp(value: number, minimum: number, maximum: number): number {
+	if (maximum < minimum) return minimum;
+	return Math.min(Math.max(value, minimum), maximum);
 }
 
-function calcularPosicion() {
-	if (!disparador.value || !contenido.value) return;
+function computePosition() {
+	if (!trigger.value || !content.value) return;
 
-	const desde = disparador.value.getBoundingClientRect();
+	const from = trigger.value.getBoundingClientRect();
 	// `scrollHeight` y no el rectángulo: el rectángulo ya viene con el techo de
 	// la vez anterior puesto, así que un menú topado se creería de ese tamaño y
 	// no volvería a crecer nunca aunque le sobrara lugar.
-	const altoQueQuiere = contenido.value.scrollHeight;
-	const anchoQueQuiere = contenido.value.offsetWidth;
+	const wantedHeight = content.value.scrollHeight;
+	const wantedWidth = content.value.offsetWidth;
 
 	// `side` es una preferencia: si no entra de ese lado y del otro hay más
 	// lugar, se da vuelta. Con «más» y no con «entra» alcanza: si no entra en
 	// ninguno de los dos, va al que menos lo corta.
 	const vertical = props.side === 'top' || props.side === 'bottom';
-	const queNecesita = vertical ? altoQueQuiere : anchoQueQuiere;
+	const needed = vertical ? wantedHeight : wantedWidth;
 
-	let lado: Lado = props.side;
-	const deEsteLado = espacioDe(lado, desde);
-	if (deEsteLado < queNecesita) {
-		const deEnfrente = espacioDe(DE_ENFRENTE[lado], desde);
-		if (deEnfrente > deEsteLado) lado = DE_ENFRENTE[lado];
+	let side: Side = props.side;
+	const here = spaceOn(side, from);
+	if (here < needed) {
+		const across = spaceOn(OPPOSITE[side], from);
+		if (across > here) side = OPPOSITE[side];
 	}
 
 	let top = 0;
 	let left = 0;
-	let techo: number | null = null;
+	let ceiling: number | null = null;
 
-	switch (lado) {
+	switch (side) {
 		case 'bottom': {
-			top = desde.bottom + props.sideOffset;
-			techo = Math.max(window.innerHeight - top - MARGEN, 0);
+			top = from.bottom + props.sideOffset;
+			ceiling = Math.max(window.innerHeight - top - MARGIN, 0);
 			break;
 		}
 		case 'top': {
 			// Crece para arriba: el borde de abajo queda clavado contra el
 			// disparador, así que lo que se mueve al toparlo es el `top`.
-			techo = Math.max(espacioDe('top', desde), 0);
-			top = desde.top - props.sideOffset - Math.min(altoQueQuiere, techo);
+			ceiling = Math.max(spaceOn('top', from), 0);
+			top = from.top - props.sideOffset - Math.min(wantedHeight, ceiling);
 			break;
 		}
 		case 'left':
 		case 'right': {
-			left =
-				lado === 'right'
-					? desde.right + props.sideOffset
-					: desde.left - anchoQueQuiere - props.sideOffset;
+			left = side === 'right' ? from.right + props.sideOffset : from.left - wantedWidth - props.sideOffset;
 			// A un costado el alto no lo limita el costado sino la ventana. El
 			// menú arranca a la altura del disparador, y si desde ahí no entra
 			// se sube lo que haga falta antes de toparlo.
-			const enLaVentana = window.innerHeight - 2 * MARGEN;
-			top = acotar(desde.top, MARGEN, window.innerHeight - Math.min(altoQueQuiere, enLaVentana) - MARGEN);
-			techo = Math.max(window.innerHeight - top - MARGEN, 0);
+			const inWindow = window.innerHeight - 2 * MARGIN;
+			top = clamp(from.top, MARGIN, window.innerHeight - Math.min(wantedHeight, inWindow) - MARGIN);
+			ceiling = Math.max(window.innerHeight - top - MARGIN, 0);
 			break;
 		}
 	}
@@ -155,13 +192,13 @@ function calcularPosicion() {
 	if (vertical) {
 		switch (props.align) {
 			case 'start':
-				left = desde.left;
+				left = from.left;
 				break;
 			case 'center':
-				left = desde.left + desde.width / 2 - anchoQueQuiere / 2;
+				left = from.left + from.width / 2 - wantedWidth / 2;
 				break;
 			case 'end':
-				left = desde.right - anchoQueQuiere;
+				left = from.right - wantedWidth;
 				break;
 		}
 	}
@@ -169,15 +206,15 @@ function calcularPosicion() {
 	// Y que no se vaya por el costado. Alinear contra el disparador es lo que se
 	// pidió, pero un disparador pegado al borde derecho manda medio menú afuera
 	// de la ventana, donde no hay forma de leerlo.
-	left = acotar(left, MARGEN, window.innerWidth - anchoQueQuiere - MARGEN);
+	left = clamp(left, MARGIN, window.innerWidth - wantedWidth - MARGIN);
 
-	posicion.value = { top, left, techo };
+	position.value = { top, left, ceiling, side };
 }
 
 /** Los ítems que hay ahora mismo, en el orden en que se leen. */
 function items(): HTMLElement[] {
-	if (!contenido.value) return [];
-	return Array.from(contenido.value.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+	if (!content.value) return [];
+	return Array.from(content.value.querySelectorAll<HTMLElement>('[role="menuitem"]'));
 }
 
 /**
@@ -186,146 +223,148 @@ function items(): HTMLElement[] {
  * Los índices negativos cuentan desde el final, así que `-1` es el último y no
  * hace falta pedirle la cantidad a nadie.
  */
-function enfocar(indice: number) {
-	const lista = items();
-	if (!lista.length) return;
-	const cuantos = lista.length;
-	lista[((indice % cuantos) + cuantos) % cuantos]?.focus();
+function focusAt(index: number) {
+	const list = items();
+	if (!list.length) return;
+	const count = list.length;
+	list[((index % count) + count) % count]?.focus();
 }
 
 /** Dónde está el foco, o `-1` si está en el menú y no en un ítem. */
-function dondeEstaElFoco(): number {
-	const activo = document.activeElement;
-	return activo instanceof HTMLElement ? items().indexOf(activo) : -1;
+function focusedIndex(): number {
+	const active = document.activeElement;
+	return active instanceof HTMLElement ? items().indexOf(active) : -1;
 }
 
-function alTeclear(evento: KeyboardEvent) {
-	const actual = dondeEstaElFoco();
+function onKeydown(event: KeyboardEvent) {
+	const current = focusedIndex();
 
-	switch (evento.key) {
+	switch (event.key) {
 		case 'ArrowDown':
-			evento.preventDefault();
-			enfocar(actual + 1);
+			event.preventDefault();
+			focusAt(current + 1);
 			break;
 		case 'ArrowUp':
-			evento.preventDefault();
+			event.preventDefault();
 			// Sin ítem enfocado la flecha de arriba entra por el final, que es
 			// lo mismo que `-1` pide.
-			enfocar(actual <= 0 ? -1 : actual - 1);
+			focusAt(current <= 0 ? -1 : current - 1);
 			break;
 		case 'Home':
-			evento.preventDefault();
-			enfocar(0);
+			event.preventDefault();
+			focusAt(0);
 			break;
 		case 'End':
-			evento.preventDefault();
-			enfocar(-1);
+			event.preventDefault();
+			focusAt(-1);
 			break;
 		case 'Escape':
-			evento.preventDefault();
+			event.preventDefault();
 			// Sin cortarlo acá, el Escape sigue subiendo hasta el oyente global
 			// de la aplicación, que cierra además lo que haya detrás del menú.
-			evento.stopPropagation();
-			menu.cerrar({ devolverElFoco: true });
+			event.stopPropagation();
+			menu.close({ returnFocus: true });
 			break;
 		case 'Tab':
-			evento.preventDefault();
-			menu.cerrar({ devolverElFoco: true });
+			event.preventDefault();
+			menu.close({ returnFocus: true });
 			break;
 	}
 }
 
-watch(abierto, async (esta) => {
-	if (!esta) return;
+watch(open, async (isOpen) => {
+	if (!isOpen) return;
 
 	await nextTick();
 	requestAnimationFrame(() => {
-		calcularPosicion();
+		computePosition();
 	});
 
-	switch (menu.focoAlAbrir.value) {
-		case 'primero':
-			enfocar(0);
+	switch (menu.focusOnOpen.value) {
+		case 'first':
+			focusAt(0);
 			break;
-		case 'ultimo':
-			enfocar(-1);
+		case 'last':
+			focusAt(-1);
 			break;
 		// Abierto con el ratón: el foco va al menú y no a un ítem —no hay
 		// ninguno elegido todavía—, que es lo que deja andar las flechas y el
 		// Escape sin haber tocado nada.
 		default:
-			contenido.value?.focus();
+			content.value?.focus();
 	}
 });
 
-function recalcularSiEstaAbierto(evento?: Event) {
-	if (!abierto.value) return;
+function recomputeIfOpen(event?: Event) {
+	if (!open.value) return;
 	// Desplazarse **adentro** del menú no lo mueve: el disparador sigue donde
 	// estaba. El oyente de `scroll` es de captura y con el techo puesto el menú
 	// pasó a ser él mismo un contenedor desplazable, así que ahora sus propios
 	// desplazamientos también llegan hasta acá.
-	if (evento && contenido.value?.contains(evento.target as Node)) return;
-	calcularPosicion();
+	if (event && content.value?.contains(event.target as Node)) return;
+	computePosition();
 }
 
-function alHacerClicAfuera(evento: MouseEvent) {
-	const destino = evento.target as HTMLElement;
-	const adentro = !!destino.closest('[data-dropdown-content]');
-	const enElDisparador = !!disparador.value?.contains(destino);
+function onOutsideClick(event: MouseEvent) {
+	const target = event.target as HTMLElement;
+	const inside = !!target.closest('[data-dropdown-content]');
+	const onTrigger = !!trigger.value?.contains(target);
 
-	if (!adentro && !enElDisparador) {
+	if (!inside && !onTrigger) {
 		// Sin devolver el foco: quien hizo clic afuera ya eligió dónde está
 		// parado, y traérselo de vuelta al disparador es sacárselo de las manos.
-		menu.cerrar();
+		menu.close();
 	}
 }
 
 onMounted(() => {
-	document.addEventListener('click', alHacerClicAfuera);
-	window.addEventListener('resize', recalcularSiEstaAbierto);
-	window.addEventListener('scroll', recalcularSiEstaAbierto, true);
+	document.addEventListener('click', onOutsideClick);
+	window.addEventListener('resize', recomputeIfOpen);
+	window.addEventListener('scroll', recomputeIfOpen, true);
 });
 
 onBeforeUnmount(() => {
-	document.removeEventListener('click', alHacerClicAfuera);
-	window.removeEventListener('resize', recalcularSiEstaAbierto);
-	window.removeEventListener('scroll', recalcularSiEstaAbierto, true);
+	document.removeEventListener('click', onOutsideClick);
+	window.removeEventListener('resize', recomputeIfOpen);
+	window.removeEventListener('scroll', recomputeIfOpen, true);
 });
 </script>
 
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition-all duration-150 ease-in-out"
-      leave-active-class="transition-all duration-150 ease-in-out"
-      enter-from-class="opacity-0 scale-95"
-      leave-to-class="opacity-0 scale-95"
+      enter-active-class="transition-[opacity,scale] duration-200 ease-ui-out"
+      leave-active-class="transition-[opacity,scale] duration-150 ease-ui"
+      enter-from-class="opacity-0 scale-96"
+      leave-to-class="opacity-0 scale-96"
       @enter="(el) => (el as HTMLElement).offsetHeight"
       @leave="(el) => (el as HTMLElement).offsetHeight">
       <div
-        v-show="abierto"
-        ref="contenido"
+        v-show="open"
+        ref="content"
         v-bind="$attrs"
-        :id="idDelMenu"
+        :id="menuId"
         role="menu"
         tabindex="-1"
         aria-orientation="vertical"
-        :aria-labelledby="idDeLaEtiqueta ?? undefined"
-        :inert="!abierto"
+        :aria-labelledby="labelId ?? undefined"
+        :inert="!open"
         :style="{
           position: 'fixed',
-          top: `${posicion.top}px`,
-          left: `${posicion.left}px`,
-          maxHeight: posicion.techo === null ? undefined : `${posicion.techo}px`,
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          maxHeight: position.ceiling === null ? undefined : `${position.ceiling}px`,
+          maxWidth: `calc(100vw - ${2 * MARGIN}px)`,
           overflowY: 'auto',
           overscrollBehavior: 'contain',
+          transformOrigin,
           zIndex: 50,
         }"
         data-dropdown-content
-        class="min-w-30 rounded-corner border border-primary bg-ui-bg/80 shadow-lg focus:outline-none"
+        class="min-w-30 rounded-corner-l border border-ui-line bg-ui-float text-tx-main shadow-surface-m focus:outline-none"
         @click="(e) => e.stopPropagation()"
-        @keydown="alTeclear">
-        <div role="none" class="py-1">
+        @keydown="onKeydown">
+        <div role="none" class="flex flex-col p-1">
           <slot />
         </div>
       </div>

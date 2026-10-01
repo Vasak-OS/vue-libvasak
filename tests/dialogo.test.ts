@@ -357,7 +357,7 @@ describe('cuando el diálogo se va sin cerrarse', () => {
 // `bg-ui-border/40` y no `bg-ui-border-dark/40`: ese token no existe en el
 // `@theme` de ninguna aplicación, así que el velo no se teñía de nada. El
 // vivo ya vale el color oscuro cuando el tema está en oscuro.
-const elVeloTenido = () => document.body.querySelector('.bg-ui-border\\/40');
+const elVeloTenido = () => document.body.querySelector('.bg-ui-scrim');
 
 describe('la forma de pantalla completa', () => {
 	test('no trae las clases que quien lo usa tendría que deshacer', async () => {
@@ -472,7 +472,20 @@ describe('el ancho', () => {
 		await abrir(vista);
 
 		const clases = elPanel()?.className ?? '';
-		expect(clases).toContain('border-ui-border');
+		expect(clases).toContain('border-ui-line');
 		expect(clases).toContain('p-6');
+	});
+
+	test('la caja es la de Once UI: flotante, opaca, radio xl y sombra xl', async () => {
+		// vue-libvasak#74: era `bg-ui-bg/80` —se veía lo de atrás sin
+		// desenfocar— con `shadow-lg` de Tailwind.
+		const { vista } = armar();
+		await abrir(vista);
+
+		const clases = elPanel()?.className ?? '';
+		for (const clase of ['bg-ui-float', 'rounded-corner-xl', 'shadow-surface-xl', 'overflow-y-auto']) {
+			expect(clases).toContain(clase);
+		}
+		expect(clases).not.toMatch(/bg-ui-bg|shadow-lg|backdrop-blur/);
 	});
 });

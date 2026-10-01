@@ -160,19 +160,78 @@ export {
 
 export type { PlaybackState } from "./media/playback";
 export { formatPlaybackTime } from "./media/playback";
-export type { AvisoTransitorio } from "./feedback/ToastArea.vue";
-export type { TonoDelAviso } from "./feedback/tonos";
-export { CLASES_POR_TONO, rolDelTono } from "./feedback/tonos";
-export type { ContextoDelMenu, FocoAlAbrir } from "./dropdown/tipos";
-export type { ContextoDelDialogo } from "./dialog/tipos";
+export type { AvisoTransitorio, ToastNotice } from "./feedback/ToastArea.vue";
+export type { NoticeTone } from "./feedback/tones";
+export { TONE_CLASSES, TOAST_TONE_CLASSES, toneRole } from "./feedback/tones";
+export type { FocusOnOpen, MenuContext } from "./dropdown/types";
+export type { DialogContext } from "./dialog/types";
 export type { OpcionDeBusqueda } from "./search/buscar";
 export { buscarOpciones } from "./search/buscar";
-export { CLAVE_DEL_DIALOGO, usarElDialogo } from "./dialog/tipos";
-export { CLAVE_DEL_MENU, usarElMenu } from "./dropdown/tipos";
-export type { ContextoDelTooltip } from "./tooltip/tipos";
-export { CLAVE_DEL_TOOLTIP, usarElTooltip } from "./tooltip/tipos";
-export type { SidebarCategory, SidebarItem } from "./sidebar/tipos";
-export type { AccionDePestana, ElementoDePestana } from "./tabs/tipos";
+export { DIALOG_KEY, useDialog } from "./dialog/types";
+export { MENU_KEY, useMenu } from "./dropdown/types";
+export type { TooltipContext } from "./tooltip/types";
+export { TOOLTIP_KEY, useTooltip } from "./tooltip/types";
+export type { SidebarCategory, SidebarItem } from "./sidebar/types";
+export type { TabAction, TabEntry } from "./tabs/types";
+
+/*
+ * Los nombres de la 1.x, como alias obsoletos.
+ *
+ * Los identificadores de la librería van en inglés (ver `CLAUDE.md` del taller).
+ * Los de estos cuatro módulos se renombraron en la 2.0.0 porque la tanda de
+ * vue-libvasak#74 los tocaba. Los **nombres** viejos de lo que se exporta
+ * siguen saliendo como alias obsoletos y se van en la 3.0.
+ *
+ * Ojo: el alias es sólo del nombre. Los campos de `MenuContext`,
+ * `TooltipContext` y `DialogContext` también pasaron al inglés (`open`,
+ * `close`, `trigger`…) y los valores de `FocusOnOpen` son `first`/`last`/
+ * `none`: quien use esos campos o esos valores tiene que migrar. Nadie fuera de
+ * la librería los usaba al cerrar la 2.0.0; ver el CHANGELOG.
+ */
+import type { FocusOnOpen as FocusOnOpenType, MenuContext as MenuContextType } from "./dropdown/types";
+import { MENU_KEY as MENU_KEY_VALUE, useMenu as useMenuValue } from "./dropdown/types";
+import type { TabAction as TabActionType, TabEntry as TabEntryType } from "./tabs/types";
+import type { TooltipContext as TooltipContextType } from "./tooltip/types";
+import { TOOLTIP_KEY as TOOLTIP_KEY_VALUE, useTooltip as useTooltipValue } from "./tooltip/types";
+
+/** @deprecated Usá `MenuContext`. Se va en la 3.0. */
+export type ContextoDelMenu = MenuContextType;
+/** @deprecated Usá `FocusOnOpen`. Se va en la 3.0. */
+export type FocoAlAbrir = FocusOnOpenType;
+/** @deprecated Usá `MENU_KEY`. Se va en la 3.0. */
+export const CLAVE_DEL_MENU = MENU_KEY_VALUE;
+/** @deprecated Usá `useMenu`. Se va en la 3.0. */
+export const usarElMenu = useMenuValue;
+/** @deprecated Usá `TooltipContext`. Se va en la 3.0. */
+export type ContextoDelTooltip = TooltipContextType;
+/** @deprecated Usá `TOOLTIP_KEY`. Se va en la 3.0. */
+export const CLAVE_DEL_TOOLTIP = TOOLTIP_KEY_VALUE;
+/** @deprecated Usá `useTooltip`. Se va en la 3.0. */
+export const usarElTooltip = useTooltipValue;
+/** @deprecated Usá `TabEntry`. Se va en la 3.0. */
+export type ElementoDePestana = TabEntryType;
+/** @deprecated Usá `TabAction`. Se va en la 3.0. */
+export type AccionDePestana = TabActionType;
+
+import type { NoticeTone as NoticeToneType } from "./feedback/tones";
+import { TONE_CLASSES as TONE_CLASSES_VALUE, toneRole as toneRoleValue } from "./feedback/tones";
+
+import type { DialogContext as DialogContextType } from "./dialog/types";
+import { DIALOG_KEY as DIALOG_KEY_VALUE, useDialog as useDialogValue } from "./dialog/types";
+
+/** @deprecated Usá `DialogContext`. Se va en la 3.0. */
+export type ContextoDelDialogo = DialogContextType;
+/** @deprecated Usá `DIALOG_KEY`. Se va en la 3.0. */
+export const CLAVE_DEL_DIALOGO = DIALOG_KEY_VALUE;
+/** @deprecated Usá `useDialog`. Se va en la 3.0. */
+export const usarElDialogo = useDialogValue;
+
+/** @deprecated Usá `NoticeTone`. Se va en la 3.0. */
+export type TonoDelAviso = NoticeToneType;
+/** @deprecated Usá `TONE_CLASSES`. Se va en la 3.0. */
+export const CLASES_POR_TONO = TONE_CLASSES_VALUE;
+/** @deprecated Usá `toneRole`. Se va en la 3.0. */
+export const rolDelTono = toneRoleValue;
 export type {
   ContextoDeLaBarra,
   ControlDeVentana,

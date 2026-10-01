@@ -35,6 +35,10 @@
  * `bg-ui-bg/80` acá y sólo acá: `--ui-background` es el token de **la ventana**.
  * Lo que se apoya encima —paneles, barras laterales, tarjetas— va en
  * `bg-ui-surface/70`.
+ *
+ * La forma (vue-libvasak#74): conserva `rounded-corner-window` y el fondo de
+ * la ventana —es el único lugar donde `bg-ui-bg` corresponde—, y el canto pasa
+ * a `ui-line`, que en oscuro aclara en vez de verse como un hueco.
  */
 import { computed, provide } from 'vue';
 import { usarLaPosicionDeLaBarra } from './preferencia';
@@ -84,15 +88,17 @@ defineEmits<{
 	close: [];
 }>();
 
-const preferida = usarLaPosicionDeLaBarra();
-const posicion = computed<PosicionDeLaBarra>(() => props.position ?? preferida.value);
-const orientacion = computed(() => orientacionDe(posicion.value));
-const vertical = computed(() => orientacion.value === 'vertical');
+const preferred = usarLaPosicionDeLaBarra();
+const barPosition = computed<PosicionDeLaBarra>(() => props.position ?? preferred.value);
+const orientation = computed(() => orientacionDe(barPosition.value));
+const vertical = computed(() => orientation.value === 'vertical');
 
-provide(CLAVE_DE_LA_BARRA, { posicion, orientacion, vertical });
+// Los campos del contexto siguen en castellano: son el contrato público de
+// `ContextoDeLaBarra`, que esta tanda no toca.
+provide(CLAVE_DE_LA_BARRA, { posicion: barPosition, orientacion: orientation, vertical });
 
 /** De qué lado empieza a contarse el `flex`. */
-const DIRECCION: Record<PosicionDeLaBarra, string> = {
+const DIRECTION: Record<PosicionDeLaBarra, string> = {
 	top: 'flex-col',
 	bottom: 'flex-col-reverse',
 	left: 'flex-row',
@@ -102,11 +108,11 @@ const DIRECCION: Record<PosicionDeLaBarra, string> = {
 
 <template>
   <div
-    class="flex h-screen w-screen overflow-hidden rounded-corner-window border border-ui-border bg-ui-bg/80"
-    :class="DIRECCION[posicion]">
+    class="flex h-screen w-screen overflow-hidden rounded-corner-window border border-ui-line bg-ui-bg/80 text-tx-main"
+    :class="DIRECTION[barPosition]">
     <AppBar
       v-if="!hideBar"
-      :position="posicion"
+      :position="barPosition"
       :title="title"
       :minimize-label="minimizeLabel"
       :maximize-label="maximizeLabel"

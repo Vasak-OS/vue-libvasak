@@ -109,8 +109,8 @@ describe('la pista, que es lo que se ve', () => {
 
 		expect(chico.attributes('class')).toContain('h-6');
 		expect(grande.attributes('class')).toContain('h-7');
-		expect(chico.find('span span').attributes('class')).toContain('h-4');
-		expect(grande.find('span span').attributes('class')).toContain('h-5');
+		expect(chico.find('span span').attributes('class')).toContain('size-4');
+		expect(grande.find('span span').attributes('class')).toContain('size-5');
 	});
 
 	test('y sigue al tamaño si cambia después de montado', () => {

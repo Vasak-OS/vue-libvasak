@@ -14,6 +14,16 @@
  * ningún lado—, y queda `ariaLabel` para el campo que se usa suelto: una caja de
  * búsqueda con lupa y sin etiqueta visible no tiene otra forma de tener nombre, y
  * sin nombre un lector de pantalla sólo dice «campo de texto».
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * 32 de alto fijo (`h-8`, que reemplaza al `py-1.5` y deja el mismo tamaño de
+ * antes), `rounded-corner-m` y **el borde de 3:1** (`ui-border-strong`,
+ * decisión 5): un campo es un control y su contorno tiene que percibirse; los
+ * bordes finos de Once UI son para los contenedores. El foco es el anillo de
+ * 2 px separado 2 px con `ui-focus`: el `focus:ring-1` de antes era un píxel
+ * que con el esquema de fábrica no llegaba a 3:1. Inválido, el borde de error.
+ * Ocupa el ancho que le den y se achica hasta cero sin empujar nada.
  */
 import { computed, ref } from 'vue';
 
@@ -65,7 +75,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-	'update:modelValue': [valor: string];
+	'update:modelValue': [value: string];
 	/**
 	 * Las teclas, declaradas y reenviadas a mano.
 	 *
@@ -79,18 +89,18 @@ const emit = defineEmits<{
 	 * campo enmudece, el chequeo de tipos sigue en cero y nada avisa. De ahí
 	 * que cada uno tenga su prueba.
 	 */
-	keyup: [evento: KeyboardEvent];
-	keydown: [evento: KeyboardEvent];
+	keyup: [event: KeyboardEvent];
+	keydown: [event: KeyboardEvent];
 }>();
 
-function alEscribir(evento: Event) {
+function onInput(event: Event) {
 	if (props.lazy) return;
-	emit('update:modelValue', (evento.target as HTMLInputElement).value);
+	emit('update:modelValue', (event.target as HTMLInputElement).value);
 }
 
-function alSalir(evento: Event) {
+function onChange(event: Event) {
 	if (!props.lazy) return;
-	emit('update:modelValue', (evento.target as HTMLInputElement).value);
+	emit('update:modelValue', (event.target as HTMLInputElement).value);
 }
 
 /**
@@ -102,7 +112,7 @@ function alSalir(evento: Event) {
  * `$el`, que es `any` y deja de compilar el día que este componente crezca una
  * raíz distinta. `SearchField` ya hacía justamente eso por dentro.
  */
-const campo = ref<HTMLInputElement | null>(null);
+const field = ref<HTMLInputElement | null>(null);
 
 /**
  * Enfoca el campo y **dice si lo consiguió**.
@@ -112,26 +122,35 @@ const campo = ref<HTMLInputElement | null>(null);
  * que la tecla que lleva al buscador parece rota. Devolviendo si llegó, quien
  * llama puede mostrar el panel y reintentar sin preguntar cuánto mide la
  * ventana. Es de la lista del correo, que ya lo había resuelto así.
+ *
+ * `enfocar` es el nombre de la 1.x y queda como alias obsoleto: lo llaman el
+ * escritorio, el correo y el agente de polkit.
  */
-function enfocar(): boolean {
-	campo.value?.focus();
-	return campo.value !== null && document.activeElement === campo.value;
+function focus(): boolean {
+	field.value?.focus();
+	return field.value !== null && document.activeElement === field.value;
 }
 
-defineExpose({ enfocar });
+defineExpose({
+	focus,
+	/** @deprecated Usá `focus()`. Se va en la 3.0. */
+	enfocar: focus,
+});
 
-const clases = computed(() => [
-	'w-full rounded-corner border bg-ui-surface/70 px-3 py-1.5 text-sm text-tx-main',
-	'placeholder:text-tx-muted focus:outline-none focus:ring-1 focus:ring-primary',
-	props.invalid ? 'border-status-error' : 'border-ui-border',
+const classes = computed(() => [
+	'h-8 w-full min-w-0 rounded-corner-m border bg-ui-surface/70 px-3 text-label-m text-tx-main',
+	'placeholder:text-tx-muted transition-colors duration-200 ease-ui',
+	'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus',
+	props.invalid ? 'border-status-error' : 'border-ui-border-strong',
+	props.invalid || props.disabled ? '' : 'hover:border-tx-main',
 	props.mono ? 'font-mono' : '',
-	props.disabled ? 'cursor-not-allowed opacity-60' : '',
+	props.disabled ? 'cursor-not-allowed opacity-50' : '',
 ]);
 </script>
 
 <template>
   <input
-    ref="campo"
+    ref="field"
     :id="id"
     :aria-label="ariaLabel"
     :type="type"
@@ -143,9 +162,9 @@ const clases = computed(() => [
     :aria-describedby="describedBy"
     :autocomplete="autocomplete"
     :aria-invalid="invalid || undefined"
-    :class="clases"
-    @input="alEscribir"
-    @change="alSalir"
+    :class="classes"
+    @input="onInput"
+    @change="onChange"
     @keyup="emit('keyup', $event)"
     @keydown="emit('keydown', $event)" />
 </template>

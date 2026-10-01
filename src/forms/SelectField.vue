@@ -20,6 +20,11 @@
  *
  * Envolverlo en un `<label>` también vale, que es asociación implícita; en ese
  * caso no se pasa `label` y no se dibuja ninguna.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * La de `TextInput`: 32 de alto, `rounded-corner-m`, el borde de 3:1 y el
+ * anillo de foco de 2 px. La etiqueta, `text-label-s` en `tx-muted`.
  */
 import { computed, useAttrs, useId } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -29,11 +34,11 @@ import ThemeIcon from '../icons/ThemeIcon.vue';
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{ label?: string }>();
-const atributos = useAttrs();
+const attrs = useAttrs();
 
 // El `id` propio sólo si hace falta uno y quien lo usa no trajo el suyo.
-const generado = useId();
-const id = computed(() => (atributos.id as string | undefined) ?? generado);
+const generatedId = useId();
+const id = computed(() => (attrs.id as string | undefined) ?? generatedId);
 
 const emit = defineEmits<{
 	/**
@@ -44,7 +49,7 @@ const emit = defineEmits<{
 	 * escribía no tenía forma de saber si llegaba a algún lado. Llega: hasta
 	 * ahora por `v-bind="atributos"`, ahora por acá.
 	 */
-	change: [evento: Event];
+	change: [event: Event];
 }>();
 
 /**
@@ -55,36 +60,36 @@ const emit = defineEmits<{
  * `number` que nunca va a llegar. Con `strictTemplates` eso dejó de pasar en
  * silencio: `Type 'string | number' is not assignable to type '"top" | …'`.
  */
-const [modelo, modificadores] = defineModel<T>({
+const [model, modifiers] = defineModel<T>({
 	required: true,
-	set(valor) {
+	set(value) {
 		// `v-model.number` sobre un componente no convierte solo como lo hace
 		// sobre un `input`: el modificador llega acá y hay que aplicarlo. Sin
 		// esto, un valor numérico sale como cadena y quien lo valida lo rechaza.
 		//
 		// La conversión se afirma: quien escribe `.number` está diciendo que su
 		// modelo es numérico, y el tipo de la conversión no lo sabe.
-		return modificadores.number ? (Number(valor) as T) : valor;
+		return modifiers.number ? (Number(value) as T) : value;
 	},
 });
 </script>
 
 <template>
   <div class="flex min-w-0 flex-col gap-1">
-    <label v-if="props.label" :for="id" class="text-tx-muted text-xs">{{ props.label }}</label>
+    <label v-if="props.label" :for="id" class="text-label-s text-tx-muted">{{ props.label }}</label>
     <div class="relative flex min-w-0 items-center">
       <select
         :id="id"
-        v-model="modelo"
-        class="min-w-0 flex-1 appearance-none truncate rounded-corner border border-ui-border bg-ui-surface/60 py-1.5 pr-8 pl-2 text-sm text-tx-main"
-        v-bind="atributos"
+        v-model="model"
+        class="h-8 min-w-0 flex-1 appearance-none truncate rounded-corner-m border border-ui-border-strong bg-ui-surface/70 pr-8 pl-3 text-label-m text-tx-main transition-colors duration-200 ease-ui hover:border-tx-main focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
+        v-bind="attrs"
         @change="emit('change', $event)">
         <slot />
       </select>
       <ThemeIcon
         name="pan-down-symbolic"
         type="symbol"
-        :size="14"
+        :size="16"
         class="pointer-events-none absolute right-2" />
     </div>
   </div>

@@ -10,9 +10,18 @@
  * Mide después de pintar: la posición depende del ancho del propio globo, y
  * antes de que exista en el DOM ese ancho es cero. De ahí el `nextTick` y el
  * cuadro de espera.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * El globo de Once UI: superficie flotante opaca, canto `ui-line`,
+ * `rounded-corner-s`, `text-body-xs` y `shadow-surface-s`. Hoy llevaba el borde
+ * del color secundario y `text-sm`, que en un globo de tres palabras grita. Entra
+ * en 150 ms sólo con opacidad y dos píxeles de desplazamiento **desde el
+ * disparador**, y sale igual: una escala en algo tan chico se lee como un
+ * parpadeo. Nunca más ancho que la ventana: un texto largo se parte.
  */
 import { computed, nextTick, ref, useAttrs, watch } from 'vue';
-import { usarElTooltip } from './tipos';
+import { useTooltip } from './types';
 
 /**
  * La clase que pasa quien lo usa, a mano.
@@ -24,8 +33,8 @@ import { usarElTooltip } from './tipos';
  * una línea, que es lo que una de las dos copias había perdido.
  */
 defineOptions({ inheritAttrs: false });
-const atributos = useAttrs();
-const claseDeQuienLoUsa = computed(() => (atributos.class as string | undefined) ?? '');
+const attrs = useAttrs();
+const callerClass = computed(() => (attrs.class as string | undefined) ?? '');
 
 const props = withDefaults(
 	defineProps<{
@@ -36,62 +45,82 @@ const props = withDefaults(
 	{ side: 'bottom', align: 'center', sideOffset: 4 }
 );
 
-const tooltip = usarElTooltip();
-const abierto = computed(() => tooltip.abierto.value);
-const globo = ref<HTMLElement | null>(null);
-const posicion = ref({ top: 0, left: 0 });
+const tooltip = useTooltip();
+const open = computed(() => tooltip.open.value);
+const bubble = ref<HTMLElement | null>(null);
+const position = ref({ top: 0, left: 0 });
 
-function ubicar() {
-	const disparador = tooltip.disparador.value;
-	if (!disparador || !globo.value) return;
+/** De dónde llega: dos píxeles del lado del disparador. */
+const OFFSET_FROM: Record<'top' | 'bottom' | 'left' | 'right', string> = {
+	bottom: '-translate-y-0.5',
+	top: 'translate-y-0.5',
+	right: '-translate-x-0.5',
+	left: 'translate-x-0.5',
+};
+const hiddenClass = computed(() => `opacity-0 ${OFFSET_FROM[props.side]}`);
 
-	const desde = disparador.getBoundingClientRect();
-	const suyo = globo.value.getBoundingClientRect();
+function place() {
+	const trigger = tooltip.trigger.value;
+	if (!trigger || !bubble.value) return;
+
+	const from = trigger.getBoundingClientRect();
+	const own = bubble.value.getBoundingClientRect();
 
 	let top = 0;
 	let left = 0;
 	switch (props.side) {
 		case 'bottom':
-			top = desde.bottom + props.sideOffset;
-			left = desde.left + desde.width / 2 - suyo.width / 2;
+			top = from.bottom + props.sideOffset;
+			left = from.left + from.width / 2 - own.width / 2;
 			break;
 		case 'top':
-			top = desde.top - suyo.height - props.sideOffset;
-			left = desde.left + desde.width / 2 - suyo.width / 2;
+			top = from.top - own.height - props.sideOffset;
+			left = from.left + from.width / 2 - own.width / 2;
 			break;
 		case 'left':
-			left = desde.left - suyo.width - props.sideOffset;
-			top = desde.top + desde.height / 2 - suyo.height / 2;
+			left = from.left - own.width - props.sideOffset;
+			top = from.top + from.height / 2 - own.height / 2;
 			break;
 		case 'right':
-			left = desde.right + props.sideOffset;
-			top = desde.top + desde.height / 2 - suyo.height / 2;
+			left = from.right + props.sideOffset;
+			top = from.top + from.height / 2 - own.height / 2;
 			break;
 	}
-	posicion.value = { top, left };
+	// Que no se salga de la ventana: un botón pegado al borde centraba medio
+	// globo afuera, donde no se puede leer.
+	const margin = 8;
+	left = Math.min(Math.max(left, margin), Math.max(margin, window.innerWidth - own.width - margin));
+	top = Math.min(Math.max(top, margin), Math.max(margin, window.innerHeight - own.height - margin));
+	position.value = { top, left };
 }
 
-watch(abierto, async (seAbrio) => {
-	if (!seAbrio) return;
+watch(open, async (isOpen) => {
+	if (!isOpen) return;
 	await nextTick();
-	requestAnimationFrame(ubicar);
+	requestAnimationFrame(place);
 });
 </script>
 
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition-all duration-200 ease-in-out"
-      leave-active-class="transition-all duration-200 ease-in-out"
-      enter-from-class="opacity-0 scale-95"
-      leave-to-class="opacity-0 scale-95">
+      enter-active-class="transition-[opacity,translate] duration-150 ease-ui-out"
+      leave-active-class="transition-[opacity,translate] duration-150 ease-ui"
+      :enter-from-class="hiddenClass"
+      :leave-to-class="hiddenClass">
       <div
-        v-show="abierto"
-        ref="globo"
-        :style="{ position: 'fixed', top: `${posicion.top}px`, left: `${posicion.left}px`, zIndex: 50 }"
+        v-show="open"
+        ref="bubble"
+        :style="{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          maxWidth: 'calc(100vw - 16px)',
+          zIndex: 50,
+        }"
         :class="[
-          claseDeQuienLoUsa,
-          'pointer-events-none rounded-corner border border-secondary bg-ui-bg/80 px-2 py-1 text-sm shadow-md',
+          callerClass,
+          'pointer-events-none rounded-corner-s border border-ui-line bg-ui-float px-2 py-1 text-body-xs text-tx-main shadow-surface-s',
         ]">
         <slot />
       </div>

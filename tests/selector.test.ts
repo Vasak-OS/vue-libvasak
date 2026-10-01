@@ -144,7 +144,7 @@ describe('el tipo del modelo', () => {
 		// llegaba a algún lado.
 		const fuente = await Bun.file(new URL('../src/forms/SelectField.vue', import.meta.url)).text();
 
-		expect(fuente).toContain('change: [evento: Event]');
+		expect(fuente).toContain('change: [event: Event]');
 		expect(fuente).toContain("@change=\"emit('change', $event)\"");
 	});
 });

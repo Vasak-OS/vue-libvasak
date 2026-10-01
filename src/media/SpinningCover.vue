@@ -27,6 +27,11 @@
  *
  * El tamaño lo decide quien lo pone, con las clases de siempre (`class="w-24"`);
  * el disco es cuadrado y ocupa el ancho que le den.
+ *
+ * La forma (vue-libvasak#74): el canto en `ui-line`, y el agujero en la
+ * superficie y no en el fondo de la ventana —el disco puede estar sobre una
+ * tarjeta—. El círculo es `rounded-corner-full`: con el radio del usuario en
+ * cero, el disco también es cuadrado, como el resto del escritorio.
  */
 import { computed, ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -89,7 +94,7 @@ function onError(): void {
 
 <template>
   <div
-    class="relative aspect-square shrink-0 overflow-hidden rounded-full border border-ui-border bg-ui-surface"
+    class="relative aspect-square shrink-0 overflow-hidden rounded-corner-full border border-ui-line bg-ui-surface"
     :class="{ 'animate-spin motion-reduce:animate-none': spins }"
     :style="spinStyle"
     :data-state="state"
@@ -107,7 +112,7 @@ function onError(): void {
 
     <!-- El agujero del disco, con el mismo borde que el canto. -->
     <div
-      class="pointer-events-none absolute left-1/2 top-1/2 h-[14%] w-[14%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-ui-border bg-ui-bg"
+      class="pointer-events-none absolute left-1/2 top-1/2 h-[14%] w-[14%] -translate-x-1/2 -translate-y-1/2 rounded-corner-full border border-ui-line bg-ui-surface"
       aria-hidden="true"></div>
   </div>
 </template>

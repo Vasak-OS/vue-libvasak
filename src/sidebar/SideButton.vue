@@ -2,21 +2,19 @@
 /**
  * Un elemento de la barra lateral.
  *
- * ── Qué se anima y qué no ───────────────────────────────────────────────────
+ * ── La forma (vue-libvasak#74) ─────────────────────────────────────────────
  *
- * `transition-all` obliga al navegador a mirar **cada** propiedad animable del
- * elemento en cada cambio, incluidas las que nadie toca: alcanza con que
- * alguien agregue un `height` a la clase para que empiece a interpolarse, y con
- * eso se paga layout de la lista entera sin haberlo pedido. Acá cambian tres
- * colores y la escala, así que la lista los nombra.
+ * La opción de una lista de Once UI: `rounded-corner-m`, **sin borde en ningún
+ * estado** —antes aparecía uno al pasar por encima y el activo llevaba el canto
+ * secundario, el relleno del primario y una sombra—. Pasar por encima es el
+ * velo neutro `ui-hover`; apretar, `ui-pressed`; el activo, el velo de acento
+ * `ui-selected-accent` con peso 600 (decisión 4: lo elegido se marca con el
+ * color de acento). Nada escala al apretar: Once UI no mueve los controles. El
+ * alto es el de antes, para que la barra de Configuración no cambie de
+ * distribución.
  *
- * `scale` y no `transform`: en Tailwind 4 las utilidades `scale-*` escriben la
- * propiedad nativa `scale`, así que nombrar `transform` deja el movimiento sin
- * animar —sin error, simplemente no transiciona—.
- *
- * Y se hunde un poco al apretarlo. `scale` es composición: cambiar el tamaño de
- * verdad sería layout de toda la lista. Las dos cosas las traía la copia de
- * resonance, que es de donde sale este componente.
+ * Se anima el color y nada más: `transition-colors`, que no puede tocar el
+ * maquetado.
  *
  * El icono sale del tema del escritorio y se vuelve a resolver cuando la
  * persona cambia de tema: por eso no se recibe una ruta sino un nombre. Plegado
@@ -48,18 +46,19 @@ defineEmits<{ click: [] }>();
     :aria-label="collapsed ? label : undefined"
     :disabled="disabled"
     :aria-current="active ? 'page' : undefined"
-    class="group relative flex w-full items-center gap-3 rounded-corner border px-3 py-2 text-left text-sm transition-[color,background-color,border-color,scale] duration-200 active:scale-[0.98]"
+    class="group relative flex w-full min-w-0 items-center gap-3 rounded-corner-m px-3 py-2 text-left text-label-m text-tx-main transition-colors duration-200 ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
     :class="[
-      active
-        ? 'border-secondary bg-primary/15 text-tx-main shadow-sm'
-        : 'border-transparent bg-transparent hover:border-ui-border hover:bg-ui-surface/70',
-      disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+      active ? 'bg-ui-selected-accent font-semibold' : 'bg-transparent',
+      disabled
+        ? 'cursor-not-allowed opacity-50'
+        : active
+          ? 'cursor-pointer'
+          : 'cursor-pointer hover:bg-ui-hover active:bg-ui-pressed active:duration-100',
       collapsed ? 'justify-center px-2' : '',
     ]"
     @click="$emit('click')">
     <span
-      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-corner font-semibold text-xs uppercase tracking-wide"
-      :class="active ? 'border-secondary bg-primary/20' : ''"
+      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-corner-s font-semibold text-label-xs uppercase"
       aria-hidden="true">
       <ThemeIcon v-if="icon" :name="icon" :size="20" />
       <!-- Sin icono, la inicial: un hueco vacío del mismo tamaño deja la fila
@@ -67,11 +66,11 @@ defineEmits<{ click: [] }>();
       <span v-else>{{ label.charAt(0).toUpperCase() }}</span>
     </span>
 
-    <span v-if="!collapsed" class="min-w-0 flex-1 truncate font-medium">{{ label }}</span>
+    <span v-if="!collapsed" class="min-w-0 flex-1 truncate">{{ label }}</span>
 
     <span
       v-if="!collapsed && badge !== ''"
-      class="rounded-corner bg-ui-surface px-2 py-0.5 font-semibold text-tx-muted text-xs">
+      class="flex h-5 shrink-0 items-center rounded-corner-full bg-ui-selected px-2 font-semibold text-label-xs text-tx-main">
       {{ badge }}
     </span>
   </button>

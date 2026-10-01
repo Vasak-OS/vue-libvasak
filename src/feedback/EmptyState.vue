@@ -36,10 +36,10 @@ withDefaults(
 <template>
   <div
     class="flex flex-col items-center justify-center gap-3 px-8 py-12 text-center"
-    :class="bordered ? 'rounded-corner border border-ui-border border-dashed bg-ui-surface/20' : ''">
+    :class="bordered ? 'rounded-corner-l border border-dashed border-ui-line' : ''">
     <ThemeIcon :name="icon" :type="iconType" :size="48" class="opacity-60" />
-    <p class="font-medium text-sm text-tx-main">{{ title }}</p>
-    <p v-if="note" class="text-sm text-tx-muted">{{ note }}</p>
+    <p class="font-semibold text-label-m text-tx-main">{{ title }}</p>
+    <p v-if="note" class="max-w-prose text-body-s text-tx-muted">{{ note }}</p>
     <!-- Para el botón que saca del vacío: «Crear carpeta», «Limpiar filtros». -->
     <slot />
   </div>

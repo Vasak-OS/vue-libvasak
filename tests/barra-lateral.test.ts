@@ -8,7 +8,7 @@
  * punto, y el comportamiento porque es lo que se pierde callado.
  */
 
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import SideBar from '../src/sidebar/SideBar.vue';
@@ -80,7 +80,7 @@ describe('la forma, que es el punto de compartirla', () => {
 		const barra = mount(SideBar, { props: { title: 'Monitor' } });
 
 		const clases = barra.get('aside').classes().join(' ');
-		for (const clase of ['rounded-corner', 'border-ui-border', 'w-[84px]']) {
+		for (const clase of ['rounded-corner-l', 'border-ui-line', 'w-72']) {
 			expect(clases).toContain(clase);
 		}
 	});
@@ -102,49 +102,65 @@ describe('la forma, que es el punto de compartirla', () => {
 
 	test('y un elemento en reposo no pinta fondo propio', async () => {
 		// Sobre un panel de superficie, un botón con su propio fondo oscuro se
-		// lee como apagado. El color aparece al pasar por encima y al estar
+		// lee como apagado. El velo aparece al pasar por encima y al estar
 		// activo, que es cuando significa algo.
 		const boton = mount(SideButton, { props: { label: 'Recursos' } });
 
 		const clases = boton.get('button').classes().join(' ');
 		expect(clases).toContain('bg-transparent');
-		expect(clases).toContain('hover:bg-ui-surface');
+		expect(clases).toContain('hover:bg-ui-hover');
 	});
 
-	test('anima los tres colores y la escala, y no «todas»', async () => {
-		// `transition-all` obliga al navegador a mirar cada propiedad animable
-		// del elemento en cada cambio, incluidas las que nadie toca: alcanza con
-		// que alguien agregue un `height` a la clase para que empiece a
-		// interpolarse, y con eso se paga layout de la lista entera. Acá cambian
-		// tres colores y la escala, así que la lista los nombra.
-		//
-		// `scale` y no `transform`: en Tailwind 4 las utilidades `scale-*`
-		// escriben la propiedad nativa `scale`, así que nombrar `transform`
-		// dejaría el movimiento sin animar, sin error y sin aviso.
+	test('pasar por encima es un velo neutro, no el acento', () => {
+		// vue-libvasak#74: el hover pinta `ui-hover`, un gris translúcido sobre
+		// el texto de siempre. El acento queda para lo elegido.
+		const clases = mount(SideButton, { props: { label: 'Recursos' } }).get('button').classes();
+
+		expect(clases.filter((c) => c.startsWith('hover:'))).not.toContain('hover:bg-primary');
+		expect(clases.join(' ')).not.toMatch(/hover:(bg|border)-(primary|secondary)/);
+	});
+
+	test('lo elegido se marca con el velo de acento y peso 600, sin borde ni sombra', () => {
+		// Decisión 4 del 30/09/2026: lo elegido en una barra lateral lleva el
+		// color de acento. Y en ningún estado aparece un borde: antes el activo
+		// llevaba el canto secundario, el relleno del primario y una sombra.
+		const clases = mount(SideButton, { props: { label: 'Recursos', active: true } })
+			.get('button')
+			.classes();
+
+		expect(clases).toContain('bg-ui-selected-accent');
+		expect(clases).toContain('font-semibold');
+		expect(clases.join(' ')).not.toMatch(/(^|\s)(border|shadow)(-|\s|$)/);
+	});
+
+	test('anima los colores y nada más', async () => {
+		// Lo único que cambia entre estados es el fondo y el peso: con
+		// `transition-colors` no hay forma de que una clase nueva empiece a
+		// interpolar el maquetado.
 		const boton = mount(SideButton, { props: { label: 'Recursos' } });
 
 		const clases = boton.get('button').classes();
-		expect(clases).toContain('transition-[color,background-color,border-color,scale]');
+		expect(clases).toContain('transition-colors');
 		expect(clases).not.toContain('transition-all');
 	});
 
-	test('y se hunde un poco al apretarlo', async () => {
-		// `scale` es composición; cambiar el tamaño de verdad sería layout de
-		// toda la lista. Lo traía la copia de resonance, que es de donde sale
-		// este componente.
+	test('y no se mueve al apretarlo', async () => {
+		// Once UI no escala los controles: apretar es el velo `ui-pressed`.
 		const boton = mount(SideButton, { props: { label: 'Recursos' } });
+		const clases = boton.get('button').classes();
 
-		expect(boton.get('button').classes()).toContain('active:scale-[0.98]');
+		expect(clases.join(' ')).not.toMatch(/scale-/);
+		expect(clases).toContain('active:bg-ui-pressed');
 	});
 
 	test('desplegada mide 72 y plegada 84 píxeles', async () => {
 		const barra = mount(SideBar, { props: { title: 'Monitor' } });
-		expect(barra.get('aside').classes()).toContain('md:w-72');
+		expect(barra.get('aside').classes()).toContain('w-72');
 
 		await barra.get('aside button').trigger('click');
 
-		expect(barra.get('aside').classes()).toContain('md:w-[84px]');
-		expect(barra.get('aside').classes()).not.toContain('md:w-72');
+		expect(barra.get('aside').classes()).toContain('w-[84px]');
+		expect(barra.get('aside').classes()).not.toContain('w-72');
 	});
 });
 
@@ -168,7 +184,7 @@ describe('el área de título', () => {
 
 		await plegar.trigger('click');
 
-		expect(barra.get('aside').classes()).toContain('md:w-[84px]');
+		expect(barra.get('aside').classes()).toContain('w-[84px]');
 	});
 });
 
@@ -288,11 +304,11 @@ describe('el contenido libre', () => {
 describe('quién manda sobre el plegado', () => {
 	test('se puede plegar desde afuera', async () => {
 		const barra = mount(SideBar, { props: { title: 'Monitor', collapsed: false } });
-		expect(barra.get('aside').classes()).toContain('md:w-72');
+		expect(barra.get('aside').classes()).toContain('w-72');
 
 		await barra.setProps({ collapsed: true });
 
-		expect(barra.get('aside').classes()).toContain('md:w-[84px]');
+		expect(barra.get('aside').classes()).toContain('w-[84px]');
 	});
 
 	test('y la barra avisa cuando la pliega la persona', async () => {
@@ -493,202 +509,163 @@ describe('los grupos', () => {
 	});
 });
 
-describe('el ancho de la ventana', () => {
-	const matchMediaDeVerdad = window.matchMedia;
-
+describe('el ancho del lugar donde está', () => {
 	/**
-	 * Una consulta congelada, como la de WebKitGTK.
+	 * Un `ResizeObserver` de mentira que se dispara a mano.
 	 *
-	 * Ahí está el fallo que se vio: la ventana abre, el WebView todavía no
-	 * tiene tamaño, la consulta se evalúa angosta y **nunca** avisa que dejó de
-	 * serlo. En happy-dom `matchMedia` sí sigue a `innerWidth` y sí dispara su
-	 * `change`, así que sin congelarla a mano la prueba pasa con el fallo
-	 * puesto —pasó— y no comprueba nada.
+	 * En WebKitGTK ni el `change` de `matchMedia` ni el `resize` de la ventana
+	 * llegan cuando la ventana cambia de tamaño; el observador sí. La barra ya no
+	 * escucha a los otros dos, así que lo único que puede avisarle es esto.
 	 */
-	function congelarLaConsulta(matches: boolean) {
-		(window as unknown as { matchMedia: unknown }).matchMedia = () => ({
-			matches,
-			media: '',
-			onchange: null,
-			addEventListener() {},
-			removeEventListener() {},
-			addListener() {},
-			removeListener() {},
-			dispatchEvent: () => false,
-		});
-	}
-
-	/**
-	 * Fija el ancho de la caja de la página.
-	 *
-	 * Es de donde la barra lee el ancho: `clientWidth` del elemento raíz es la
-	 * caja contra la que se resuelven las consultas de medios. En happy-dom es
-	 * una propiedad de sólo lectura, así que se redefine.
-	 */
-	function anchoDeLaRaiz(pixeles: number) {
-		Object.defineProperty(document.documentElement, 'clientWidth', {
-			value: pixeles,
-			configurable: true,
-		});
-		(window as unknown as { innerWidth: number }).innerWidth = pixeles;
-	}
-
-	/** Pone el ancho y avisa, como haría un navegador de verdad. */
-	async function ponerElAncho(pixeles: number) {
-		anchoDeLaRaiz(pixeles);
-		window.dispatchEvent(new Event('resize'));
-		await nextTick();
-	}
+	const observados: Array<{ callback: () => void; elementos: unknown[] }> = [];
+	let desconectados = 0;
+	const original = globalThis.ResizeObserver;
 
 	beforeEach(() => {
-		(window as unknown as { matchMedia: unknown }).matchMedia = matchMediaDeVerdad;
-		anchoDeLaRaiz(1280);
-	});
-
-	test('una ventana angosta la pliega sola', async () => {
-		// Por debajo de 768 no entra el texto de los botones: desplegada ahí
-		// sería una columna de etiquetas cortadas encima del contenido.
-		const vista = mount(SideBar, { props: { title: 'Ventana' } });
-		await ponerElAncho(600);
-
-		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
-	});
-
-	test('abre desplegada aunque la consulta diga que es angosta', async () => {
-		// El caso de verdad: se monta con la consulta congelada en «angosta»
-		// —el WebView sin tamaño todavía— pero la ventana ya mide 1280. Si la
-		// barra le cree a la consulta, abre plegada y se queda así para
-		// siempre, sin que nadie la haya plegado. Pasó.
-		congelarLaConsulta(true);
-		anchoDeLaRaiz(1280);
-
-		const vista = mount(SideBar, { props: { title: 'Ventana' } });
-		await nextTick();
-
-		expect(vista.find('aside').classes()).toContain('md:w-72');
-	});
-
-	test('y si la ventana crece después, se despliega igual', async () => {
-		// Misma consulta congelada, pero el WebView arranca angosto de verdad y
-		// crece al terminar de abrirse. El `change` no llega nunca; el `resize`
-		// sí, y es el que vuelve a mirar el ancho.
-		congelarLaConsulta(true);
-		anchoDeLaRaiz(600);
-
-		const vista = mount(SideBar, { props: { title: 'Ventana' } });
-		await nextTick();
-		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
-
-		await ponerElAncho(1280);
-
-		expect(vista.find('aside').classes()).toContain('md:w-72');
-	});
-
-	test('plegada a mano sigue plegada aunque la ventana sea ancha', async () => {
-		// Ensancharla no es desplegarla: lo que se plegó a propósito se queda
-		// como lo dejaron.
-		const vista = mount(SideBar, { props: { title: 'Ventana', collapsed: true } });
-		await ponerElAncho(1280);
-
-		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
-	});
-
-	test('mide la caja de la página y no la ventana', async () => {
-		// `clientWidth` del elemento raíz es la caja contra la que se resuelven
-		// las consultas de medios, y es la que cambia cuando el WebView recibe
-		// su tamaño. `innerWidth` puede decir otra cosa —la ventana del
-		// compositor, con sus decoraciones— y es la que dejaba la barra
-		// plegada en una ventana ancha.
-		Object.defineProperty(document.documentElement, 'clientWidth', {
-			value: 600,
-			configurable: true,
-		});
-		(window as unknown as { innerWidth: number }).innerWidth = 1280;
-
-		const vista = mount(SideBar, { props: { title: 'Ventana' } });
-		await nextTick();
-
-		expect(vista.find('aside').classes()).toContain('md:w-[84px]');
-	});
-
-	test('el observador de tamaño es el que la despliega', async () => {
-		// Ni el `change` de `matchMedia` ni el `resize` de la ventana llegan en
-		// WebKitGTK cuando la ventana pasa de angosta a ancha al terminar de
-		// abrirse: se comprobó redimensionando el instalador dos veces desde el
-		// compositor y la barra se quedó plegada las dos. El que sí avisa es un
-		// `ResizeObserver` sobre el elemento raíz.
-		const observadores: Array<{ callback: () => void; observado: unknown }> = [];
-		const original = globalThis.ResizeObserver;
+		observados.length = 0;
+		desconectados = 0;
 		(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
-			callback: () => void;
+			private mio: { callback: () => void; elementos: unknown[] };
 			constructor(callback: () => void) {
-				this.callback = callback;
-				observadores.push({ callback, observado: null });
+				this.mio = { callback, elementos: [] };
+				observados.push(this.mio);
 			}
 			observe(elemento: unknown) {
-				const mio = observadores.find((uno) => uno.callback === this.callback);
-				if (mio) mio.observado = elemento;
+				this.mio.elementos.push(elemento);
 			}
-			disconnect() {}
-			unobserve() {}
-		};
-
-		try {
-			congelarLaConsulta(true);
-			anchoDeLaRaiz(600);
-			const vista = mount(SideBar, { props: { title: 'Ventana' } });
-			await nextTick();
-			expect(vista.find('aside').classes()).toContain('md:w-[84px]');
-
-			// El WebView recibe su tamaño: no hay evento de ventana, sólo el
-			// observador.
-			expect(observadores).toHaveLength(1);
-			expect(observadores[0].observado).toBe(document.documentElement);
-			anchoDeLaRaiz(1280);
-			observadores[0].callback();
-			await nextTick();
-
-			expect(vista.find('aside').classes()).toContain('md:w-72');
-		} finally {
-			(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = original;
-		}
-	});
-
-	test('y lo desconecta al desmontarse', async () => {
-		// Un observador por cada ventana que se abrió y se cerró es una fuga
-		// que además dibuja componentes muertos.
-		let desconectados = 0;
-		const original = globalThis.ResizeObserver;
-		(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
-			constructor(_callback: () => void) {}
-			observe() {}
 			disconnect() {
 				desconectados++;
 			}
 			unobserve() {}
 		};
-
-		try {
-			const vista = mount(SideBar, { props: { title: 'Ventana' } });
-			await nextTick();
-			vista.unmount();
-
-			expect(desconectados).toBe(1);
-		} finally {
-			(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = original;
-		}
+		ponerAncho(document.documentElement, 1280);
 	});
 
-	test('deja de escuchar al desmontarse', async () => {
-		// Un oyente de `resize` por cada ventana que se abrió y se cerró es una
-		// fuga que además dibuja componentes muertos.
-		const vista = mount(SideBar, { props: { title: 'Ventana' } });
-		await ponerElAncho(1280);
+	afterEach(() => {
+		(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = original;
+	});
+
+	/** `clientWidth` es de sólo lectura en happy-dom: se redefine. */
+	function ponerAncho(elemento: Element, pixeles: number) {
+		Object.defineProperty(elemento, 'clientWidth', { value: pixeles, configurable: true });
+	}
+
+	/**
+	 * La barra dentro de un contenedor de ese ancho.
+	 *
+	 * El ancho se le pone al padre de verdad del `aside` —el que crea el
+	 * montaje— y se avisa, como cuando el WebView maqueta la ventana.
+	 */
+	async function montarEn(pixeles: number, props: Record<string, unknown> = { title: 'Ventana' }) {
+		const vista = mount(SideBar, { props, attachTo: document.body });
+		const contenedor = vista.element.parentElement as HTMLElement;
+		ponerAncho(contenedor, pixeles);
+		await avisar();
+		return { vista, contenedor };
+	}
+
+	/** Lo que haría el navegador al cambiar el tamaño: llamar a los observadores. */
+	async function avisar() {
+		for (const uno of observados) uno.callback();
+		await nextTick();
+	}
+
+	test('un lugar angosto la pliega sola', async () => {
+		// Por debajo de 768 no entra el texto de los botones: desplegada ahí
+		// sería una columna de etiquetas cortadas encima del contenido.
+		const { vista } = await montarEn(600);
+		await nextTick();
+
+		expect(vista.find('aside').classes()).toContain('w-[84px]');
+	});
+
+	test('se pliega por su contenedor y no por la pantalla', async () => {
+		// La página mide 1280, pero la barra está en un panel de 500: ahí no
+		// entra. Con el `md:` de antes se quedaba desplegada y cortada.
+		ponerAncho(document.documentElement, 1280);
+		const { vista } = await montarEn(500);
+		await nextTick();
+
+		expect(vista.find('aside').classes()).toContain('w-[84px]');
+		expect(vista.find('aside').classes().join(' ')).not.toMatch(/(^|\s)(sm|md|lg|xl):/);
+	});
+
+	test('y angosta no ofrece desplegarse', async () => {
+		const { vista } = await montarEn(600);
+		await nextTick();
+
+		expect(vista.get('aside button').classes()).toContain('hidden');
+	});
+
+	test('si el lugar crece después, se despliega', async () => {
+		// El WebView arranca angosto y crece al terminar de abrirse: el único
+		// aviso que llega es el del observador.
+		const { vista, contenedor } = await montarEn(600);
+		await nextTick();
+		expect(vista.find('aside').classes()).toContain('w-[84px]');
+
+		ponerAncho(contenedor, 1280);
+		await avisar();
+
+		expect(vista.find('aside').classes()).toContain('w-72');
+	});
+
+	test('un envoltorio que sólo la contiene a ella no la pliega: mide el lugar compartido', async () => {
+		// Una aplicación que la envuelva en un `shrink-0` le pone un padre del
+		// ancho de la barra. Medir ése es medirse a sí misma: angosta para
+		// siempre, plegada y sin botón para desplegarla.
+		const panel = document.createElement('div');
+		const wrapper = document.createElement('div');
+		panel.append(wrapper);
+		document.body.append(panel);
+		ponerAncho(panel, 1280);
+		ponerAncho(wrapper, 288);
+		const vista = mount(SideBar, { props: { title: 'Ventana' }, attachTo: wrapper });
+		const aside = vista.find('aside').element as HTMLElement;
+		Object.defineProperty(aside, 'offsetWidth', { value: 288, configurable: true });
+		ponerAncho(aside.parentElement as HTMLElement, 288);
+		await avisar();
+
+		expect(vista.find('aside').classes()).toContain('w-72');
+		vista.unmount();
+		panel.remove();
+	});
+
+	test('un contenedor que todavía mide cero no la pliega: manda la página', async () => {
+		// Montada antes de maquetarse, el contenedor dice cero. Plegarse por eso
+		// sería plegarse por nada.
+		ponerAncho(document.documentElement, 1280);
+		const { vista } = await montarEn(0);
+		await nextTick();
+
+		expect(vista.find('aside').classes()).toContain('w-72');
+	});
+
+	test('plegada a mano sigue plegada aunque el lugar sea ancho', async () => {
+		// Ensancharla no es desplegarla: lo que se plegó a propósito se queda
+		// como lo dejaron.
+		const { vista } = await montarEn(1280, { title: 'Ventana', collapsed: true });
+		await avisar();
+
+		expect(vista.find('aside').classes()).toContain('w-[84px]');
+	});
+
+	test('observa al contenedor y a la página', async () => {
+		const { contenedor } = await montarEn(1280);
+		await nextTick();
+
+		expect(observados).toHaveLength(1);
+		expect(observados[0]?.elementos).toContain(contenedor);
+		expect(observados[0]?.elementos).toContain(document.documentElement);
+	});
+
+	test('y lo desconecta al desmontarse', async () => {
+		// Un observador por cada ventana que se abrió y se cerró es una fuga
+		// que además dibuja componentes muertos.
+		const { vista } = await montarEn(1280);
+		await nextTick();
 		vista.unmount();
 
-		expect(() => {
-			anchoDeLaRaiz(600);
-			window.dispatchEvent(new Event('resize'));
-		}).not.toThrow();
+		expect(desconectados).toBe(1);
 	});
 });
