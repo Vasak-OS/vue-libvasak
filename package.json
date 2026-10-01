@@ -17,6 +17,7 @@
 		},
 		"./style.css": "./dist/vue-libvasak.css",
 		"./tokens.css": "./dist/tokens.css",
+		"./scrollbar.css": "./dist/scrollbar.css",
 		"./package.json": "./package.json"
 	},
 	"keywords": [

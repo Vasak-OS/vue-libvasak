@@ -26,11 +26,15 @@ export function publishTokens(): Plugin {
   return {
     name: 'vasak-publish-tokens',
     generateBundle() {
-      this.emitFile({
-        type: 'asset',
-        fileName: 'tokens.css',
-        source: readFileSync(new URL('./src/styles/tokens.css', import.meta.url), 'utf8'),
-      });
+      // `scrollbar.css` (2.1.0) va aparte porque sus reglas son globales: quien
+      // importa los tokens no recibe una barra de desplazamiento que no pidió.
+      for (const fileName of ['tokens.css', 'scrollbar.css']) {
+        this.emitFile({
+          type: 'asset',
+          fileName,
+          source: readFileSync(new URL(`./src/styles/${fileName}`, import.meta.url), 'utf8'),
+        });
+      }
     },
   };
 }

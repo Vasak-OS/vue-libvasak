@@ -230,35 +230,3 @@
   outline-offset: 2px;
 }
 
-/*
- * La barra de desplazamiento, con los tokens.
- *
- * Es la que ya declaraba el `main.css` de cada aplicación —8 px, el pulgar en
- * `tx-muted` al 45 % y al 70 % al pasar por encima—, así que importar este
- * archivo no mueve nada de lugar: el ancho es el mismo. Lo que cambia es que
- * el radio sale del de la persona en vez de los 4 px fijos, y que vive en un
- * solo lugar: el `ScrollArea` del gestor de archivos, que dibujaba otra con
- * `bg-ui-bg/80` (invisible sobre la ventana), sobra.
- *
- * Van los seudoelementos de WebKit y no `scrollbar-color`: WebKitGTK dibuja
- * con los primeros, y en Chromium —donde corre el banco— declarar
- * `scrollbar-color` apaga los seudoelementos, así que las capturas mostrarían
- * otra barra que la de la ventana.
- */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--use-text-muted) 45%, transparent);
-  border-radius: var(--radius-corner-full);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--use-text-muted) 70%, transparent);
-}

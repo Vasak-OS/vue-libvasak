@@ -81,6 +81,8 @@ Tailwind, y le dice a Tailwind que mire las clases de la librería:
 ```css
 @import "tailwindcss";
 @import "@vasakgroup/vue-libvasak/tokens.css";
+/* opcional (2.1.0): la barra de desplazamiento con los tokens, en lugar de la copia propia */
+@import "@vasakgroup/vue-libvasak/scrollbar.css";
 
 @source "../../node_modules/@vasakgroup/vue-libvasak/dist";
 ```

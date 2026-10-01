@@ -283,6 +283,17 @@ describe('el campo numérico', () => {
 		expect(sinNada.findAll('button').map((b) => b.attributes('aria-label'))).toEqual(['Restar', 'Sumar']);
 	});
 
+	test('un límite que no cae en el paso no se pasa al redondear', async () => {
+		// Con `max` 0,95 y paso 0,1, ajustar primero y redondear después daba 1.
+		const vista = montar(NumberField, { props: { modelValue: 0.5, max: 0.95, step: 0.1 } });
+		await escribir(vista, '0.99', 'change');
+		expect(vista.emitted('update:modelValue')?.at(-1)).toEqual([0.95]);
+
+		const entero = montar(NumberField, { props: { modelValue: 1, max: 2.5 } });
+		await escribir(entero, '7', 'change');
+		expect(entero.emitted('update:modelValue')?.at(-1)).toEqual([2.5]);
+	});
+
 	test('angosto, del ancho de Configuración; si no, llena la fila', () => {
 		expect(montar(NumberField, { props: { modelValue: 1, narrow: true } }).classes()).toContain('w-32');
 		expect(montar(NumberField, { props: { modelValue: 1 } }).classes()).toContain('w-full');

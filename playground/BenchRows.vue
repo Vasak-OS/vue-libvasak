@@ -3,7 +3,7 @@
  * La 2.1.0: filas, listas, cabeceras, superficies, insignias y lo que sumaron
  * los avisos, el vacío, la espera y la barra de progreso.
  */
-import { ref } from 'vue';
+import { ref, useId } from 'vue';
 import {
 	ActionButton,
 	AlertMessage,
@@ -27,6 +27,10 @@ defineProps<{ section: string; width: number }>();
 const weather = ref(true);
 const music = ref(false);
 const selected = ref('inbox');
+/** Uno por instancia: el banco dibuja esta sección una vez por ancho. */
+const id = useId();
+const weatherId = `${id}-weather`;
+const musicId = `${id}-music`;
 </script>
 
 <template>
@@ -40,11 +44,11 @@ const selected = ref('inbox');
     <PageHeader title="Elegí el disco" description="Todo lo que tenga se va a borrar." icon="drive-harddisk" />
 
     <ConfigSection title="Indicadores del panel" icon="preferences-desktop" description="Lo que se ve al lado del reloj.">
-      <SettingRow label="Clima" description="La temperatura y el cielo de tu ciudad" control-id="bench-weather">
-        <SwitchToggle id="bench-weather" v-model="weather" label="Clima" />
+      <SettingRow label="Clima" description="La temperatura y el cielo de tu ciudad" :control-id="weatherId">
+        <SwitchToggle :id="weatherId" v-model="weather" label="Clima" />
       </SettingRow>
-      <SettingRow label="Lo que suena, con un nombre de ajuste bastante largo para ver cómo se parte" control-id="bench-music">
-        <SwitchToggle id="bench-music" v-model="music" label="Lo que suena" />
+      <SettingRow label="Lo que suena, con un nombre de ajuste bastante largo para ver cómo se parte" :control-id="musicId">
+        <SwitchToggle :id="musicId" v-model="music" label="Lo que suena" />
       </SettingRow>
       <template #actions>
         <ActionButton label="Restablecer" variant="ghost" size="sm" />

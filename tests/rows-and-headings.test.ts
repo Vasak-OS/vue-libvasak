@@ -137,6 +137,14 @@ describe('la fila de lista', () => {
 		expect(vista.attributes('href')).toBe('https://vasak.net.ar');
 	});
 
+	test('un enlace apagado pierde el href pero sigue siendo un enlace', () => {
+		const vista = montar(ListRow, { props: { title: 'Sitio', role: 'link', href: '/x', disabled: true } });
+
+		expect(vista.attributes('href')).toBeUndefined();
+		expect(vista.attributes('role')).toBe('link');
+		expect(vista.attributes('aria-disabled')).toBe('true');
+	});
+
 	test('no impone su alto: lo decide el desplazador virtual', () => {
 		expect(montar(ListRow, { props: { title: 'x' } }).classes().join(' ')).not.toMatch(/(^|\s)(min-)?h-\d/);
 	});

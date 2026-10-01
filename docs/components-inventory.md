@@ -459,7 +459,12 @@ Tiene su propio `components/ui/`, con 454 usos repartidos en las vistas.
   - `TrayPopupView.vue:124` es el menú DBus, con `menuitemcheckbox` y profundidad → Ext `DropdownMenuItem checked inset`; `:115` → `DropdownMenuLabel`.
 - **Widgets:** `MusicWidget.vue:289`/`:302` (elegir reproductor) → `Popover`. El resto de los widgets se queda (sección 5).
 
-## 2. Componentes genéricos nuevos para la librería (2.1.0)
+## 2. Componentes genéricos nuevos para la librería
+
+> **Qué va en cada versión** (decisión 1 de «Decisiones tomadas», al final, que manda sobre esta sección):
+> - **2.1.0:** `OptionGroup`, `SegmentedControl`, `Checkbox`, `Slider`, `TextArea`, `NumberField`, `SettingRow`, `ListRow`/`ListGroup`, `Badge`, `StatusDot`, `SectionHeading`, `PageHeader`, `Panel` y `DialogBody`.
+> - **2.2.0:** `Popover`, `Kbd`, `Avatar`/`IdentityBlock`, `IconTile`, `Skeleton`, `CoverArt`, `Disclosure`, `PropertyList`, `StatTile`, `CodeBlock` y `DropZone`.
+> - **Fuera de la librería:** `WidgetFrame`, que queda como componente propio del escritorio (decisión 4).
 
 Los nombres van en inglés. Las fuentes son las copias de las que sale cada uno; «sabe» es lo que esa copia aporta y tiene que subir a la librería (decisión 5).
 

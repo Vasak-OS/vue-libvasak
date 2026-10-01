@@ -75,11 +75,15 @@ function round(value: number): number {
 	return Number(value.toFixed(decimals.value));
 }
 
+/**
+ * Redondea al paso y **después** ajusta a los límites: al revés, con `max`
+ * 0,95 y paso 0,1, el 0,99 se ajustaba a 0,95 y el redondeo lo subía a 1.
+ */
 function clamp(value: number): number {
-	let result = value;
+	let result = round(value);
 	if (props.min !== undefined) result = Math.max(props.min, result);
 	if (props.max !== undefined) result = Math.min(props.max, result);
-	return round(result);
+	return result;
 }
 
 /** Lo que el campo dice ahora, o `null` si no es un número. */

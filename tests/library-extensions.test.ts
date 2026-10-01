@@ -401,6 +401,28 @@ describe('el diálogo', () => {
 });
 
 describe('el cuerpo del diálogo, solo', () => {
+	test('observa el envoltorio del contenido, que crece con lo que llega después', () => {
+		const observados: Element[] = [];
+		const original = globalThis.ResizeObserver;
+		globalThis.ResizeObserver = class {
+			observe(elemento: Element) {
+				observados.push(elemento);
+			}
+			unobserve() {}
+			disconnect() {}
+		} as unknown as typeof ResizeObserver;
+		try {
+			const vista = montar(DialogBody, { slots: { default: '<p>uno</p><p>dos</p>' } });
+			const envoltorio = vista.element.firstElementChild;
+
+			expect(observados).toContain(vista.element);
+			expect(observados).toContain(envoltorio as Element);
+			expect(envoltorio?.querySelectorAll('p')).toHaveLength(2);
+		} finally {
+			globalThis.ResizeObserver = original;
+		}
+	});
+
 	test('cuando el contenido no entra, se puede alcanzar con el teclado', async () => {
 		// Un `ResizeObserver` de mentira, para decidir desde acá cuándo avisa:
 		// en happy-dom nada mide, así que el de verdad no avisaría nunca.

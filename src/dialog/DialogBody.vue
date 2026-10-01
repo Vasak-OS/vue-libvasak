@@ -37,6 +37,13 @@ const props = withDefaults(
 
 const translate = useLabels();
 const body = ref<HTMLElement | null>(null);
+/**
+ * El envoltorio del contenido. Se observa éste y no los hijos de la ranura:
+ * un párrafo que llega después no cambia el tamaño de los que ya estaban, y
+ * `ResizeObserver` avisa de cambios de tamaño de lo observado, no del alto que
+ * se puede desplazar. El envoltorio sí crece con todo lo que entra.
+ */
+const content = ref<HTMLElement | null>(null);
 const overflows = ref(false);
 let observer: ResizeObserver | null = null;
 
@@ -50,7 +57,7 @@ onMounted(() => {
 	if (typeof ResizeObserver === 'undefined' || !body.value) return;
 	observer = new ResizeObserver(measure);
 	observer.observe(body.value);
-	for (const child of Array.from(body.value.children)) observer.observe(child);
+	if (content.value) observer.observe(content.value);
 });
 
 onBeforeUnmount(() => observer?.disconnect());
@@ -68,6 +75,6 @@ const regionName = computed(() => props.label ?? translate('dialog.body', 'Conte
     :tabindex="overflows ? 0 : undefined"
     :role="overflows ? 'region' : undefined"
     :aria-label="overflows ? regionName : undefined">
-    <slot />
+    <div ref="content"><slot /></div>
   </div>
 </template>

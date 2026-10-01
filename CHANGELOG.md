@@ -37,8 +37,11 @@ exporta la 2.0.0 cambia de nombre ni de comportamiento si no se pide lo nuevo.
 - **`DialogBody`**: el cuerpo que desplaza entre un encabezado y un pie
   quietos; se vuelve tabulable sólo cuando no entra.
 - Tokens: `ui-overlay` (el velo sobre una imagen, 4,5:1 sobre negro o blanco
-  puro) y `text-heading-l`. La barra de desplazamiento de las aplicaciones pasa
-  a `tokens.css`, con el radio de la persona.
+  puro) y `text-heading-l`.
+- **`@vasakgroup/vue-libvasak/scrollbar.css`**: la barra de desplazamiento que
+  cada aplicación copiaba en su `main.css`, con el radio de la persona. Va en
+  un archivo aparte porque sus reglas son globales: importar los tokens no
+  cambia la barra de nadie.
 - Textos con respaldo en el catálogo: `alert.close`, `dialog.close`,
   `dialog.body`, `numberField.decrement`, `numberField.increment`.
 

@@ -79,7 +79,9 @@ const tag = computed(() => (props.role === 'link' && props.href ? 'a' : 'div'));
 
 const ariaRole = computed(() => {
 	if (props.role === 'none') return undefined;
-	if (props.role === 'link' && props.href) return undefined;
+	// Un `<a>` con `href` ya es un enlace; apagado pierde el `href`, y con él
+	// lo que lo hacía enlace, así que el rol se escribe.
+	if (props.role === 'link' && props.href && !props.disabled) return undefined;
 	return props.role;
 });
 
