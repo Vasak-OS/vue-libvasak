@@ -39,12 +39,12 @@ withDefaults(
     role="status"
     aria-atomic="true"
     class="flex flex-col items-center justify-center gap-4 px-8 py-12 text-center"
-    :class="bordered ? 'rounded-corner border border-ui-border border-dashed bg-ui-surface/20' : ''">
+    :class="bordered ? 'rounded-corner-l border border-dashed border-ui-line' : ''">
     <!-- El anillo se queda quieto con el movimiento reducido. Ahí no informa de
          nada —el texto de abajo ya lo dice— y girar sin parar es justo lo que
          esa preferencia pide que no pase. -->
     <span
-      class="h-10 w-10 animate-spin rounded-full border-4 border-ui-border border-t-primary motion-reduce:animate-none" />
-    <p class="text-sm text-tx-muted">{{ label }}</p>
+      class="size-10 animate-spin rounded-corner-full border-4 border-ui-line border-t-primary motion-reduce:animate-none" />
+    <p class="text-body-s text-tx-muted">{{ label }}</p>
   </div>
 </template>

@@ -27,18 +27,21 @@
  * se pudo guardar». Por eso la pila va más arriba, y no empatada.
  */
 import { computed } from 'vue';
-import { CLASES_POR_TONO, rolDelTono, type TonoDelAviso } from './tonos';
+import { type NoticeTone, TOAST_TONE_CLASSES, toneRole } from './tones';
 
-export interface AvisoTransitorio {
+export interface ToastNotice {
 	/** Estable mientras el aviso viva: es la clave de la animación. */
 	id: string | number;
 	message: string;
-	tone?: TonoDelAviso;
+	tone?: NoticeTone;
 }
+
+/** @deprecated Usá `ToastNotice`. Se va en la 3.0. */
+export type AvisoTransitorio = ToastNotice;
 
 const props = withDefaults(
 	defineProps<{
-		toasts: AvisoTransitorio[];
+		toasts: ToastNotice[];
 		/**
 		 * Dónde se apilan.
 		 *
@@ -52,7 +55,7 @@ const props = withDefaults(
 	{ position: 'bottom-right' }
 );
 
-const ubicacion = computed(() =>
+const placement = computed(() =>
 	props.position === 'bottom-center'
 		? 'bottom-4 left-1/2 -translate-x-1/2'
 		: 'right-4 bottom-4'
@@ -64,21 +67,21 @@ const ubicacion = computed(() =>
     <!-- `pointer-events-none` en la pila y `auto` en cada aviso: la columna
          ocupa una franja de la ventana, y sin esto se come los clics de lo que
          haya debajo aunque no se vea nada. -->
-    <div class="pointer-events-none fixed z-60 flex flex-col gap-2" :class="ubicacion">
+    <div class="pointer-events-none fixed z-60 flex flex-col gap-2" :class="placement">
       <TransitionGroup
-        enter-active-class="transition-all duration-300 ease-out"
-        leave-active-class="transition-all duration-200 ease-in"
+        enter-active-class="transition-[opacity,translate] duration-200 ease-ui-out"
+        leave-active-class="transition-[opacity,translate] duration-150 ease-ui"
         enter-from-class="translate-y-2 opacity-0"
         leave-to-class="translate-y-2 opacity-0"
-        move-class="transition-transform duration-300">
+        move-class="transition-[translate] duration-300 ease-ui">
         <div
-          v-for="aviso in toasts"
-          :key="aviso.id"
-          :role="rolDelTono(aviso.tone ?? 'info')"
+          v-for="toast in toasts"
+          :key="toast.id"
+          :role="toneRole(toast.tone ?? 'info')"
           aria-atomic="true"
-          class="pointer-events-auto rounded-corner border px-4 py-2 text-sm shadow-lg backdrop-blur-sm"
-          :class="CLASES_POR_TONO[aviso.tone ?? 'info']">
-          <slot :aviso="aviso">{{ aviso.message }}</slot>
+          class="pointer-events-auto max-w-[calc(100vw-32px)] rounded-corner-l border bg-ui-float px-4 py-2 text-body-s text-tx-main shadow-surface-m"
+          :class="TOAST_TONE_CLASSES[toast.tone ?? 'info']">
+          <slot :aviso="toast">{{ toast.message }}</slot>
         </div>
       </TransitionGroup>
     </div>

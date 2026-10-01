@@ -31,6 +31,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '../src';
+import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
 import VerticalTabs from './VerticalTabs.vue';
 
@@ -46,8 +47,11 @@ const sections = [
 	'sidebar',
 	'forms',
 	'devices',
+	'feedback',
+	'dialog',
 ] as const;
 const FORMS = ['forms', 'devices'];
+const FEEDBACK = ['feedback', 'dialog'];
 const shown = computed(() =>
 	props.only ? sections.filter((section) => props.only.split(',').includes(section)) : sections
 );
@@ -235,6 +239,11 @@ onMounted(async () => {
           </div>
 
           <BenchForms v-else-if="FORMS.includes(section)" :section="section" :width="width" />
+          <BenchFeedback
+            v-else-if="FEEDBACK.includes(section)"
+            :section="section"
+            :width="width"
+            :first="width === widths[0]" />
 
           <!-- Barra lateral: desplegada y plegada. -->
           <div v-else-if="section === 'sidebar'" class="flex h-120 gap-2">

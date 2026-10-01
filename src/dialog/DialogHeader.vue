@@ -13,7 +13,7 @@ defineOptions({ inheritAttrs: false });
 
 <template>
   <div class="@container">
-    <div v-bind="$attrs" class="flex flex-col gap-1.5 text-center @sm:text-left">
+    <div v-bind="$attrs" class="flex flex-col gap-1 text-center @sm:text-left">
       <slot />
     </div>
   </div>

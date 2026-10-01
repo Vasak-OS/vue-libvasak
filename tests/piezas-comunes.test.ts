@@ -21,7 +21,7 @@ import FormGroup from '../src/forms/FormGroup.vue';
 import Dialog from '../src/dialog/Dialog.vue';
 import DialogContent from '../src/dialog/DialogContent.vue';
 import ToastArea from '../src/feedback/ToastArea.vue';
-import { rolDelTono } from '../src/feedback/tonos';
+import { toneRole as rolDelTono } from '../src/feedback/tones';
 import ProgressBar from '../src/forms/ProgressBar.vue';
 import SearchField from '../src/search/SearchField.vue';
 import TextInput from '../src/forms/TextInput.vue';
@@ -91,7 +91,7 @@ describe('el aviso en línea', () => {
 		expect(clases('success')).toContain('status-success');
 		expect(clases('warning')).toContain('status-warning');
 		// `info` no tiene token `status-*`: no existe en el sistema.
-		expect(clases('info')).toContain('ui-border');
+		expect(clases('info')).toContain('ui-line');
 	});
 });
 

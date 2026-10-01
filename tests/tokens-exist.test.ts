@@ -64,6 +64,17 @@ const MIGRATED = [
 	'search/SearchSelect.vue',
 	'tray/TrayIconButton.vue',
 	'cards/DeviceCard.vue',
+	'feedback/AlertMessage.vue',
+	'feedback/ToastArea.vue',
+	'feedback/EmptyState.vue',
+	'feedback/LoadingState.vue',
+	'layout/ConfigSection.vue',
+	'dialog/Dialog.vue',
+	'dialog/DialogContent.vue',
+	'dialog/DialogTitle.vue',
+	'dialog/DialogDescription.vue',
+	'dialog/DialogHeader.vue',
+	'dialog/DialogFooter.vue',
 ];
 
 /** Sin comentarios: lo que se explica no es lo que se dibuja. */

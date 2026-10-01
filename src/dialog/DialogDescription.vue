@@ -10,7 +10,7 @@
 </script>
 
 <template>
-  <p class="text-sm text-tx-muted">
+  <p class="text-body-s text-tx-muted">
     <slot />
   </p>
 </template>

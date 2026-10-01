@@ -20,4 +20,15 @@ for theme in light dark; do
     magick "$file" -fuzz 1% -trim +repage -bordercolor "$(magick "$file" -format '%[pixel:p{1,1}]' info:)" -border 16 "$file"
     echo "$file"
   done
+  # Lo que se dibuja contra la ventana —el diálogo, los avisos— se captura con
+  # la ventana de cada ancho, no dentro de una caja.
+  for width in ${WINDOW_WIDTHS:-}; do
+    for section in ${WINDOW_SECTIONS:-dialog}; do
+      file="$out/${prefix}${section}-${theme}-${width}.png"
+      google-chrome-stable --headless=new --disable-gpu --hide-scrollbars \
+        --window-size="$width,720" --virtual-time-budget=6000 \
+        --screenshot="$file" "$url/?only=$section&theme=$theme&width=$width${BENCH_QUERY:-}" >/dev/null 2>&1
+      echo "$file"
+    done
+  done
 done

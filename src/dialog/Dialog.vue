@@ -9,19 +9,19 @@
  * que deja abrirlo desde un botón, desde una ruta o desde lo que sea.
  */
 import { computed, provide, type Ref, ref } from 'vue';
-import { CLAVE_DEL_DIALOGO } from './tipos';
+import { DIALOG_KEY } from './types';
 
 const props = withDefaults(defineProps<{ open?: boolean }>(), { open: false });
-const emit = defineEmits<{ 'update:open': [abierto: boolean] }>();
+const emit = defineEmits<{ 'update:open': [open: boolean] }>();
 
-const idDelTitulo = ref<string | null>(null);
+const titleId = ref<string | null>(null);
 
-provide(CLAVE_DEL_DIALOGO, {
-	abierto: computed(() => props.open) as Ref<boolean>,
-	cerrar: () => emit('update:open', false),
-	idDelTitulo,
-	ponerElTitulo: (id: string | null) => {
-		idDelTitulo.value = id;
+provide(DIALOG_KEY, {
+	open: computed(() => props.open) as Ref<boolean>,
+	close: () => emit('update:open', false),
+	titleId,
+	setTitle: (id: string | null) => {
+		titleId.value = id;
 	},
 });
 </script>

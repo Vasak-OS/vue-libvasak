@@ -160,14 +160,14 @@ export {
 
 export type { PlaybackState } from "./media/playback";
 export { formatPlaybackTime } from "./media/playback";
-export type { AvisoTransitorio } from "./feedback/ToastArea.vue";
-export type { TonoDelAviso } from "./feedback/tonos";
-export { CLASES_POR_TONO, rolDelTono } from "./feedback/tonos";
+export type { AvisoTransitorio, ToastNotice } from "./feedback/ToastArea.vue";
+export type { NoticeTone } from "./feedback/tones";
+export { TONE_CLASSES, TOAST_TONE_CLASSES, toneRole } from "./feedback/tones";
 export type { FocusOnOpen, MenuContext } from "./dropdown/types";
-export type { ContextoDelDialogo } from "./dialog/tipos";
+export type { DialogContext } from "./dialog/types";
 export type { OpcionDeBusqueda } from "./search/buscar";
 export { buscarOpciones } from "./search/buscar";
-export { CLAVE_DEL_DIALOGO, usarElDialogo } from "./dialog/tipos";
+export { DIALOG_KEY, useDialog } from "./dialog/types";
 export { MENU_KEY, useMenu } from "./dropdown/types";
 export type { TooltipContext } from "./tooltip/types";
 export { TOOLTIP_KEY, useTooltip } from "./tooltip/types";
@@ -211,6 +211,26 @@ export const usarElTooltip = useTooltipValue;
 export type ElementoDePestana = TabEntryType;
 /** @deprecated Usá `TabAction`. Se va en la 3.0. */
 export type AccionDePestana = TabActionType;
+
+import type { NoticeTone as NoticeToneType } from "./feedback/tones";
+import { TONE_CLASSES as TONE_CLASSES_VALUE, toneRole as toneRoleValue } from "./feedback/tones";
+
+import type { DialogContext as DialogContextType } from "./dialog/types";
+import { DIALOG_KEY as DIALOG_KEY_VALUE, useDialog as useDialogValue } from "./dialog/types";
+
+/** @deprecated Usá `DialogContext`. Se va en la 3.0. */
+export type ContextoDelDialogo = DialogContextType;
+/** @deprecated Usá `DIALOG_KEY`. Se va en la 3.0. */
+export const CLAVE_DEL_DIALOGO = DIALOG_KEY_VALUE;
+/** @deprecated Usá `useDialog`. Se va en la 3.0. */
+export const usarElDialogo = useDialogValue;
+
+/** @deprecated Usá `NoticeTone`. Se va en la 3.0. */
+export type TonoDelAviso = NoticeToneType;
+/** @deprecated Usá `TONE_CLASSES`. Se va en la 3.0. */
+export const CLASES_POR_TONO = TONE_CLASSES_VALUE;
+/** @deprecated Usá `toneRole`. Se va en la 3.0. */
+export const rolDelTono = toneRoleValue;
 export type {
   ContextoDeLaBarra,
   ControlDeVentana,
