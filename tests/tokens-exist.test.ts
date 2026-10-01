@@ -40,21 +40,36 @@ const MIGRATED = sources('**/*.vue');
 /**
  * Sin comentarios: lo que se explica no es lo que se dibuja.
  *
- * Se repite hasta que el texto deja de cambiar: sacar un comentario puede
- * juntar los pedazos de otro (`<!-<!-- -->-`), y una pasada sola lo dejaría
- * entero.
+ * Se recorre a mano y no con un reemplazo de expresiones regulares: sacar un
+ * comentario con `replace` puede juntar los pedazos de otro (`<!-<!-- -->-`), y
+ * esto no sanea nada —sólo decide qué se mira—, pero un recorrido que corta por
+ * delimitadores no tiene ese problema.
  */
 function stripComments(text: string): string {
-	let previous: string;
-	let current = text;
-	do {
-		previous = current;
-		current = previous
-			.replace(/<!--[\s\S]*?-->/g, '')
-			.replace(/\/\*[\s\S]*?\*\//g, '')
-			.replace(/(^|[^:"'`])\/\/[^\n]*/g, '$1');
-	} while (current !== previous);
-	return current;
+	const pairs: Array<[string, string]> = [
+		['<!--', '-->'],
+		['/*', '*/'],
+	];
+	let out = '';
+	let index = 0;
+	while (index < text.length) {
+		const pair = pairs.find(([open]) => text.startsWith(open, index));
+		if (pair) {
+			const end = text.indexOf(pair[1], index + pair[0].length);
+			index = end === -1 ? text.length : end + pair[1].length;
+			continue;
+		}
+		// `//` de línea, salvo dentro de una dirección (`https://`) o un texto.
+		const previous = text[index - 1] ?? '';
+		if (text.startsWith('//', index) && !':"\'`'.includes(previous)) {
+			const end = text.indexOf('\n', index);
+			index = end === -1 ? text.length : end;
+			continue;
+		}
+		out += text[index];
+		index += 1;
+	}
+	return out;
 }
 
 async function read(path: string): Promise<string> {
