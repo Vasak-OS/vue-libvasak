@@ -48,14 +48,19 @@ import { onMounted, onUnmounted, readonly, ref, type Ref, watch } from 'vue';
  *
  * Interno a propósito: lo comparten `ThemeIcon` y `SideButton`, y lo que las
  * aplicaciones usan es el componente, no esto.
+ *
+ * Hasta la 2.1.0 era `src/internos/iconoDelTema.ts`, con los identificadores
+ * en castellano. Pasó al inglés en la 2.2.0 al sumarle los respaldos; los dos
+ * nombres que salen del paquete (`olvidarLosIconosDelTema`,
+ * `usarLaVersionDelTema`) siguen como alias obsoletos en `index.ts`.
  */
 
-const EVENTO = 'vicons:theme-changed';
+const THEME_EVENT = 'vicons:theme-changed';
 
 /** Lo ya resuelto, por `tipo:nombre`. */
-const memoria = new Map<string, string>();
+const cache = new Map<string, string>();
 /** Los pedidos que todavía no volvieron, para no pedir dos veces lo mismo. */
-const enVuelo = new Map<string, Promise<string>>();
+const inFlight = new Map<string, Promise<string>>();
 
 /**
  * Sube con cada cambio de tema.
@@ -65,9 +70,9 @@ const enVuelo = new Map<string, Promise<string>>();
  */
 const version = ref(0);
 
-let suscriptores = 0;
-let soltarElOyente: UnlistenFn | null = null;
-let registrando: Promise<void> | null = null;
+let subscribers = 0;
+let releaseListener: UnlistenFn | null = null;
+let registering: Promise<void> | null = null;
 
 /**
  * Deja el módulo como recién cargado.
@@ -76,44 +81,44 @@ let registrando: Promise<void> | null = null;
  * entre archivos de prueba, así que sin esto una prueba ve los suscriptores que
  * dejó otra y cuenta oyentes que ya no existen.
  */
-export function olvidarLosIconosDelTema() {
-	memoria.clear();
-	enVuelo.clear();
-	suscriptores = 0;
-	soltarElOyente = null;
-	registrando = null;
+export function forgetThemeIcons() {
+	cache.clear();
+	inFlight.clear();
+	subscribers = 0;
+	releaseListener = null;
+	registering = null;
 	version.value = 0;
-	registradas.clear();
-	enPantalla.clear();
-	proximoId = 0;
+	registered.clear();
+	onScreen.clear();
+	nextId = 0;
 	// El vigía también: se queda mirando elementos de componentes que ya no
 	// existen, y en las pruebas eso lo hereda el archivo siguiente.
-	vigia?.disconnect();
-	vigia = null;
-	vigiaIntentado = false;
-	if (esperando !== null) {
-		clearTimeout(esperando);
-		esperando = null;
+	observer?.disconnect();
+	observer = null;
+	observerTried = false;
+	if (pending !== null) {
+		clearTimeout(pending);
+		pending = null;
 	}
-	if (cicloActual) cicloActual.cancelado = true;
-	cicloActual = null;
+	if (currentCycle) currentCycle.cancelled = true;
+	currentCycle = null;
 }
 
 // ── El planificador de la recarga ──────────────────────────────────────────
 
 /** Cuánto se espera antes de empezar, para que varios avisos sean uno. */
-const ESPERA_MS = 100;
+const DEBOUNCE_MS = 100;
 /** Cuántos iconos se resuelven juntos. */
-const POR_TANDA = 10;
+const BATCH_SIZE = 10;
 /** Un cuadro a 60 Hz: lo que se le deja al hilo entre tanda y tanda. */
-const ENTRE_TANDAS_MS = 16;
+const BETWEEN_BATCHES_MS = 16;
 
-type Recarga = () => Promise<void>;
+type Reload = () => Promise<void>;
 
 /** Cada instancia registrada, con el elemento que dibuja si lo tiene. */
-const registradas = new Map<number, { recargar: Recarga; elemento: HTMLElement | null }>();
-const enPantalla = new Set<number>();
-let proximoId = 0;
+const registered = new Map<number, { reload: Reload; element: HTMLElement | null }>();
+const onScreen = new Set<number>();
+let nextId = 0;
 
 /**
  * Quién está en pantalla.
@@ -123,38 +128,38 @@ let proximoId = 0;
  * `IntersectionObserver` —una prueba sin DOM— se sigue sin él: todas cuentan
  * como visibles, que es el orden de antes y no rompe nada.
  */
-let vigia: IntersectionObserver | null = null;
-let vigiaIntentado = false;
+let observer: IntersectionObserver | null = null;
+let observerTried = false;
 
-function elVigia(): IntersectionObserver | null {
-	if (vigiaIntentado) {
-		return vigia;
+function getObserver(): IntersectionObserver | null {
+	if (observerTried) {
+		return observer;
 	}
-	vigiaIntentado = true;
+	observerTried = true;
 	if (typeof IntersectionObserver === 'undefined') {
 		return null;
 	}
-	vigia = new IntersectionObserver(
-		(entradas) => {
-			for (const entrada of entradas) {
-				const cual = (entrada.target as HTMLElement).dataset?.iconoId;
-				if (cual == null) continue;
-				const id = Number.parseInt(cual, 10);
-				if (entrada.isIntersecting) enPantalla.add(id);
-				else enPantalla.delete(id);
+	observer = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				const which = (entry.target as HTMLElement).dataset?.iconId;
+				if (which == null) continue;
+				const id = Number.parseInt(which, 10);
+				if (entry.isIntersecting) onScreen.add(id);
+				else onScreen.delete(id);
 			}
 		},
 		{ threshold: 0 }
 	);
-	return vigia;
+	return observer;
 }
 
-function anotar(recargar: Recarga): number {
-	const id = proximoId++;
-	registradas.set(id, { recargar, elemento: null });
+function register(reload: Reload): number {
+	const id = nextId++;
+	registered.set(id, { reload, element: null });
 	// Hasta que el vigía diga lo contrario, cuenta como visible: si no, lo que
 	// se acaba de montar se recargaría último, que es justo al revés.
-	enPantalla.add(id);
+	onScreen.add(id);
 	return id;
 }
 
@@ -164,9 +169,9 @@ function anotar(recargar: Recarga): number {
  * Va aparte de `anotar` porque el elemento no existe cuando se registra: en
  * `setup` todavía no hay DOM. Quien lo tenga lo pasa al montar.
  */
-function mirarElemento(id: number, elemento: HTMLElement | null) {
-	const entrada = registradas.get(id);
-	if (!entrada || entrada.elemento === elemento) return;
+function watchElement(id: number, element: HTMLElement | null) {
+	const entry = registered.get(id);
+	if (!entry || entry.element === element) return;
 
 	// Se suelta el anterior **antes** de tomar el nuevo. `ThemeIcon` cambia el
 	// `span` del hueco por el `img` cuando el icono resuelve, así que esto corre
@@ -174,60 +179,60 @@ function mirarElemento(id: number, elemento: HTMLElement | null) {
 	// con el mismo identificador, y un aviso tardío del viejo —que ya no está en
 	// el documento, o sea nunca visible— saca de «en pantalla» a un icono que sí
 	// lo está. Ahí se recargaría último, que es justo al revés.
-	if (entrada.elemento) {
-		vigia?.unobserve(entrada.elemento);
-		delete entrada.elemento.dataset.iconoId;
-		entrada.elemento = null;
+	if (entry.element) {
+		observer?.unobserve(entry.element);
+		delete entry.element.dataset.iconId;
+		entry.element = null;
 	}
 
-	if (!elemento) return;
-	const ojo = elVigia();
-	if (!ojo) return;
-	entrada.elemento = elemento;
-	elemento.dataset.iconoId = String(id);
-	ojo.observe(elemento);
+	if (!element) return;
+	const eye = getObserver();
+	if (!eye) return;
+	entry.element = element;
+	element.dataset.iconId = String(id);
+	eye.observe(element);
 }
 
-function olvidar(id: number) {
-	const entrada = registradas.get(id);
-	if (entrada?.elemento) {
-		vigia?.unobserve(entrada.elemento);
-		delete entrada.elemento.dataset.iconoId;
+function unregister(id: number) {
+	const entry = registered.get(id);
+	if (entry?.element) {
+		observer?.unobserve(entry.element);
+		delete entry.element.dataset.iconId;
 	}
-	enPantalla.delete(id);
-	registradas.delete(id);
+	onScreen.delete(id);
+	registered.delete(id);
 }
 
-let esperando: ReturnType<typeof setTimeout> | null = null;
+let pending: ReturnType<typeof setTimeout> | null = null;
 /** El ciclo en curso. Se compara por identidad para saber si sigue siendo el suyo. */
-let cicloActual: { cancelado: boolean } | null = null;
+let currentCycle: { cancelled: boolean } | null = null;
 
-function dormir(ms: number) {
-	return new Promise((listo) => setTimeout(listo, ms));
+function sleep(ms: number) {
+	return new Promise((done) => setTimeout(done, ms));
 }
 
-async function correrElCiclo(ciclo: { cancelado: boolean }) {
+async function runCycle(cycle: { cancelled: boolean }) {
 	// Se saca una foto: lo que se desmonte a mitad desaparece del mapa y se
 	// saltea al buscarlo.
-	const todas = [...registradas.keys()];
-	const visibles = todas.filter((id) => enPantalla.has(id));
-	const ocultas = todas.filter((id) => !enPantalla.has(id));
+	const all = [...registered.keys()];
+	const visible = all.filter((id) => onScreen.has(id));
+	const hidden = all.filter((id) => !onScreen.has(id));
 
-	for (const grupo of [visibles, ocultas]) {
-		for (let desde = 0; desde < grupo.length; desde += POR_TANDA) {
-			if (ciclo.cancelado) return;
-			const tanda = grupo.slice(desde, desde + POR_TANDA);
+	for (const group of [visible, hidden]) {
+		for (let start = 0; start < group.length; start += BATCH_SIZE) {
+			if (cycle.cancelled) return;
+			const batch = group.slice(start, start + BATCH_SIZE);
 			await Promise.allSettled(
-				tanda.map((id) => registradas.get(id)?.recargar() ?? Promise.resolve())
+				batch.map((id) => registered.get(id)?.reload() ?? Promise.resolve())
 			);
-			if (ciclo.cancelado) return;
-			if (desde + POR_TANDA < grupo.length || grupo === visibles) {
-				await dormir(ENTRE_TANDAS_MS);
+			if (cycle.cancelled) return;
+			if (start + BATCH_SIZE < group.length || group === visible) {
+				await sleep(BETWEEN_BATCHES_MS);
 			}
 		}
 	}
 
-	if (cicloActual === ciclo) cicloActual = null;
+	if (currentCycle === cycle) currentCycle = null;
 }
 
 /**
@@ -240,8 +245,8 @@ async function correrElCiclo(ciclo: { cancelado: boolean }) {
  * así que una prueba que cuente pedidos pasa con la baja puesta y sin ella.
  * Se vio: el sabotaje de sacar la baja no movió ninguna prueba.
  */
-export function cuantosIconosAnotados(): number {
-	return registradas.size;
+export function countRegisteredIcons(): number {
+	return registered.size;
 }
 
 /**
@@ -250,32 +255,32 @@ export function cuantosIconosAnotados(): number {
  * Exportado para las pruebas: sin esto habría que esperar los 100 ms de rebote
  * en cada una, y una prueba que duerme es una prueba que a veces falla sola.
  */
-export function recargarLosIconosAhora() {
-	if (esperando !== null) {
-		clearTimeout(esperando);
-		esperando = null;
+export function reloadIconsNow() {
+	if (pending !== null) {
+		clearTimeout(pending);
+		pending = null;
 	}
-	if (cicloActual) cicloActual.cancelado = true;
-	const ciclo = { cancelado: false };
-	cicloActual = ciclo;
-	void correrElCiclo(ciclo);
+	if (currentCycle) currentCycle.cancelled = true;
+	const cycle = { cancelled: false };
+	currentCycle = cycle;
+	void runCycle(cycle);
 }
 
-function alCambiarElTema() {
+function onThemeChanged() {
 	// Lo resuelto ya no vale, y lo que esté en vuelo tampoco: se pidió contra el
 	// tema anterior. Se vacía en el acto y no al empezar el ciclo, para que nadie
 	// que resuelva mientras tanto se lleve un valor del tema viejo.
-	memoria.clear();
-	enVuelo.clear();
-	// Los que resuelven por su cuenta con `usarLaVersionDelTema()` no pasan por
+	cache.clear();
+	inFlight.clear();
+	// Los que resuelven por su cuenta con `useThemeVersion()` no pasan por
 	// el planificador: son pocos y saben lo que hacen.
 	version.value++;
 
-	if (esperando !== null) clearTimeout(esperando);
-	esperando = setTimeout(() => {
-		esperando = null;
-		recargarLosIconosAhora();
-	}, ESPERA_MS);
+	if (pending !== null) clearTimeout(pending);
+	pending = setTimeout(() => {
+		pending = null;
+		reloadIconsNow();
+	}, DEBOUNCE_MS);
 }
 
 /**
@@ -285,37 +290,37 @@ function alCambiarElTema() {
  * el oyente por instancia garantizaba —que un cambio de tema durante la primera
  * resolución no se pierda— sin pagar el registro una vez por fila.
  */
-function tomarElOyente(): Promise<void> {
-	suscriptores++;
+function takeListener(): Promise<void> {
+	subscribers++;
 
-	if (soltarElOyente || registrando) {
-		return registrando ?? Promise.resolve();
+	if (releaseListener || registering) {
+		return registering ?? Promise.resolve();
 	}
 
-	registrando = listen(EVENTO, alCambiarElTema).then((soltar) => {
+	registering = listen(THEME_EVENT, onThemeChanged).then((release) => {
 		// Registrarse tarda, y quien lo pidió puede haberse ido mientras tanto:
 		// ahí `onUnmounted` ya pasó y no vio nada que soltar, así que el oyente
 		// quedaba puesto para siempre.
-		if (suscriptores <= 0) {
-			soltar();
+		if (subscribers <= 0) {
+			release();
 		} else {
-			soltarElOyente = soltar;
+			releaseListener = release;
 		}
-		registrando = null;
+		registering = null;
 	});
 
-	return registrando;
+	return registering;
 }
 
-function devolverElOyente() {
-	suscriptores--;
-	if (suscriptores > 0) {
+function returnListener() {
+	subscribers--;
+	if (subscribers > 0) {
 		return;
 	}
 
-	suscriptores = 0;
-	soltarElOyente?.();
-	soltarElOyente = null;
+	subscribers = 0;
+	releaseListener?.();
+	releaseListener = null;
 }
 
 /**
@@ -324,38 +329,38 @@ function devolverElOyente() {
  * `version` entra en la clave del pedido en vuelo para que una respuesta pedida
  * contra el tema anterior no se memorice como si fuera del nuevo.
  */
-function resolverCompartido(nombre: string, tipo: 'icon' | 'symbol'): Promise<string> {
-	const clave = `${tipo}:${nombre}`;
+function resolveShared(name: string, type: 'icon' | 'symbol'): Promise<string> {
+	const key = `${type}:${name}`;
 
-	const guardado = memoria.get(clave);
-	if (guardado !== undefined) {
-		return Promise.resolve(guardado);
+	const saved = cache.get(key);
+	if (saved !== undefined) {
+		return Promise.resolve(saved);
 	}
 
-	const pedido = enVuelo.get(clave);
-	if (pedido) {
-		return pedido;
+	const request = inFlight.get(key);
+	if (request) {
+		return request;
 	}
 
-	const cuando = version.value;
-	const nuevo = (tipo === 'symbol' ? getSymbolSource(nombre) : getIconSource(nombre))
-		.then((fuente) => {
+	const atVersion = version.value;
+	const fresh = (type === 'symbol' ? getSymbolSource(name) : getIconSource(name))
+		.then((source) => {
 			// Si el tema cambió mientras tanto, esto es del tema viejo: se
 			// devuelve a quien lo pidió —que ya va a volver a resolver— pero no
 			// se guarda.
-			if (version.value === cuando) {
-				memoria.set(clave, fuente);
+			if (version.value === atVersion) {
+				cache.set(key, source);
 			}
-			return fuente;
+			return source;
 		})
 		.finally(() => {
-			if (enVuelo.get(clave) === nuevo) {
-				enVuelo.delete(clave);
+			if (inFlight.get(key) === fresh) {
+				inFlight.delete(key);
 			}
 		});
 
-	enVuelo.set(clave, nuevo);
-	return nuevo;
+	inFlight.set(key, fresh);
+	return fresh;
 }
 
 /**
@@ -375,75 +380,105 @@ function resolverCompartido(nombre: string, tipo: 'icon' | 'symbol'): Promise<st
  * Se devuelve de sólo lectura: quien la usa la mira en un `watch`, no la mueve.
  *
  * ```ts
- * const version = usarLaVersionDelTema();
+ * const version = useThemeVersion();
  * watch([loQueSea, version], resolver, { immediate: true });
  * ```
  */
-export function usarLaVersionDelTema(): Readonly<Ref<number>> {
-	let desmontado = false;
+export function useThemeVersion(): Readonly<Ref<number>> {
+	let unmounted = false;
 
 	onMounted(async () => {
-		await tomarElOyente();
+		await takeListener();
 		// Registrarse tarda: si el componente ya se fue, se devuelve en el acto
 		// en vez de dejar la cuenta subida para siempre.
-		if (desmontado) {
-			devolverElOyente();
+		if (unmounted) {
+			returnListener();
 		}
 	});
 
 	onUnmounted(() => {
-		if (!desmontado) {
-			desmontado = true;
-			devolverElOyente();
+		if (!unmounted) {
+			unmounted = true;
+			returnListener();
 		}
 	});
 
 	return readonly(version);
 }
 
-export function useIconoDelTema(nombre: Ref<string>, tipo: Ref<'icon' | 'symbol'>) {
-	const fuente = ref('');
-	let desmontado = false;
-	let ultimoPedido = 0;
+/**
+ * El icono de un nombre del tema, o del primero de una lista que el tema tenga.
+ *
+ * `names` es la lista de candidatos en orden: el nombre pedido y sus
+ * respaldos. Los temas no se ponen de acuerdo —el `Icon=` de un `.desktop`, el
+ * identificador de AppStream, el nombre del paquete—, así que quien tiene más
+ * de un nombre posible los pasa todos y se queda con el primero que resuelva.
+ * Cada candidato pasa por la misma memoria compartida: probar tres nombres en
+ * diez filas iguales son tres pedidos, no treinta.
+ *
+ * `name` sigue aceptando un nombre suelto, que es lo que usaba la 2.1.0.
+ */
+export function useThemeIcon(names: Ref<string> | Ref<readonly string[]>, type: Ref<'icon' | 'symbol'>) {
+	const source = ref('');
+	let unmounted = false;
+	let lastRequest = 0;
 	// Se anota en el `setup` y no al montar: entre una cosa y la otra puede
 	// llegar un cambio de tema, y quien no está anotado no se entera.
-	const id = anotar(async () => {
-		await resolver();
+	const id = register(async () => {
+		await resolve();
 	});
 
-	async function resolver() {
-		const mio = ++ultimoPedido;
-		const cual = nombre.value;
+	/** Los candidatos sin vacíos ni repetidos, en el orden en que llegaron. */
+	function candidates(): string[] {
+		const value = names.value;
+		const list = typeof value === 'string' ? [value] : [...value];
+		return [...new Set(list.filter(Boolean))];
+	}
 
-		if (!cual) {
-			fuente.value = '';
+	async function resolve() {
+		const mine = ++lastRequest;
+		const list = candidates();
+
+		if (!list.length) {
+			source.value = '';
 			return;
 		}
 
-		const resuelto = await resolverCompartido(cual, tipo.value);
-
-		if (mio === ultimoPedido && !desmontado) {
-			fuente.value = resuelto;
+		let resolved = '';
+		for (const candidate of list) {
+			try {
+				resolved = await resolveShared(candidate, type.value);
+			} catch {
+				// Un nombre que falla no corta la lista: se prueba el siguiente.
+				resolved = '';
+			}
+			// Un pedido más nuevo ya está en camino: éste no decide nada.
+			if (mine !== lastRequest || unmounted) return;
+			if (resolved) break;
 		}
+
+		source.value = resolved;
 	}
 
 	onMounted(async () => {
-		await tomarElOyente();
-		if (!desmontado) {
-			await resolver();
+		await takeListener();
+		if (!unmounted) {
+			await resolve();
 		}
 	});
 
 	onUnmounted(() => {
-		desmontado = true;
-		olvidar(id);
-		devolverElOyente();
+		unmounted = true;
+		unregister(id);
+		returnListener();
 	});
 
-	watch([nombre, tipo], resolver);
+	// `deep` porque la lista puede llegar como el mismo arreglo con otro
+	// contenido; con un nombre suelto no cambia nada.
+	watch([names, type], resolve, { deep: true });
 
 	// El cambio de tema ya **no** se mira acá: lo reparte el planificador, que
 	// decide en qué orden y de a cuántos. Mirar `version` además haría las dos
 	// cosas a la vez, que es lo que se está tratando de evitar.
-	return { fuente, mirarElemento: (elemento: HTMLElement | null) => mirarElemento(id, elemento) };
+	return { source, watchElement: (element: HTMLElement | null) => watchElement(id, element) };
 }

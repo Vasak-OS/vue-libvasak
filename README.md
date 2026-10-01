@@ -118,6 +118,10 @@ aplicación, y si la clave no está, del respaldo de la librería:
 | `dialog.close` | el cerrar de `DialogHeader` con `closable` | «Cerrar» |
 | `dialog.body` | el nombre de `DialogBody` cuando desplaza | «Contenido» |
 | `numberField.decrement` / `numberField.increment` | los botones de `NumberField` con `stepper` | «Restar» / «Sumar» |
+| `avatar.edit` | el botón de `Avatar` con `editable` | «Change picture» |
+| `media.progress` | el aro de `SpinningCover` con `progress` | «Progress» |
+| `tray.progress` | la línea de `TrayIconButton` con `progress` | «Progress» |
+| `dropZone.label` / `dropZone.locked` | el texto de `DropZone` | «Drop files here» / «Can't drop here» |
 
 ## Qué componente para qué (2.1.0)
 
@@ -134,6 +138,22 @@ salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
   el título de un tramo: `SectionHeading`;
 - un campo con su etiqueta, ayuda y error: `FormGroup`, cuya ranura recibe
   `id`, `describedBy` e `invalid` para pasárselos al campo.
+
+## Qué componente para qué (2.2.0)
+
+- algo que cuelga de un botón y no es un menú (un formulario chico, un
+  selector): `Popover`; colgado de otro elemento que no es el disparador:
+  `PopoverAnchor`;
+- un atajo: `Kbd`; en un menú, la propiedad `shortcut` del ítem;
+- una persona: `Avatar`, o `IdentityBlock` con el nombre al lado;
+- un icono en un recuadro con estado: `IconTile`;
+- lo que todavía carga: `Skeleton` (decoración; lo que carga lo dice la región
+  con `aria-busy` o un `LoadingState`);
+- una portada: `CoverArt`; girando, con aro o como botón: `SpinningCover`;
+- pares de nombre y valor: `PropertyList`; un número con su nombre:
+  `StatTile`; texto de máquina o un registro: `CodeBlock`;
+- algo que se despliega: `Disclosure`; dónde soltar lo que se arrastra:
+  `DropZone`.
 
 ## Reproductor
 

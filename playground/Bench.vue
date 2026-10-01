@@ -31,6 +31,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '../src';
+import BenchExtras from './BenchExtras.vue';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
 import BenchRows from './BenchRows.vue';
@@ -61,6 +62,12 @@ const sections = [
 	'notices',
 	'dialog-body',
 	'dialog-sm',
+	'popover',
+	'menu-22',
+	'identity',
+	'media-22',
+	'data',
+	'tray-22',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -68,6 +75,8 @@ const FEEDBACK = ['feedback', 'dialog', 'dialog-body', 'dialog-sm'];
 /** Lo de la 2.1.0. */
 const SELECTION = ['selection', 'fields'];
 const ROWS = ['rows', 'notices'];
+/** Lo de la 2.2.0. */
+const EXTRAS = ['popover', 'menu-22', 'identity', 'media-22', 'data', 'tray-22'];
 const shown = computed(() =>
 	props.only ? sections.filter((section) => props.only.split(',').includes(section)) : sections
 );
@@ -260,6 +269,7 @@ onMounted(async () => {
           <BenchForms v-else-if="FORMS.includes(section)" :section="section" :width="width" />
           <BenchSelection v-else-if="SELECTION.includes(section)" :section="section" :width="width" />
           <BenchRows v-else-if="ROWS.includes(section)" :section="section" :width="width" />
+          <BenchExtras v-else-if="EXTRAS.includes(section)" :section="section" :width="width" />
           <BenchWindow
             v-else-if="WINDOW.includes(section)"
             :section="section"

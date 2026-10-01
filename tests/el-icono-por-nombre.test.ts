@@ -22,7 +22,7 @@ import { nextTick } from 'vue';
 import DeviceCard from '../src/cards/DeviceCard.vue';
 import ToggleControl from '../src/controls/ToggleControl.vue';
 import SliderControl from '../src/forms/SliderControl.vue';
-import { olvidarLosIconosDelTema } from '../src/internos/iconoDelTema';
+import { forgetThemeIcons } from '../src/internal/themeIcon';
 import TrayIconButton from '../src/tray/TrayIconButton.vue';
 import { olvidarTodo, ponerEnElTema } from './dobles';
 
@@ -48,12 +48,12 @@ const LOS_CUATRO = [
 
 beforeEach(() => {
 	olvidarTodo();
-	olvidarLosIconosDelTema();
+	forgetThemeIcons();
 });
 
 afterEach(() => {
 	while (montados.length) montados.pop()?.unmount();
-	olvidarLosIconosDelTema();
+	forgetThemeIcons();
 });
 
 describe('el icono se pide por nombre', () => {

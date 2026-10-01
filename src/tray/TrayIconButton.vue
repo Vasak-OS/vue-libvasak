@@ -15,15 +15,25 @@
     @mouseleave="showTooltip = false"
   >
     <ThemeIcon
-      v-if="name"
+      v-if="name || fallbackSrc"
       :name="name"
       :type="type"
       :size="22"
       :alt="alt"
+      :fallbacks="fallbacks"
+      :fallback-src="fallbackSrc"
       class="m-auto"
       :class="iconClass"
     />
     
+    <!-- El progreso de LauncherEntry (2.2.0): una línea al pie, sólo si viene. -->
+    <span
+      v-if="hasProgress"
+      class="pointer-events-none absolute right-1 bottom-0.5 left-1"
+      data-progress>
+      <ProgressTrack :value="percent" :label="progressText" height="h-1" fill="bg-primary" />
+    </span>
+
     <!-- Badge/Counter -->
     <div
       v-if="badge !== null && badge > 0"
@@ -79,9 +89,21 @@
  * `rounded-corner-full` en peso 600 y ya no rebota: un número que salta sin
  * parar en el panel distrae de todo lo demás. El globo propio es el mismo
  * globo de `TooltipContent`.
+ *
+ * ── Lo que sumó la 2.2.0 ───────────────────────────────────────────────────
+ *
+ * `progress` (0–100): una línea fina al pie del icono, el progreso que una
+ * aplicación publica por `com.canonical.Unity.LauncherEntry` (una descarga,
+ * una copia). El número de la misma interfaz ya entraba por `badge`. Las dos
+ * son **opcionales y sólo se dibujan si vienen**: de dónde salen (DBusMenu,
+ * LauncherEntry) es del escritorio (vasak-desktop#145), no de la librería.
+ * También `fallbacks` y `fallbackSrc`, que pasan a `ThemeIcon`: el nombre de
+ * icono que manda otra aplicación puede no estar en el tema.
  */
 import { computed, ref } from 'vue';
+import ProgressTrack from '../forms/ProgressTrack.vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
+import { useLabels } from '../shared/labels';
 
 
 interface Props {
@@ -106,6 +128,14 @@ interface Props {
    * icono. Con esto quedan quietos y se dibujan como un `div`.
    */
   interactive?: boolean;
+  /** El progreso que publica la aplicación, de 0 a 100. Sin esto no hay línea. */
+  progress?: number | null;
+  /** Cómo se llama la línea para un lector de pantalla. */
+  progressLabel?: string;
+  /** Otros nombres del tema para el icono, en orden. */
+  fallbacks?: readonly string[];
+  /** El dibujo que manda la aplicación, si ningún nombre resolvió. */
+  fallbackSrc?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -120,7 +150,16 @@ const props = withDefaults(defineProps<Props>(), {
   showCustomTooltip: false,
   customTooltipText: '',
   interactive: true,
+  progress: null,
+  progressLabel: undefined,
+  fallbacks: () => [],
+  fallbackSrc: '',
 });
+
+const translate = useLabels();
+const hasProgress = computed(() => typeof props.progress === 'number' && Number.isFinite(props.progress));
+const percent = computed(() => Math.min(Math.max(props.progress ?? 0, 0), 100));
+const progressText = computed(() => props.progressLabel ?? translate('tray.progress', 'Progress'));
 
 const emit = defineEmits<{
   click: [];
@@ -133,7 +172,13 @@ const emit = defineEmits<{
  * anuncia un botón **vacío**. Se usa el `alt` del icono, y si no hay, el texto
  * del tooltip.
  */
-const accessibleName = computed(() => props.alt || props.tooltip || undefined);
+const accessibleName = computed(() => {
+  const name = props.alt || props.tooltip;
+  // El progreso va adentro del botón, y lo de adentro de un botón no se
+  // anuncia aparte: se suma a su nombre.
+  if (!hasProgress.value) return name || undefined;
+  return [name, progressText.value, `${Math.round(percent.value)} %`].filter(Boolean).join(', ');
+});
 
 const showTooltip = ref(false);
 

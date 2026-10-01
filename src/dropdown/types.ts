@@ -88,3 +88,11 @@ export function nextMenuId(): string {
 	counter += 1;
 	return `vsk-menu-${counter}`;
 }
+
+/**
+ * Lo que el teclado del menú recorre: las opciones comunes y, desde la 2.2.0,
+ * las que se marcan (`menuitemcheckbox`, `menuitemradio`), que son las de
+ * DBusMenu en la bandeja. Un selector solo, para que el menú y quien lo pruebe
+ * no se separen.
+ */
+export const MENU_ITEM_SELECTOR = '[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]';

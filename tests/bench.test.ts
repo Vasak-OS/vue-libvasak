@@ -149,6 +149,6 @@ describe('la compilación publica tokens.css tal cual', () => {
 
 		expect(manifest.exports['./tokens.css']).toBe('./dist/tokens.css');
 		expect(manifest.exports['./scrollbar.css']).toBe('./dist/scrollbar.css');
-		expect(manifest.version).toBe('2.1.0');
+		expect(manifest.version).toBe('2.2.0');
 	});
 });

@@ -42,8 +42,8 @@ mock.module('@tauri-apps/api/window', () => ({ getCurrentWindow }));
 // archivos de prueba, así que `olvidarTodo()` tiene que poder vaciarla. Se
 // importa acá y no en `dobles.ts` porque este módulo arrastra a Vue, y Vue
 // tomado antes del registro del DOM se queda con `document` en nulo.
-const { olvidarLosIconosDelTema } = await import('../src/internos/iconoDelTema');
-asiSeOlvidanLosIconos(olvidarLosIconosDelTema);
+const { forgetThemeIcons } = await import('../src/internal/themeIcon');
+asiSeOlvidanLosIconos(forgetThemeIcons);
 
 /**
  * Compilar un `.vue` acá y no en la primera prueba que monte.

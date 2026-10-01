@@ -14,7 +14,7 @@ import { nextTick } from 'vue';
 import SideBar from '../src/sidebar/SideBar.vue';
 import SideButton from '../src/sidebar/SideButton.vue';
 import SideGroup from '../src/sidebar/SideGroup.vue';
-import { recargarLosIconosAhora } from '../src/internos/iconoDelTema';
+import { reloadIconsNow } from '../src/internal/themeIcon';
 import {
 	cuantosOyentes,
 	demorarElProximoRegistro,
@@ -65,7 +65,7 @@ async function asentar(vueltas = 8) {
  * acá es lo otro: que el icono termine siguiendo al tema.
  */
 async function esperarLaRecarga() {
-	recargarLosIconosAhora();
+	reloadIconsNow();
 	await asentar();
 }
 
@@ -229,7 +229,7 @@ describe('los elementos', () => {
 		const registros = barra
 			.findAll('button')
 			.find((boton) => boton.text().includes('Registros'));
-		expect((registros?.element as HTMLButtonElement).disabled).toBe(true);
+		expect((registros?.element as HTMLButtonElement | undefined)?.disabled).toBe(true);
 		await registros?.trigger('click');
 
 		expect(barra.emitted('update:modelValue')).toBeUndefined();
@@ -627,6 +627,25 @@ describe('el ancho del lugar donde está', () => {
 		await avisar();
 
 		expect(vista.find('aside').classes()).toContain('w-72');
+		vista.unmount();
+		panel.remove();
+	});
+
+	test('un panel más angosto que la barra desplegada la pliega: no es un envoltorio', async () => {
+		// Desplegada mide 288 y el panel 240. Antes se subía por cualquier
+		// antepasado que no fuera más ancho que la barra, llegaba a la página
+		// de 1280 y se quedaba desplegada, cortada por el panel.
+		ponerAncho(document.documentElement, 1280);
+		const panel = document.createElement('div');
+		document.body.append(panel);
+		ponerAncho(panel, 240);
+		const vista = mount(SideBar, { props: { title: 'Ventana' }, attachTo: panel });
+		const aside = vista.find('aside').element as HTMLElement;
+		Object.defineProperty(aside, 'offsetWidth', { value: 288, configurable: true });
+		ponerAncho(aside.parentElement as HTMLElement, 240);
+		await avisar();
+
+		expect(vista.find('aside').classes()).toContain('w-[84px]');
 		vista.unmount();
 		panel.remove();
 	});

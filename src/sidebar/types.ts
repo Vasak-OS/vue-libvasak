@@ -4,6 +4,8 @@ export interface SidebarItem {
 	label: string;
 	/** Un nombre del tema de iconos del escritorio, no una ruta. */
 	icon?: string;
+	/** Una línea debajo del nombre (2.2.0). */
+	description?: string;
 	badge?: string | number;
 	disabled?: boolean;
 }

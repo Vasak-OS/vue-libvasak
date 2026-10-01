@@ -34,27 +34,93 @@
  *
  * Un nombre largo se parte en dos líneas en vez de cortarse: en un menú, lo
  * que no se lee no se puede elegir.
+ *
+ * # Lo que sumó la 2.2.0
+ *
+ * Lo que necesitan el menú de la bandeja (DBusMenu, `TrayPopupView` del
+ * escritorio) y los menús con atajos del gestor de archivos. Nada cambia si no
+ * se pide.
+ *
+ * - `checked` (`true`/`false`) vuelve al ítem una opción que se marca:
+ *   `role="menuitemcheckbox"` —o `menuitemradio` con `toggle="radio"`, el
+ *   «toggle-type» de DBusMenu— con `aria-checked` y la tilde del tema. En
+ *   `null` (por omisión) es un ítem común. Al elegirlo emite además
+ *   `update:checked` con el valor nuevo: la casilla se invierte, la radio
+ *   queda marcada.
+ * - `inset` corre el texto tantas columnas de icono (28 px cada una) como se
+ *   pida, para que un ítem sin tilde ni icono quede alineado con los que la
+ *   tienen —o para el nivel de un submenú aplanado—.
+ * - `icon` (un nombre del tema) o la ranura `prefix` adelante; la ranura
+ *   `description` debajo del nombre; `shortcut` (las teclas, que dibuja
+ *   `Kbd`) o la ranura del mismo nombre al extremo derecho.
+ * - `danger`: el velo de pasar por encima y de apretar en el tono de error,
+ *   para «Borrar». El texto **no** va en rojo: el rojo del esquema de fábrica
+ *   sobre la superficie flotante no llega a 4,5:1 (lo mide
+ *   `tests/surface-contrast.test.ts`), así que lo que avisa es la palabra y el
+ *   velo, como en `FormGroup`.
+ *
+ * El teclado del menú recorre los tres roles (`MENU_ITEM_SELECTOR`).
  */
+import { computed } from 'vue';
+import ThemeIcon from '../icons/ThemeIcon.vue';
+import Kbd from '../text/Kbd.vue';
 import { useMenu } from './types';
 
 const props = withDefaults(
 	defineProps<{
 		disabled?: boolean;
+		/** Marcado o no. `null` es un ítem que no se marca. */
+		checked?: boolean | null;
+		/** Casilla o radio, cuando se marca. */
+		toggle?: 'checkbox' | 'radio';
+		/** Columnas de icono que se corre el texto. */
+		inset?: number;
+		/** Un icono del tema adelante del nombre. */
+		icon?: string;
+		iconType?: 'icon' | 'symbol';
+		/** Las teclas del atajo, ya traducidas. */
+		shortcut?: readonly string[];
+		danger?: boolean;
 	}>(),
 	{
 		disabled: false,
+		checked: null,
+		toggle: 'checkbox',
+		inset: 0,
+		icon: '',
+		iconType: 'symbol',
+		shortcut: () => [],
+		danger: false,
 	}
 );
 
 const emit = defineEmits<{
 	select: [];
 	click: [event: Event];
+	'update:checked': [value: boolean];
+}>();
+
+defineSlots<{
+	default?: () => unknown;
+	prefix?: () => unknown;
+	description?: () => unknown;
+	shortcut?: () => unknown;
 }>();
 
 const menu = useMenu();
 
+const checkable = computed(() => props.checked !== null);
+const role = computed(() =>
+	!checkable.value ? 'menuitem' : props.toggle === 'radio' ? 'menuitemradio' : 'menuitemcheckbox'
+);
+/** 28 px por columna: el icono de 16 y la separación de 12. */
+const insetStyle = computed(() =>
+	props.inset > 0 ? { paddingInlineStart: `calc(0.75rem + ${props.inset * 1.75}rem)` } : undefined
+);
+
 function choose(event: Event) {
 	if (props.disabled) return;
+	if (checkable.value) emit('update:checked', props.toggle === 'radio' ? true : !props.checked);
 	emit('select');
 	emit('click', event);
 	menu.close({ returnFocus: true });
@@ -63,20 +129,43 @@ function choose(event: Event) {
 
 <template>
   <div
-    role="menuitem"
+    :role="role"
     tabindex="0"
     :aria-disabled="disabled || undefined"
+    :aria-checked="checkable ? (checked ? 'true' : 'false') : undefined"
     :class="[
-      'flex min-h-8 min-w-0 items-center gap-3 rounded-corner-m border border-transparent px-3 py-1 text-label-m text-tx-main',
+      'flex min-h-8 min-w-0 items-center gap-3 rounded-corner-m border border-transparent px-3 py-1 text-label-m',
       'transition-colors duration-200 ease-ui',
       'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus',
+      'text-tx-main',
       disabled
         ? 'cursor-not-allowed opacity-50'
-        : 'cursor-pointer hover:bg-ui-hover focus-visible:bg-ui-hover active:bg-ui-pressed active:duration-100',
+        : danger
+          ? 'cursor-pointer hover:bg-status-error/10 focus-visible:bg-status-error/10 active:bg-status-error/15 active:duration-100'
+          : 'cursor-pointer hover:bg-ui-hover focus-visible:bg-ui-hover active:bg-ui-pressed active:duration-100',
     ]"
+    :style="insetStyle"
+    :data-danger="danger || undefined"
     @click="choose"
     @keydown.enter.prevent="choose"
     @keydown.space.prevent="choose">
-    <slot />
+    <!-- La columna de la marca: vacía si no está marcado, para que los ítems
+         de un grupo queden alineados. -->
+    <span v-if="checkable" aria-hidden="true" class="flex size-4 shrink-0 items-center justify-center" data-check>
+      <template v-if="checked">
+        <span v-if="toggle === 'radio'" class="size-2 rounded-corner-full bg-tx-main" />
+        <ThemeIcon v-else name="object-select" type="symbol" :size="16" />
+      </template>
+    </span>
+    <span v-if="$slots.prefix || icon" aria-hidden="true" class="flex shrink-0 items-center">
+      <slot name="prefix"><ThemeIcon :name="icon" :type="iconType" :size="16" /></slot>
+    </span>
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span class="min-w-0 break-words"><slot /></span>
+      <span v-if="$slots.description" class="min-w-0 break-words text-body-xs text-tx-muted"><slot name="description" /></span>
+    </span>
+    <span v-if="$slots.shortcut || shortcut.length" class="ml-auto flex shrink-0 items-center text-tx-muted">
+      <slot name="shortcut"><Kbd :keys="shortcut" /></slot>
+    </span>
   </div>
 </template>
