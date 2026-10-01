@@ -62,6 +62,22 @@ import SectionHeading from "./layout/SectionHeading.vue";
 import PageHeader from "./layout/PageHeader.vue";
 import Panel from "./layout/Panel.vue";
 import DialogBody from "./dialog/DialogBody.vue";
+/* 2.2.0: globos, teclas, identidad, carátulas, datos, plegables y soltar. */
+import Popover from "./popover/Popover.vue";
+import PopoverTrigger from "./popover/PopoverTrigger.vue";
+import PopoverAnchor from "./popover/PopoverAnchor.vue";
+import PopoverContent from "./popover/PopoverContent.vue";
+import Kbd from "./text/Kbd.vue";
+import Avatar from "./identity/Avatar.vue";
+import IdentityBlock from "./identity/IdentityBlock.vue";
+import IconTile from "./indicators/IconTile.vue";
+import Skeleton from "./feedback/Skeleton.vue";
+import CoverArt from "./media/CoverArt.vue";
+import Disclosure from "./disclosure/Disclosure.vue";
+import PropertyList from "./data/PropertyList.vue";
+import StatTile from "./data/StatTile.vue";
+import CodeBlock from "./data/CodeBlock.vue";
+import DropZone from "./feedback/DropZone.vue";
 import type { App } from "vue";
 
 const components = [
@@ -128,6 +144,21 @@ const components = [
   PageHeader,
   Panel,
   DialogBody,
+  Popover,
+  PopoverTrigger,
+  PopoverAnchor,
+  PopoverContent,
+  Kbd,
+  Avatar,
+  IdentityBlock,
+  IconTile,
+  Skeleton,
+  CoverArt,
+  Disclosure,
+  PropertyList,
+  StatTile,
+  CodeBlock,
+  DropZone,
 ];
 
 export default {
@@ -202,6 +233,21 @@ export {
   PageHeader,
   Panel,
   DialogBody,
+  Popover,
+  PopoverTrigger,
+  PopoverAnchor,
+  PopoverContent,
+  Kbd,
+  Avatar,
+  IdentityBlock,
+  IconTile,
+  Skeleton,
+  CoverArt,
+  Disclosure,
+  PropertyList,
+  StatTile,
+  CodeBlock,
+  DropZone,
 };
 
 export type { PlaybackState } from "./media/playback";
@@ -222,6 +268,14 @@ export type { TooltipContext } from "./tooltip/types";
 export { TOOLTIP_KEY, useTooltip } from "./tooltip/types";
 export type { SidebarCategory, SidebarItem } from "./sidebar/types";
 export type { TabAction, TabEntry } from "./tabs/types";
+export type { PopoverContext } from "./popover/types";
+export { POPOVER_KEY, usePopover } from "./popover/types";
+export type { AvatarSize } from "./identity/Avatar.vue";
+export type { IconTileStatus, IconTileTone } from "./indicators/IconTile.vue";
+export type { CoverArtSize } from "./media/CoverArt.vue";
+export type { PropertyItem } from "./data/PropertyList.vue";
+export type { CodeLine, CodeLineTone } from "./data/CodeBlock.vue";
+export type { ToggleIndicator } from "./controls/ToggleControl.vue";
 
 /*
  * Los nombres de la 1.x, como alias obsoletos.
@@ -308,4 +362,11 @@ export { posicionDe, usarLaPosicionDeLaBarra } from "./window/preferencia";
  * instalador, donde el aviso dejó de dibujar su icono al correr la suite entera
  * y lo dibujaba bien al correr su archivo solo.
  */
-export { olvidarLosIconosDelTema, usarLaVersionDelTema } from "./internos/iconoDelTema";
+export { forgetThemeIcons, useThemeVersion } from "./internal/themeIcon";
+
+import { forgetThemeIcons as forgetThemeIconsValue, useThemeVersion as useThemeVersionValue } from "./internal/themeIcon";
+
+/** @deprecated Usá `forgetThemeIcons`. Se va en la 3.0. */
+export const olvidarLosIconosDelTema = forgetThemeIconsValue;
+/** @deprecated Usá `useThemeVersion`. Se va en la 3.0. */
+export const usarLaVersionDelTema = useThemeVersionValue;

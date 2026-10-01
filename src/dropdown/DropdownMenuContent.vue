@@ -51,7 +51,8 @@
  * se parte en dos líneas en vez de mandar medio menú afuera.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useMenu } from './types';
+import { computePlacement, MARGIN, type Placement, transformOriginFor } from '../shared/placement';
+import { MENU_ITEM_SELECTOR, useMenu } from './types';
 
 const props = withDefaults(
 	defineProps<{
@@ -73,148 +74,37 @@ const { menuId, labelId } = menu;
 const trigger = computed(() => menu.trigger.value);
 const open = computed(() => menu.open.value);
 
-type Side = 'top' | 'bottom' | 'left' | 'right';
-
 const content = ref<HTMLElement | null>(null);
 /** Dónde va, hasta dónde puede crecer y de qué lado quedó. Sin techo mientras no haga falta. */
-const position = ref<{ top: number; left: number; ceiling: number | null; side: Side }>({
+const position = ref<Placement>({
 	top: 0,
 	left: 0,
 	ceiling: null,
 	side: 'bottom',
 });
 
-/** El aire que se le deja al borde de la ventana. */
-const MARGIN = 8;
-
-const OPPOSITE: Record<Side, Side> = {
-	top: 'bottom',
-	bottom: 'top',
-	left: 'right',
-	right: 'left',
-};
-
 /**
- * La esquina desde la que crece: la que toca al disparador.
- *
- * Abajo del disparador crece desde arriba; arriba, desde abajo; a un costado,
- * desde el borde que da al disparador. En el otro eje manda la alineación.
+ * La esquina desde la que crece: la que toca al disparador. La cuenta vive en
+ * `shared/placement.ts`, que comparte con `PopoverContent`.
  */
-const transformOrigin = computed(() => {
-	const { side } = position.value;
-	const alongX = props.align === 'start' ? 'left' : props.align === 'end' ? 'right' : 'center';
-	switch (side) {
-		case 'bottom':
-			return `top ${alongX}`;
-		case 'top':
-			return `bottom ${alongX}`;
-		case 'right':
-			return 'top left';
-		case 'left':
-			return 'top right';
-	}
-	return 'top left';
-});
-
-/** Lo que hay entre el disparador y el borde de la ventana, de ese lado. */
-function spaceOn(side: Side, from: DOMRect): number {
-	const gap = props.sideOffset + MARGIN;
-	switch (side) {
-		case 'bottom':
-			return window.innerHeight - from.bottom - gap;
-		case 'top':
-			return from.top - gap;
-		case 'right':
-			return window.innerWidth - from.right - gap;
-		case 'left':
-			return from.left - gap;
-	}
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-	if (maximum < minimum) return minimum;
-	return Math.min(Math.max(value, minimum), maximum);
-}
+const transformOrigin = computed(() => transformOriginFor(position.value.side, props.align));
 
 function computePosition() {
 	if (!trigger.value || !content.value) return;
 
-	const from = trigger.value.getBoundingClientRect();
-	// `scrollHeight` y no el rectángulo: el rectángulo ya viene con el techo de
-	// la vez anterior puesto, así que un menú topado se creería de ese tamaño y
-	// no volvería a crecer nunca aunque le sobrara lugar.
-	const wantedHeight = content.value.scrollHeight;
-	const wantedWidth = content.value.offsetWidth;
-
-	// `side` es una preferencia: si no entra de ese lado y del otro hay más
-	// lugar, se da vuelta. Con «más» y no con «entra» alcanza: si no entra en
-	// ninguno de los dos, va al que menos lo corta.
-	const vertical = props.side === 'top' || props.side === 'bottom';
-	const needed = vertical ? wantedHeight : wantedWidth;
-
-	let side: Side = props.side;
-	const here = spaceOn(side, from);
-	if (here < needed) {
-		const across = spaceOn(OPPOSITE[side], from);
-		if (across > here) side = OPPOSITE[side];
-	}
-
-	let top = 0;
-	let left = 0;
-	let ceiling: number | null = null;
-
-	switch (side) {
-		case 'bottom': {
-			top = from.bottom + props.sideOffset;
-			ceiling = Math.max(window.innerHeight - top - MARGIN, 0);
-			break;
-		}
-		case 'top': {
-			// Crece para arriba: el borde de abajo queda clavado contra el
-			// disparador, así que lo que se mueve al toparlo es el `top`.
-			ceiling = Math.max(spaceOn('top', from), 0);
-			top = from.top - props.sideOffset - Math.min(wantedHeight, ceiling);
-			break;
-		}
-		case 'left':
-		case 'right': {
-			left = side === 'right' ? from.right + props.sideOffset : from.left - wantedWidth - props.sideOffset;
-			// A un costado el alto no lo limita el costado sino la ventana. El
-			// menú arranca a la altura del disparador, y si desde ahí no entra
-			// se sube lo que haga falta antes de toparlo.
-			const inWindow = window.innerHeight - 2 * MARGIN;
-			top = clamp(from.top, MARGIN, window.innerHeight - Math.min(wantedHeight, inWindow) - MARGIN);
-			ceiling = Math.max(window.innerHeight - top - MARGIN, 0);
-			break;
-		}
-	}
-
-	if (vertical) {
-		switch (props.align) {
-			case 'start':
-				left = from.left;
-				break;
-			case 'center':
-				left = from.left + from.width / 2 - wantedWidth / 2;
-				break;
-			case 'end':
-				left = from.right - wantedWidth;
-				break;
-		}
-	}
-
-	// Y que no se vaya por el costado. Alinear contra el disparador es lo que se
-	// pidió, pero un disparador pegado al borde derecho manda medio menú afuera
-	// de la ventana, donde no hay forma de leerlo.
-	left = clamp(left, MARGIN, window.innerWidth - wantedWidth - MARGIN);
-
-	position.value = { top, left, ceiling, side };
+	position.value = computePlacement(
+		trigger.value.getBoundingClientRect(),
+		// `scrollHeight` y no el rectángulo: ver `computePlacement`.
+		{ width: content.value.offsetWidth, height: content.value.scrollHeight },
+		{ side: props.side, align: props.align, sideOffset: props.sideOffset },
+		{ width: window.innerWidth, height: window.innerHeight }
+	);
 }
 
 /** Los ítems que hay ahora mismo, en el orden en que se leen. */
 function items(): HTMLElement[] {
 	if (!content.value) return [];
-	return Array.from(content.value.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+	return Array.from(content.value.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR));
 }
 
 /**

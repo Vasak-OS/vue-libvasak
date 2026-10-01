@@ -30,10 +30,32 @@
  * `icon` —la ruta ya resuelta— se fue en la 2.0.0, como avisaba desde la 1.x:
  * obligaba a quien lo usara a resolver la ruta por su cuenta, escuchar el
  * cambio de tema y volver a pedirla. Ninguna aplicación lo usaba al sacarlo.
+ *
+ * ── Lo que sumó la 2.2.0 ───────────────────────────────────────────────────
+ *
+ * Lo que dibujaban a mano encima los botones de Red, Bluetooth y tema del
+ * escritorio, ahora en el componente. Sin pedirlo, el botón es el de siempre.
+ *
+ * - `indicator`: un `StatusDot` en la esquina de arriba —conectando (late),
+ *   conectado, sin red—. Su `label` se suma al nombre del botón, porque el
+ *   punto solo no lo ve quien no ve.
+ * - `badge`: un número en la esquina de abajo (dispositivos conectados), con
+ *   la misma píldora que `TrayIconButton`. Cero o nada, no se dibuja.
+ * - la ranura `overlay`: encima del icono y sin recibir el puntero, para las
+ *   barras de señal del Wi-Fi.
  */
+import { computed } from 'vue';
+import StatusDot, { type StatusDotTone } from '../indicators/StatusDot.vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
-withDefaults(
+export interface ToggleIndicator {
+	tone: StatusDotTone;
+	pulse?: boolean;
+	/** El estado, ya traducido. Se suma al nombre del botón. */
+	label?: string;
+}
+
+const props = withDefaults(
 	defineProps<{
 		/** El nombre del icono en el tema del escritorio. */
 		name?: string;
@@ -69,6 +91,10 @@ withDefaults(
 		isLoading?: boolean;
 		iconClass?: Record<string, boolean>;
 		customClass?: Record<string, boolean>;
+		/** Un punto de estado en la esquina de arriba. */
+		indicator?: ToggleIndicator | null;
+		/** Un número en la esquina de abajo. Cero o nada, no se dibuja. */
+		badge?: number | null;
 	}>(),
 	{
 		name: '',
@@ -78,7 +104,21 @@ withDefaults(
 		isLoading: false,
 		iconClass: () => ({}),
 		customClass: () => ({}),
+		indicator: null,
+		badge: null,
 	}
+);
+
+defineSlots<{
+	overlay?: () => unknown;
+}>();
+
+const showsBadge = computed(() => typeof props.badge === 'number' && props.badge > 0);
+/** El nombre del botón, con el estado del punto y el número si los tiene. */
+const accessibleName = computed(() =>
+	[props.label, props.indicator?.label, showsBadge.value ? String(props.badge) : '']
+		.filter(Boolean)
+		.join(', ')
 );
 
 const emit = defineEmits<{ click: [] }>();
@@ -99,8 +139,8 @@ function onClick() {
       ...customClass,
     }"
     :disabled="isLoading"
-    :title="label"
-    :aria-label="label"
+    :title="accessibleName"
+    :aria-label="accessibleName"
     :aria-pressed="pressed ?? undefined"
     :aria-busy="isLoading || undefined"
     @click="onClick">
@@ -118,5 +158,18 @@ function onClick() {
         'opacity-60': !isActive,
         ...iconClass,
       }" />
+    <span v-if="$slots.overlay" aria-hidden="true" class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+      <slot name="overlay" />
+    </span>
+    <span v-if="indicator" class="absolute top-2 right-2 z-30 flex" data-indicator>
+      <StatusDot :tone="indicator.tone" :pulse="indicator.pulse" size="md" />
+    </span>
+    <span
+      v-if="showsBadge"
+      aria-hidden="true"
+      class="absolute right-1 bottom-1 z-30 flex h-4 min-w-4 items-center justify-center rounded-corner-full bg-primary px-1 font-semibold text-label-xs text-tx-on-primary"
+      data-badge>
+      {{ badge }}
+    </span>
   </button>
 </template>

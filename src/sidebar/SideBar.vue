@@ -63,6 +63,13 @@
  * La barra es una tarjeta de Once UI: `rounded-corner-l`, canto `ui-line`,
  * superficie `/70`. El botón de plegar es un botón sin borde de 32. Los
  * botones, ver `SideButton`.
+ *
+ * # El pie (2.2.0)
+ *
+ * La ranura `footer` queda abajo, quieta mientras la lista desplaza, con un
+ * divisor arriba: el reproductor de resonance, el intervalo del monitor, el
+ * aviso de error de la nube del gestor de archivos. Recibe `collapsed`, como
+ * la ranura por omisión, porque plegada entran 84 píxeles.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -139,19 +146,33 @@ const toggleClasses = computed(() => [
  * El padre directo puede ser un envoltorio que sólo la contiene a ella —un
  * `shrink-0` de una aplicación—, y medir eso es medirse a sí misma: siempre
  * angosta, plegada para siempre y sin botón para desplegarla. Por eso se sube
- * mientras el antepasado no sea más ancho que la barra.
+ * mientras el antepasado mida lo mismo que la barra.
  *
  * Uno que mide cero todavía no se maquetó —el WebView sin tamaño, o una vista
  * que se monta antes de mostrarse— y tampoco sirve: se sigue subiendo, y al
- * final queda la página, que es lo que hacía la 1.x.
+ * final queda la página, que es lo que hacía la 1.x. Uno más angosto que la
+ * barra **sí** es el lugar: ahí no entra, y se pliega.
  */
 function container(): HTMLElement | null {
 	const own = root.value?.offsetWidth ?? 0;
 	let node = root.value?.parentElement ?? null;
-	while (node && node !== document.documentElement && node.clientWidth <= own) {
+	while (node && node !== document.documentElement && wrapsOnlyTheBar(node.clientWidth, own)) {
 		node = node.parentElement;
 	}
 	return node && node !== document.documentElement ? node : null;
+}
+
+/**
+ * Si un antepasado es un envoltorio de la barra y no el lugar que comparte.
+ *
+ * Mide cero (todavía no se maquetó) o lo mismo que la barra, con un píxel de
+ * redondeo. Hasta la 2.1.0 se subía también por uno **más angosto** que la
+ * barra, y ése no es un envoltorio: es justo el lugar donde no entra. Una
+ * barra desplegada de 288 en un panel de 240 subía hasta la página, la veía
+ * ancha y se quedaba desplegada y cortada (se vio en el banco de la 2.2.0).
+ */
+function wrapsOnlyTheBar(width: number, own: number): boolean {
+	return width === 0 || Math.abs(width - own) <= 1;
 }
 
 function containerWidth(): number {
@@ -278,6 +299,7 @@ defineExpose({ collapsed: isCollapsed });
           v-for="item in category.items"
           :key="item.id"
           :label="item.label"
+          :description="item.description"
           :icon="item.icon"
           :badge="item.badge"
           :disabled="item.disabled"
@@ -288,5 +310,9 @@ defineExpose({ collapsed: isCollapsed });
 
       <slot :collapsed="isCollapsed" />
     </div>
+
+    <footer v-if="$slots.footer" class="min-w-0 shrink-0 border-ui-line-weak border-t p-2" data-sidebar-footer>
+      <slot name="footer" :collapsed="isCollapsed" />
+    </footer>
   </aside>
 </template>
