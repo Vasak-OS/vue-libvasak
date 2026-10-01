@@ -31,6 +31,22 @@
  * iconos de freedesktop, que traen `VasakOS-light` y `VasakOS-dark` mismos;
  * `content-loading` no es del estándar y en `VasakOS-light` sólo llegaba
  * heredado de Breeze. Es la misma que usa `ActionButton`.
+ *
+ * ── Las teclas ─────────────────────────────────────────────────────────────────
+ *
+ * El Enter se oye en la caja y no en el campo: burbujea igual y alcanza
+ * una sola vez, aunque mañana haya más de un elemento adentro que lo
+ * produzca.
+ *
+ * Las demás teclas **se reenvían** en vez de atenderse: qué significa
+ * Escape depende de dónde viva esta caja —cerrar el desplegable, plegar la
+ * barra, salir de la vista— y ésa no es una decisión del campo. Se reenvían
+ * desde el campo y no desde acá para no reinterpretar a mano lo que el
+ * modificador `.enter` de Vue ya decide bien.
+ *
+ * (Esto vivía como comentario arriba de la raíz de la plantilla, y eso la
+ * partía en un fragmento: los atributos de quien lo usa no caían en ningún
+ * lado.)
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import TextInput from '../forms/TextInput.vue';
@@ -90,6 +106,16 @@ const props = withDefaults(
 		 * si la aplicación no tiene la clave, «Vaciar».
 		 */
 		clearLabel?: string;
+		/**
+		 * `lg` es el campo de 40 que **es** la ventana: el buscador del lanzador
+		 * (vasak-prism), que lo dibujaba a mano. La lupa y la cruz crecen a 20.
+		 */
+		size?: 'md' | 'lg';
+		/**
+		 * Sin canto ni fondo, para cuando ya está dentro de una superficie que lo
+		 * enmarca: el lanzador, la búsqueda global del gestor de archivos.
+		 */
+		bare?: boolean;
 	}>(),
 	{
 		modelValue: '',
@@ -100,6 +126,8 @@ const props = withDefaults(
 		debounce: 0,
 		clearable: true,
 		busy: false,
+		size: 'md',
+		bare: false,
 	}
 );
 
@@ -152,6 +180,10 @@ const listWiring = computed(() =>
 		: {}
 );
 const showsClear = computed(() => props.clearable && hasText.value && !props.disabled);
+
+/** El icono y el lugar que se le deja al texto, por tamaño. */
+const large = computed(() => props.size === 'lg');
+const iconSize = computed(() => (large.value ? 20 : 16));
 
 function cancelDebounce() {
 	clearTimeout(timer);
@@ -221,24 +253,15 @@ watch(
 </script>
 
 <template>
-  <!-- El Enter se oye en la caja y no en el campo: burbujea igual y alcanza
-       una sola vez, aunque mañana haya más de un elemento adentro que lo
-       produzca.
-
-       Las demás teclas **se reenvían** en vez de atenderse: qué significa
-       Escape depende de dónde viva esta caja —cerrar el desplegable, plegar la
-       barra, salir de la vista— y ésa no es una decisión del campo. Se reenvían
-       desde el campo y no desde acá para no reinterpretar a mano lo que el
-       modificador `.enter` de Vue ya decide bien. -->
   <div class="relative flex min-w-0 items-center" @keydown.enter="searchNow">
     <!-- La lupa —o la ruedita mientras busca— no se lee: la etiqueta del campo
          ya dice qué es esto, y un lector de pantalla que diga «imagen, buscar»
          antes de «buscar, campo de texto» repite. -->
-    <span class="pointer-events-none absolute left-2 flex items-center">
+    <span class="pointer-events-none absolute flex items-center" :class="large ? 'left-3' : 'left-2'">
       <ThemeIcon
         :name="busy ? 'process-working-symbolic' : 'system-search'"
         type="symbol"
-        :size="16"
+        :size="iconSize"
         :class="busy ? 'animate-spin opacity-70' : 'opacity-60'" />
     </span>
 
@@ -250,19 +273,22 @@ watch(
       :ariaLabel="label || undefined"
       v-bind="listWiring"
       :disabled="disabled"
-      class="truncate pl-8 [&::-webkit-search-cancel-button]:appearance-none"
-      :class="showsClear ? 'pr-8' : ''"
+      :size="size"
+      :bare="bare"
+      class="truncate [&::-webkit-search-cancel-button]:appearance-none"
+      :class="[large ? 'pl-10' : 'pl-8', showsClear ? (large ? 'pr-10' : 'pr-8') : '']"
       @update:model-value="write"
       @keydown="emit('keydown', $event)" />
 
     <button
       v-if="showsClear"
       type="button"
-      class="absolute right-1 flex size-6 items-center justify-center rounded-corner-s text-tx-muted transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100"
+      class="absolute right-1 flex items-center justify-center rounded-corner-s text-tx-muted transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100"
+      :class="large ? 'size-8' : 'size-6'"
       :aria-label="clearName"
       @mousedown.prevent
       @click="clear">
-      <ThemeIcon name="gtk-close" type="symbol" :size="16" alt="" />
+      <ThemeIcon name="gtk-close" type="symbol" :size="iconSize" alt="" />
     </button>
   </div>
 </template>

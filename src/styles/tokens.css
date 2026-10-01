@@ -139,6 +139,13 @@
      `backdrop-blur` no desenfoca nada y sólo cuesta. */
   --color-ui-float: color-mix(in srgb, var(--use-ui-background) 88%, var(--use-ui-surface));
   --color-ui-scrim: color-mix(in srgb, var(--use-ui-background) 55%, transparent);
+  /* Lo que va **encima de una imagen o un vídeo**: los botones y las pastillas
+     del visor de fotos, la duración sobre una miniatura. No hay un fondo
+     conocido detrás —puede ser cualquier foto—, así que el velo tiene que
+     sostener el texto solo: al 85 % el texto principal llega a 4,5:1 aunque
+     debajo haya negro o blanco puro (lo mide `tests/surface-contrast.test.ts`,
+     el peor caso da 5,01:1 en claro). Al 80 % ya no llegaba (4,42:1). */
+  --color-ui-overlay: color-mix(in srgb, var(--use-ui-background) 85%, transparent);
   --color-ui-focus: var(--use-ui-focus);
 
   /* ── Sombras: las tres capas de Once UI, con la tinta del esquema ─────── */
@@ -185,6 +192,12 @@
   --text-heading-s--line-height: 1.5rem;
   --text-heading-m: 1.25rem;
   --text-heading-m--line-height: 1.5rem;
+  /* El título de una página entera (`PageHeader size="lg"`): el `text-2xl` que
+     Configuración usa en sus treinta y tres cabeceras. Sin este paso, pasar a
+     la librería achicaba cada título de 24 a 20 px, que es cambiarle el
+     formato a la pantalla (decisión 8). */
+  --text-heading-l: 1.5rem;
+  --text-heading-l--line-height: 2rem;
 
   /* ── Curvas ──────────────────────────────────────────────────────────────
      `ease-ui` es el `ease-in-out` de Once UI para todo; `ease-ui-out` arranca
@@ -215,4 +228,37 @@
   ):focus-visible {
   outline: 2px solid var(--color-ui-focus);
   outline-offset: 2px;
+}
+
+/*
+ * La barra de desplazamiento, con los tokens.
+ *
+ * Es la que ya declaraba el `main.css` de cada aplicación —8 px, el pulgar en
+ * `tx-muted` al 45 % y al 70 % al pasar por encima—, así que importar este
+ * archivo no mueve nada de lugar: el ancho es el mismo. Lo que cambia es que
+ * el radio sale del de la persona en vez de los 4 px fijos, y que vive en un
+ * solo lugar: el `ScrollArea` del gestor de archivos, que dibujaba otra con
+ * `bg-ui-bg/80` (invisible sobre la ventana), sobra.
+ *
+ * Van los seudoelementos de WebKit y no `scrollbar-color`: WebKitGTK dibuja
+ * con los primeros, y en Chromium —donde corre el banco— declarar
+ * `scrollbar-color` apaga los seudoelementos, así que las capturas mostrarían
+ * otra barra que la de la ventana.
+ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--use-text-muted) 45%, transparent);
+  border-radius: var(--radius-corner-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--use-text-muted) 70%, transparent);
 }

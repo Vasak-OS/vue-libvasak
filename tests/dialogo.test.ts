@@ -280,7 +280,7 @@ describe('lo que un lector de pantalla oye', () => {
 		const { vista } = armar();
 		await abrir(vista);
 
-		const descripcion = document.body.querySelector('p');
+		const descripcion = elPanel()?.querySelector('p');
 
 		expect(descripcion?.className).toContain('text-tx-muted');
 		expect(descripcion?.className).not.toContain('muted-foreground');

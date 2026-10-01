@@ -31,11 +31,19 @@
  * Una tarjeta de Once UI —`rounded-corner-l`, canto `ui-line`, superficie al
  * 70 %— en vez de `.background`, que era el fondo de la ventana puesto sobre la
  * ventana. El botón es un botón sin borde de 32 con el velo `ui-hover`, y nada
- * escala al pasar ni al apretar. La vía nativa toma el primario del esquema
- * con `accent-color`.
+ * escala al pasar ni al apretar. Hasta la 2.0.0 la vía era la nativa, con el
+ * primario del esquema por `accent-color`.
+ *
+ * ── La vía es `Slider` (2.1.0) ─────────────────────────────────────────────
+ *
+ * El `input` de adentro pasó a ser el `Slider` de la librería, con la vía fina
+ * y el pulgar de Once UI en vez de los del tema de GTK. La API no cambió: las
+ * mismas propiedades, los mismos eventos y el mismo `aria-valuetext` con el
+ * porcentaje.
  */
 import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
+import Slider from './Slider.vue';
 
 interface Props {
   /** El nombre del icono en el tema del escritorio. */
@@ -86,9 +94,8 @@ const percentageClass = computed(() => {
   return '';
 });
 
-const handleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  emit('update:modelValue', Number(target.value));
+const handleInput = (value: number) => {
+  emit('update:modelValue', value);
 };
 
 const handleButtonClick = () => {
@@ -118,15 +125,14 @@ const handleButtonClick = () => {
       <ThemeIcon v-if="name" :name="name" :type="type" :size="24" />
     </div>
 
-    <input
-      type="range"
+    <Slider
+      :model-value="modelValue"
       :min="min"
       :max="max"
-      :value="modelValue"
-      @input="handleInput"
-      :aria-label="label"
-      :aria-valuetext="`${percentage}%`"
-      class="min-w-0 flex-1 cursor-pointer accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+      :label="label"
+      :value-text="`${percentage}%`"
+      class="flex-1"
+      @update:model-value="handleInput"
     />
 
     <span

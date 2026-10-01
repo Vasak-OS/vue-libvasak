@@ -37,8 +37,27 @@ const props = withDefaults(
 		 * sistema y programa la luz nocturna, y son cuatro campos de verdad. El
 		 * navegador les dibuja su propio selector, que es justo lo que se quiere:
 		 * uno escrito a mano no entiende de husos ni de formatos locales.
+		 *
+		 * `datetime-local` (2.1.0) es el «programar el envío» del correo, que lo
+		 * dibujaba con un `input` nativo sin estilo al lado de los campos del
+		 * sistema.
 		 */
-		type?: 'text' | 'password' | 'search' | 'url' | 'email' | 'number' | 'date' | 'time';
+		type?: 'text' | 'password' | 'search' | 'url' | 'email' | 'number' | 'date' | 'time' | 'datetime-local';
+		/**
+		 * El alto: `md` es el de 32 de siempre; `lg` es el de 40, para el campo
+		 * que **es** la ventana, como el buscador del lanzador (vasak-prism).
+		 *
+		 * Va como propiedad y no como clase porque `h-10` y `h-8` en el mismo
+		 * atributo no los decide el orden en que se escriben sino el de la hoja.
+		 */
+		size?: 'md' | 'lg';
+		/**
+		 * Sin canto ni fondo, para el campo que ya vive dentro de una superficie
+		 * que lo enmarca (el lanzador, la búsqueda global del gestor de
+		 * archivos). El anillo de foco va por dentro: pegado al canto de la
+		 * superficie, uno de afuera lo recorta el `overflow`.
+		 */
+		bare?: boolean;
 		/** La otra mitad del `for` de `FormGroup`: sin esto la etiqueta no ata a nada. */
 		id?: string;
 		/** El nombre del campo cuando no hay etiqueta visible que se lo dé. */
@@ -71,7 +90,17 @@ const props = withDefaults(
 		 */
 		lazy?: boolean;
 	}>(),
-	{ type: 'text', disabled: false, readonly: false, invalid: false, mono: false, required: false, lazy: false }
+	{
+		type: 'text',
+		size: 'md',
+		bare: false,
+		disabled: false,
+		readonly: false,
+		invalid: false,
+		mono: false,
+		required: false,
+		lazy: false,
+	}
 );
 
 const emit = defineEmits<{
@@ -137,12 +166,22 @@ defineExpose({
 	enfocar: focus,
 });
 
+/** El canto: el de error, ninguno (`bare`) o el de 3:1. */
+function border(): string {
+	if (props.invalid) return 'border-status-error';
+	return props.bare ? 'border-transparent' : 'border-ui-border-strong';
+}
+
 const classes = computed(() => [
-	'h-8 w-full min-w-0 rounded-corner-m border bg-ui-surface/70 px-3 text-label-m text-tx-main',
+	'w-full min-w-0 rounded-corner-m border px-3 text-tx-main',
+	props.size === 'lg' ? 'h-10 text-body-m' : 'h-8 text-label-m',
+	props.bare ? 'bg-transparent' : 'bg-ui-surface/70',
 	'placeholder:text-tx-muted transition-colors duration-200 ease-ui',
-	'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus',
-	props.invalid ? 'border-status-error' : 'border-ui-border-strong',
-	props.invalid || props.disabled ? '' : 'hover:border-tx-main',
+	props.bare
+		? 'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus'
+		: 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus',
+	border(),
+	props.invalid || props.disabled || props.bare ? '' : 'hover:border-tx-main',
 	props.mono ? 'font-mono' : '',
 	props.disabled ? 'cursor-not-allowed opacity-50' : '',
 ]);

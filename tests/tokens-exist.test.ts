@@ -190,8 +190,17 @@ describe('lo que la forma de Once UI deja afuera', () => {
 		['el fondo de la ventana sobre la ventana', /(?<![\w-])(?:[a-z-]+:)*bg-ui-bg(?![\w-])|(?<![\w-])background(?=["'\s])/g],
 	];
 
-	/** El marco de la ventana **es** la ventana: el único que lleva su fondo. */
-	const WINDOW_BACKGROUND_ALLOWED = ['window/WindowFrame.vue'];
+	/**
+	 * Los que pueden llevar el fondo de la ventana, y por qué.
+	 *
+	 * - El marco **es** la ventana.
+	 * - El título pegajoso de `SectionHeading` tapa lo que pasa por debajo al
+	 *   desplazar, así que tiene que ser opaco y del color exacto de lo que
+	 *   tiene detrás —la ventana, o la ventana con la superficie de un `Panel`
+	 *   encima—, o se ve una franja. No es una tarjeta sobre la ventana: es la
+	 *   ventana misma, recortada.
+	 */
+	const WINDOW_BACKGROUND_ALLOWED = ['window/WindowFrame.vue', 'layout/SectionHeading.vue'];
 
 	for (const [what, regex] of FORBIDDEN) {
 		test(`sin ${what}`, async () => {
@@ -237,14 +246,20 @@ describe('en toda la librería', () => {
 		// está en un comentario no cuenta: es una medición explicada, no un
 		// color dibujado.
 		const literal =
-			/#[0-9a-fA-F]{3,8}(?![\w-])|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(|(?<![\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|via|to|fill|stroke|shadow|divide|accent|caret|decoration)-(?:white|black|(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3})(?![\w-])/g;
+			/#[0-9a-fA-F]{3,8}(?![\w-])|(?<![a-zA-Z])(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(|(?<![\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|via|to|fill|stroke|shadow|divide|accent|caret|decoration)-(?:white|black|(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3})(?![\w-])/g;
 
 		expect(await findAll(sources('**/*.{vue,ts,css}'), literal)).toEqual([]);
 	});
 
 	test('la guardia de colores ve un color cuando lo hay', () => {
-		const literal = /#[0-9a-fA-F]{3,8}(?![\w-])|\b(?:rgba?|hsla?|oklch)\(/g;
+		const literal = /#[0-9a-fA-F]{3,8}(?![\w-])|(?<![a-zA-Z])(?:rgba?|hsla?|oklch)\(/g;
 		expect([...'color: #dd7878; box-shadow: 0 0 1px rgb(0 0 0 / .1)'.matchAll(literal)]).toHaveLength(2);
+		// Pegado a un `_` o a un `[` dentro de un valor arbitrario de Tailwind.
+		// Con `\b` delante, `drop-shadow-[0_2px_rgba(0,0,0,.4)]` pasaba: el `_`
+		// es un carácter de palabra, así que entre `_` y `r` no hay borde.
+		expect([...'drop-shadow-[0_2px_rgba(0,0,0,.4)] bg-[rgb(1_2_3)]'.matchAll(literal)]).toHaveLength(2);
+		// Y una función que sólo termina en esas letras no es un color.
+		expect([...'color-mix(in srgb, var(--x) 10%, transparent)'.matchAll(literal)]).toHaveLength(0);
 		// Y un comentario no es un color.
 		expect(stripComments('/* #dd7878 */ <!-- rgb(1 2 3) -->')).not.toMatch(literal);
 	});
