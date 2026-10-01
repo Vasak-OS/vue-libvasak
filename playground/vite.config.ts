@@ -13,11 +13,15 @@ import { defineConfig, type Plugin } from 'vite';
  * tema instalado en `/usr/share/icons`, que es lo que ve la persona.
  */
 
-const THEMES = ['VasakOS', 'Adwaita', 'hicolor', 'breeze'];
+/** El tema de cada modo y lo que hereda (`Inherits=hicolor,breeze`). */
+const THEMES = {
+	light: ['VasakOS-light', 'VasakOS', 'hicolor', 'breeze'],
+	dark: ['VasakOS-dark', 'VasakOS', 'hicolor', 'breeze'],
+};
 const ROOT = '/usr/share/icons';
 
 /** Nombre → archivo, el primero que aparezca en el orden de los temas. */
-function indexIcons(): Map<string, string> {
+function indexIcons(themes: string[]): Map<string, string> {
 	const index = new Map<string, string>();
 	const walk = (dir: string, depth: number) => {
 		if (depth > 4 || !existsSync(dir)) return;
@@ -38,7 +42,7 @@ function indexIcons(): Map<string, string> {
 			}
 		}
 	};
-	for (const theme of THEMES) {
+	for (const theme of themes) {
 		const before = new Map(index);
 		walk(join(ROOT, theme), 0);
 		// Lo que ya dio un tema anterior no lo pisa uno posterior.
@@ -48,13 +52,15 @@ function indexIcons(): Map<string, string> {
 }
 
 function systemIcons(): Plugin {
-	let index: Map<string, string> | null = null;
+	const indexes = new Map<string, Map<string, string>>();
 	return {
 		name: 'vasak-bench-icons',
 		configureServer(server) {
 			server.middlewares.use('/__icon/', (request, response) => {
-				index ??= indexIcons();
 				const url = new URL(request.url ?? '/', 'http://bench');
+				const mode = url.searchParams.get('mode') === 'dark' ? 'dark' : 'light';
+				if (!indexes.has(mode)) indexes.set(mode, indexIcons(THEMES[mode]));
+				const index = indexes.get(mode);
 				const name = decodeURIComponent(url.pathname.slice(1));
 				const symbol = url.searchParams.get('kind') === 'symbol';
 				const candidates = symbol && !name.endsWith('-symbolic') ? [`${name}-symbolic`, name] : [name];

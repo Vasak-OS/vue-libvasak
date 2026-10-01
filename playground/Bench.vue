@@ -76,7 +76,7 @@ const categories = [
 	},
 ];
 
-const buttonVariants = ['primary', 'secondary', 'outline', 'ghost', 'danger'] as const;
+const buttonVariants = ['primary', 'secondary', 'ghost', 'danger'] as const;
 const buttonStates = ['', 'is-hover', 'is-active', 'is-focus'] as const;
 
 /**

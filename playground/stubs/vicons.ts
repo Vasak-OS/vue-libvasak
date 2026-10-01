@@ -15,7 +15,10 @@ export async function getSymbolSource(name: string): Promise<string> {
 }
 
 async function lookup(name: string, kind: 'icon' | 'symbol'): Promise<string> {
-	const url = `/__icon/${encodeURIComponent(name)}?kind=${kind}`;
+	// El tema que eligió la persona depende del modo: `VasakOS-light` en claro y
+	// `VasakOS-dark` en oscuro, como en `vasak.conf`.
+	const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+	const url = `/__icon/${encodeURIComponent(name)}?kind=${kind}&mode=${mode}`;
 	const response = await fetch(url, { method: 'HEAD' });
 	return response.ok ? url : '';
 }

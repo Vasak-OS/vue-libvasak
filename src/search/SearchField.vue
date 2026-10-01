@@ -27,9 +27,10 @@
  * La del `TextInput`, con la lupa y la cruz a 16 px y `pl-8`/`pr-8` para que el
  * texto no pase por debajo. La cruz es un botón sin borde de 24 px con
  * `rounded-corner-s` y el velo `ui-hover`, como el `tertiary` de Once UI. La
- * ruedita de carga es `process-working-symbolic`, el nombre del estándar de
- * freedesktop: `content-loading` no existe en el tema de VasakOS ni en
- * Adwaita, así que mientras buscaba no se dibujaba nada.
+ * ruedita de carga es `process-working`, el nombre de la especificación de
+ * iconos de freedesktop, que traen `VasakOS-light` y `VasakOS-dark` mismos;
+ * `content-loading` no es del estándar y en `VasakOS-light` sólo llegaba
+ * heredado de Breeze. Es la misma que usa `ActionButton`.
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import TextInput from '../forms/TextInput.vue';

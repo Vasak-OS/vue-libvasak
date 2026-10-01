@@ -39,9 +39,12 @@
  * primario, el secundario y el texto el primero que llegue a 3:1 contra el
  * fondo— es del config-manager, que ya hace lo mismo con `--ui-border-strong`,
  * y escribirá `--ui-focus` / `--ui-focus-dark`. Mientras no lo haga, el piso es
- * el primario llevado un 40 % hacia el texto principal: con el esquema por
- * omisión da 3,9:1 en claro (3,76:1 sobre la superficie flotante) y más de 8:1
- * en oscuro. Sigue siendo del color de la marca y sale del esquema.
+ * el primario mezclado al 40 % con el texto principal. Con el esquema por
+ * omisión da 4,77:1 en claro (4,60:1 sobre la superficie flotante) y 9,77:1 en
+ * oscuro; con un acento claro (`#e5c890`) todavía llega, 3,44:1. La
+ * especificación proponía 60 %, y con un acento claro eso da 2,50:1: lo mide
+ * `tests/surface-contrast.test.ts`. Sigue teñido de la marca y sale del
+ * esquema.
  *
  * `--use-shadow-ink` es la tinta de las sombras. Once UI usa negro; negro es un
  * color fijo, y acá no hay colores fijos. En claro la tinta es el texto
@@ -53,7 +56,7 @@
 :root {
   --use-ui-focus: var(
     --ui-focus,
-    color-mix(in srgb, var(--use-primary) 60%, var(--use-text-main))
+    color-mix(in srgb, var(--use-primary) 40%, var(--use-text-main))
   );
   --use-shadow-ink: var(--use-text-main);
 }
@@ -61,7 +64,7 @@
 .dark {
   --use-ui-focus: var(
     --ui-focus-dark,
-    color-mix(in srgb, var(--use-primary) 60%, var(--use-text-main))
+    color-mix(in srgb, var(--use-primary) 40%, var(--use-text-main))
   );
   --use-shadow-ink: var(--use-ui-border);
 }
