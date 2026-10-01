@@ -40,17 +40,36 @@
  * la envuelve lleva `p-1` y un `gap-1` contra el contenido, como en
  * Configuración y en la tienda.
  *
- * # Por qué no hay traducciones acá
+ * # Los textos
  *
  * Una librería de componentes que traduce obliga a todas las aplicaciones a
- * compartir sus claves. Los textos entran por propiedades; el `aria-label` del
- * botón de plegar también, que es el único que no se ve pero se oye.
+ * compartir sus claves, así que los textos entran por propiedades; el
+ * `aria-label` del botón de plegar también, que es el único que no se ve pero se
+ * oye. Sin pasarlo sale del catálogo de la aplicación (`sidebar.collapse`,
+ * `sidebar.expand`) y, si tampoco está ahí, «Collapse» / «Expand».
+ *
+ * # Se pliega por el lugar que le dan, no por la pantalla
+ *
+ * Por debajo de 768 píxeles de **su contenedor** no entra el texto de los
+ * botones y se pliega sola. Hasta la 1.x medía la página entera y usaba `md:`,
+ * que es un punto de corte de la pantalla: la barra no sabe en qué ventana
+ * está, y en un panel angosto dentro de una ventana ancha se quedaba
+ * desplegada, cortada. Ahora un `ResizeObserver` mira al elemento que la
+ * contiene —en WebKitGTK ni `matchMedia` ni `resize` avisan, el observador sí—
+ * y las clases salen de ese estado, sin puntos de corte.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * La barra es una tarjeta de Once UI: `rounded-corner-l`, canto `ui-line`,
+ * superficie `/70`. El botón de plegar es un botón sin borde de 32. Los
+ * botones, ver `SideButton`.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
-import SideGroup from './SideGroup.vue';
+import { useLabels } from '../shared/labels';
 import SideButton from './SideButton.vue';
-import type { SidebarCategory } from './tipos';
+import SideGroup from './SideGroup.vue';
+import type { SidebarCategory } from './types';
 
 const props = withDefaults(
 	defineProps<{
@@ -72,20 +91,10 @@ const props = withDefaults(
 		categories: () => [],
 		modelValue: '',
 		collapsed: undefined,
-		collapseLabel: 'Collapse',
-		expandLabel: 'Expand',
+		collapseLabel: undefined,
+		expandLabel: undefined,
 	}
 );
-
-/**
- * El botón de plegar, que aparece en dos lugares de la plantilla —con cabecera y
- * sin ella— y tiene que verse igual en los dos.
- *
- * Escondido por debajo de 768: ahí la barra se pliega sola y ofrecer
- * desplegarla sería ofrecer algo que no entra.
- */
-const CLASES_DEL_BOTON =
-	'hidden h-8 w-8 shrink-0 items-center justify-center rounded-corner border border-ui-border bg-ui-surface/70 transition-colors hover:bg-ui-surface md:inline-flex';
 
 const emit = defineEmits<{
 	'update:modelValue': [value: string];
@@ -94,46 +103,58 @@ const emit = defineEmits<{
 }>();
 
 /** Por debajo de esto no entra el texto de los botones y la barra se pliega. */
-const ANCHO_MINIMO = 767;
+const MINIMUM_WIDTH = 767;
 
-const plegadaAMano = ref(props.collapsed ?? false);
-const esAngosta = ref(false);
-let consulta: MediaQueryList | null = null;
-let observador: ResizeObserver | null = null;
+const translate = useLabels();
+const collapseText = computed(() => props.collapseLabel ?? translate('sidebar.collapse', 'Collapse'));
+const expandText = computed(() => props.expandLabel ?? translate('sidebar.expand', 'Expand'));
+
+const root = ref<HTMLElement | null>(null);
+const collapsedByHand = ref(props.collapsed ?? false);
+const narrow = ref(false);
+let observer: ResizeObserver | null = null;
 
 /**
  * Plegada por decisión o por ancho.
  *
- * Por debajo de 768 píxeles no hay lugar para el texto de los botones, así que
- * la barra se pliega sola y el botón de plegar no se muestra: ofrecer
- * desplegarla ahí sería ofrecer algo que no entra.
+ * Angosta, el botón de plegar no se muestra: ofrecer desplegarla ahí sería
+ * ofrecer algo que no entra.
  */
-const plegada = computed(() => esAngosta.value || plegadaAMano.value);
-const hayTitulo = computed(() => Boolean(props.title || props.subtitle));
-const hayCategorias = computed(() => props.categories.length > 0);
+const isCollapsed = computed(() => narrow.value || collapsedByHand.value);
+const hasTitle = computed(() => Boolean(props.title || props.subtitle));
 
 /**
- * El ancho que de verdad tiene la página.
- *
- * `clientWidth` del elemento raíz y no `innerWidth`: es el ancho de la caja
- * contra la que se resuelven las consultas de medios, y es el que cambia —y
- * avisa— cuando el WebView recibe su tamaño. `innerWidth` queda de respaldo
- * para un documento que todavía no tenga raíz.
+ * El botón de plegar, que aparece en dos lugares de la plantilla —con cabecera y
+ * sin ella— y tiene que verse igual en los dos.
  */
-function anchoDeLaPagina() {
+const toggleClasses = computed(() => [
+	'h-8 w-8 shrink-0 items-center justify-center rounded-corner-m text-tx-main transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100',
+	narrow.value ? 'hidden' : 'inline-flex',
+]);
+
+/**
+ * Lo que mide el lugar donde está puesta.
+ *
+ * Un contenedor que mide cero todavía no se maquetó —el WebView sin tamaño, o
+ * una vista que se monta antes de mostrarse—, y plegarse por eso sería plegarse
+ * por nada: ahí se mira la página, que es lo que hacía la 1.x.
+ */
+function containerWidth(): number {
+	const width = root.value?.parentElement?.clientWidth;
+	if (width) return width;
 	return document.documentElement?.clientWidth || window.innerWidth;
 }
 
-function revisar() {
-	esAngosta.value = anchoDeLaPagina() <= ANCHO_MINIMO;
+function check() {
+	narrow.value = containerWidth() <= MINIMUM_WIDTH;
 }
 
-function alternar() {
-	plegadaAMano.value = !plegadaAMano.value;
-	emit('update:collapsed', plegadaAMano.value);
+function toggle() {
+	collapsedByHand.value = !collapsedByHand.value;
+	emit('update:collapsed', collapsedByHand.value);
 }
 
-function elegir(id: string) {
+function choose(id: string) {
 	emit('update:modelValue', id);
 	emit('change', id);
 }
@@ -142,82 +163,71 @@ function elegir(id: string) {
 // ventanas de la misma aplicación pueden recordar cómo la dejó la persona.
 watch(
 	() => props.collapsed,
-	(valor) => {
-		if (valor !== undefined) {
-			plegadaAMano.value = valor;
+	(value) => {
+		if (value !== undefined) {
+			collapsedByHand.value = value;
 		}
 	}
 );
 
 /**
- * Tres avisos para lo mismo, y el que manda es el tercero.
- *
- * En WebKitGTK —el WebView de todas estas ventanas— ni el `change` de
- * `matchMedia` ni el `resize` de la ventana llegan cuando la ventana pasa de
- * angosta a ancha al terminar de abrirse. Se comprobó redimensionando la
- * ventana del instalador dos veces desde el compositor: la barra se quedó
- * plegada las dos.
- *
- * Lo que sí avisa es un `ResizeObserver` sobre el elemento raíz, que además
- * dispara con la primera medición, así que arregla también el caso de montarse
- * antes de que el WebView tenga tamaño —que era el fallo original—. Los otros
- * dos quedan porque no cuestan nada y en un navegador de verdad son los que
- * llegan primero.
+ * El observador dispara también con la primera medición, así que cubre el caso
+ * de montarse antes de que el WebView tenga tamaño —que era el fallo original de
+ * la 0.x— y cada cambio del contenedor después.
  */
 onMounted(() => {
-	consulta = window.matchMedia(`(max-width: ${ANCHO_MINIMO}px)`);
-	revisar();
-	consulta.addEventListener('change', revisar);
-	window.addEventListener('resize', revisar);
-
-	if (typeof ResizeObserver !== 'undefined' && document.documentElement) {
-		observador = new ResizeObserver(revisar);
-		observador.observe(document.documentElement);
+	check();
+	if (typeof ResizeObserver !== 'undefined') {
+		observer = new ResizeObserver(check);
+		const container = root.value?.parentElement;
+		if (container) observer.observe(container);
+		// La página también: mientras el contenedor mida cero es la que manda, y
+		// tiene que poder avisar cuando el WebView recibe su tamaño.
+		if (document.documentElement) observer.observe(document.documentElement);
 	}
 });
 
 onBeforeUnmount(() => {
-	consulta?.removeEventListener('change', revisar);
-	window.removeEventListener('resize', revisar);
-	observador?.disconnect();
-	observador = null;
+	observer?.disconnect();
+	observer = null;
 });
 
-defineExpose({ collapsed: plegada });
+defineExpose({ collapsed: isCollapsed });
 </script>
 
 <template>
   <aside
-    class="relative z-30 flex h-full shrink-0 flex-col rounded-corner border border-ui-border bg-ui-surface/70 transition-[width] duration-300"
-    :class="['w-[84px]', plegada ? 'md:w-[84px]' : 'md:w-72']">
+    ref="root"
+    class="relative z-30 flex h-full min-h-0 shrink-0 flex-col rounded-corner-l border border-ui-line bg-ui-surface/70 text-tx-main transition-[width] duration-300 ease-ui"
+    :class="isCollapsed ? 'w-[84px]' : 'w-72'">
     <header
-      v-if="hayTitulo || $slots.header"
-      class="flex flex-col gap-2 border-ui-border border-b p-2">
-      <div class="flex items-center gap-2">
+      v-if="hasTitle || $slots.header"
+      class="flex flex-col gap-2 border-ui-line-weak border-b p-2">
+      <div class="flex min-w-0 items-center gap-2">
         <button
           type="button"
-          :class="CLASES_DEL_BOTON"
-          :aria-label="plegada ? expandLabel : collapseLabel"
-          :aria-expanded="!plegada"
-          @click="alternar">
+          :class="toggleClasses"
+          :aria-label="isCollapsed ? expandText : collapseText"
+          :aria-expanded="!isCollapsed"
+          @click="toggle">
           <ThemeIcon
-            :name="plegada ? 'pan-end-symbolic' : 'pan-start-symbolic'"
+            :name="isCollapsed ? 'pan-end-symbolic' : 'pan-start-symbolic'"
             type="symbol"
             :size="16" />
         </button>
         <!-- El área de título es opcional: hay ventanas donde el nombre ya está
              en la barra superior y repetirlo acá gasta la mitad del alto. -->
-        <div v-if="hayTitulo && !plegada" class="min-w-0 flex-1">
-          <p v-if="title" class="truncate font-semibold text-sm">{{ title }}</p>
-          <p v-if="subtitle" class="truncate text-tx-muted text-xs">{{ subtitle }}</p>
+        <div v-if="hasTitle && !isCollapsed" class="min-w-0 flex-1">
+          <p v-if="title" class="truncate font-semibold text-label-m">{{ title }}</p>
+          <p v-if="subtitle" class="truncate text-body-xs text-tx-muted">{{ subtitle }}</p>
         </div>
       </div>
 
       <!-- Lo que va antes que cualquier categoría: la búsqueda de la tienda,
            por ejemplo. Plegada no entra un campo de texto —84 píxeles es el
            ancho del icono— así que se esconde en vez de quedar ilegible. -->
-      <div v-if="$slots.header && !plegada">
-        <slot name="header" :collapsed="plegada" />
+      <div v-if="$slots.header && !isCollapsed" class="min-w-0">
+        <slot name="header" :collapsed="isCollapsed" />
       </div>
     </header>
 
@@ -225,15 +235,15 @@ defineExpose({ collapsed: plegada });
          barra deja de poder plegarse. Alineado a la izquierda y no centrado: es
          donde queda cuando **sí** hay título, y así no se corre de lugar entre
          una ventana y otra del escritorio. -->
-    <div v-else class="flex border-ui-border border-b p-2">
+    <div v-else class="flex border-ui-line-weak border-b p-2">
       <button
         type="button"
-        :class="CLASES_DEL_BOTON"
-        :aria-label="plegada ? expandLabel : collapseLabel"
-        :aria-expanded="!plegada"
-        @click="alternar">
+        :class="toggleClasses"
+        :aria-label="isCollapsed ? expandText : collapseText"
+        :aria-expanded="!isCollapsed"
+        @click="toggle">
         <ThemeIcon
-          :name="plegada ? 'pan-end-symbolic' : 'pan-start-symbolic'"
+          :name="isCollapsed ? 'pan-end-symbolic' : 'pan-start-symbolic'"
           type="symbol"
           :size="16" />
       </button>
@@ -244,7 +254,7 @@ defineExpose({ collapsed: plegada });
         v-for="category in categories"
         :key="category.id"
         :title="category.title"
-        :collapsed="plegada">
+        :collapsed="isCollapsed">
         <SideButton
           v-for="item in category.items"
           :key="item.id"
@@ -252,12 +262,12 @@ defineExpose({ collapsed: plegada });
           :icon="item.icon"
           :badge="item.badge"
           :disabled="item.disabled"
-          :collapsed="plegada"
+          :collapsed="isCollapsed"
           :active="modelValue === item.id"
-          @click="elegir(item.id)" />
+          @click="choose(item.id)" />
       </SideGroup>
 
-      <slot :collapsed="plegada" />
+      <slot :collapsed="isCollapsed" />
     </div>
   </aside>
 </template>

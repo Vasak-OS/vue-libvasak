@@ -20,7 +20,7 @@ import { defineComponent, h, nextTick } from 'vue';
 import Tooltip from '../src/tooltip/Tooltip.vue';
 import TooltipContent from '../src/tooltip/TooltipContent.vue';
 import TooltipTrigger from '../src/tooltip/TooltipTrigger.vue';
-import { usarElTooltip } from '../src/tooltip/tipos';
+import { useTooltip } from '../src/tooltip/types';
 
 const RETARDO = 200;
 
@@ -96,14 +96,45 @@ describe('el tooltip', () => {
 
 	test('el foco lo abre igual que el puntero', async () => {
 		// Un tooltip que sólo responde al ratón no existe para quien no lo usa.
+		//
+		// El foco se le da **al botón**, que es lo que recibe el foco de verdad.
+		// Hasta la 1.x el envoltorio escuchaba `focus`, que no burbujea: la
+		// prueba lo disparaba sobre el `div` y pasaba, y en una ventana tabular
+		// hasta el botón no abría nada. Ahora escucha `focusin`.
 		const vista = armar();
 
-		await elEnvoltorio(vista).trigger('focus');
-		await esperar(RETARDO + 30);
-		await nextTick();
+		try {
+			(vista.get('.boton').element as HTMLElement).focus();
+			await esperar(RETARDO + 30);
+			await nextTick();
 
-		expect(estaVisible()).toBe(true);
-		vista.unmount();
+			expect(estaVisible()).toBe(true);
+
+			(vista.get('.boton').element as HTMLElement).blur();
+			await nextTick();
+			expect(estaVisible()).toBe(false);
+		} finally {
+			vista.unmount();
+		}
+	});
+
+	test('el globo no lleva el borde de marca ni escala al entrar', async () => {
+		// vue-libvasak#74: superficie flotante, canto fino, y una entrada de
+		// opacidad con dos píxeles de desplazamiento, no una escala.
+		const vista = armar({ delayDuration: 0 });
+
+		try {
+			await elEnvoltorio(vista).trigger('mouseenter');
+			await esperar(20);
+			await nextTick();
+			const clases = elGlobo()?.className ?? '';
+
+			expect(clases).toContain('bg-ui-float');
+			expect(clases).toContain('border-ui-line');
+			expect(clases).not.toMatch(/border-(primary|secondary)|backdrop-blur|bg-ui-bg/);
+		} finally {
+			vista.unmount();
+		}
 	});
 
 	test('un disparador apagado no explica nada', async () => {
@@ -190,8 +221,8 @@ describe('una pieza suelta', () => {
 	test('y el contexto suelto abre y cierra sin proveedor', () => {
 		const Suelto = defineComponent({
 			setup() {
-				const tooltip = usarElTooltip();
-				return () => h('i', { class: 'estado' }, String(tooltip.abierto.value));
+				const tooltip = useTooltip();
+				return () => h('i', { class: 'estado' }, String(tooltip.open.value));
 			},
 		});
 

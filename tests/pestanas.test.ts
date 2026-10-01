@@ -189,7 +189,7 @@ describe('con la barra a un costado', () => {
 describe('el nombre desplegado', () => {
 	/** Lo desplegado vive en el `body`, no adentro del envoltorio. */
 	function desplegados() {
-		return [...document.body.querySelectorAll('.whitespace-nowrap')].map((uno) => uno.textContent);
+		return [...document.body.querySelectorAll('[data-tab-expanded-label]')].map((uno) => uno.textContent);
 	}
 
 	test('aparece al pasar el puntero y se va al salir', async () => {
@@ -235,7 +235,7 @@ describe('el nombre desplegado', () => {
 		await pestana.trigger('focus');
 		expect(desplegados()).toContain('Primera');
 
-		const popup = document.body.querySelector<HTMLElement>('.whitespace-nowrap')?.parentElement;
+		const popup = document.body.querySelector<HTMLElement>('[data-tab-expanded-label]')?.parentElement;
 		popup?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
 		await pestana.trigger('blur');
 		await nextTick();
@@ -248,7 +248,7 @@ describe('el nombre desplegado', () => {
 		await nextTick();
 		const pestana = vista.findComponent(TabItem);
 		await pestana.trigger('focus');
-		const popup = document.body.querySelector<HTMLElement>('.whitespace-nowrap')?.parentElement;
+		const popup = document.body.querySelector<HTMLElement>('[data-tab-expanded-label]')?.parentElement;
 		popup?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
 		await pestana.trigger('blur');
 

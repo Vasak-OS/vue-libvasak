@@ -18,6 +18,18 @@
  * fila entera, y el `.prevent` le cancelaría al botón su propia activación —o a
  * un campo de texto su salto de línea—. Con `.self` sólo responden las teclas
  * que llegan a la fila misma, que es cuando la fila tiene el foco.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * La tarjeta de Once UI: `rounded-corner-l`, canto `ui-line` y la superficie
+ * `bg-ui-surface/70` de todo lo que se apoya en la ventana. Hasta la 1.x iba con
+ * `.background`, una clase que definía cada aplicación como `bg-ui-bg/80`: el
+ * fondo de la ventana puesto sobre la ventana, y en una aplicación sin esa
+ * clase, ningún fondo. Clicable, pasar por encima suma el velo `ui-hover`
+ * **encima** de la superficie —como imagen de fondo, que se pinta sobre el
+ * color: reemplazar el color dejaría la fila más clara al pasar— sin tocar el
+ * borde, y el foco es el anillo de siempre. `min-w-0` para que lo de
+ * adentro pueda cortarse con `truncate` en vez de ensanchar la lista.
  */
 interface Props {
 	clickable?: boolean;
@@ -43,9 +55,10 @@ const handleClick = () => {
 <template>
   <div
     :class="[
-      'flex items-center justify-between background p-3 rounded-corner border border-ui-border transition-colors duration-200',
+      'flex min-w-0 items-center justify-between gap-3 rounded-corner-l border border-ui-line bg-ui-surface/70 p-3 text-tx-main transition-colors duration-200 ease-ui',
       {
-        'hover:bg-ui-surface/60 cursor-pointer': props.clickable,
+        'cursor-pointer hover:bg-linear-to-r hover:from-ui-hover hover:to-ui-hover active:from-ui-pressed active:to-ui-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus':
+          props.clickable,
       },
       customClass,
     ]"

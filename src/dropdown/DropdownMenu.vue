@@ -9,7 +9,7 @@
  * el disparador.
  */
 import { computed, provide, ref, watch } from 'vue';
-import { CLAVE_DEL_MENU, type FocoAlAbrir, siguienteIdDeMenu } from './tipos';
+import { type FocusOnOpen, MENU_KEY, nextMenuId } from './types';
 
 const props = withDefaults(
 	defineProps<{
@@ -31,11 +31,11 @@ const emit = defineEmits<{
 	'update:open': [value: boolean];
 }>();
 
-const interno = ref(false);
-const disparador = ref<HTMLElement | null>(null);
-const idDeLaEtiqueta = ref<string | null>(null);
-const focoAlAbrir = ref<FocoAlAbrir>('ninguno');
-const idDelMenu = siguienteIdDeMenu();
+const internal = ref(false);
+const trigger = ref<HTMLElement | null>(null);
+const labelId = ref<string | null>(null);
+const focusOnOpen = ref<FocusOnOpen>('none');
+const menuId = nextMenuId();
 
 /**
  * Quién tenía el foco cuando el menú se abrió.
@@ -45,72 +45,72 @@ const idDelMenu = siguienteIdDeMenu();
  * el botón derecho, y devolverle el foco a eso es tirarlo al vacío. Se anota al
  * abrir y no al cerrar, que es cuando el foco ya está adentro del menú.
  */
-let quienLoAbrio: HTMLElement | null = null;
+let openedBy: HTMLElement | null = null;
 
-const abierto = computed({
-	get: () => props.open ?? interno.value,
-	set: (valor: boolean) => {
+const open = computed({
+	get: () => props.open ?? internal.value,
+	set: (value: boolean) => {
 		if (props.open === undefined) {
-			interno.value = valor;
+			internal.value = value;
 		}
-		emit('update:open', valor);
+		emit('update:open', value);
 	},
 });
 
 // También cuando lo abre la aplicación por la propiedad: el menú contextual de
-// una pestaña nunca pasa por `abrir()`, y sin esto se cerraría sin devolverle
+// una pestaña nunca pasa por `show()`, y sin esto se cerraría sin devolverle
 // el foco a nadie.
-watch(abierto, (esta) => {
-	if (esta) {
-		const activo = document.activeElement;
-		quienLoAbrio = activo instanceof HTMLElement ? activo : null;
+watch(open, (isOpen) => {
+	if (isOpen) {
+		const active = document.activeElement;
+		openedBy = active instanceof HTMLElement ? active : null;
 	} else {
-		focoAlAbrir.value = 'ninguno';
+		focusOnOpen.value = 'none';
 	}
 });
 
-function abrir(foco: FocoAlAbrir = 'ninguno') {
-	focoAlAbrir.value = foco;
-	abierto.value = true;
+function show(focus: FocusOnOpen = 'none') {
+	focusOnOpen.value = focus;
+	open.value = true;
 }
 
-function cerrar(opciones: { devolverElFoco?: boolean } = {}) {
-	abierto.value = false;
+function close(options: { returnFocus?: boolean } = {}) {
+	open.value = false;
 
-	if (!opciones.devolverElFoco) return;
-	const destino = quienLoAbrio ?? disparador.value;
+	if (!options.returnFocus) return;
+	const target = openedBy ?? trigger.value;
 	// `isConnected` porque la acción que se acaba de elegir bien puede haber
 	// sacado del documento a quien abrió el menú —«cerrar las demás pestañas»
 	// se lleva puesta la pestaña que tenía el foco—, y enfocar un elemento
 	// huérfano deja el foco en el `body`, sin decirlo.
-	if (destino?.isConnected) {
-		destino.focus();
+	if (target?.isConnected) {
+		target.focus();
 	}
 }
 
-function alternar(foco: FocoAlAbrir = 'ninguno') {
-	if (abierto.value) {
-		cerrar({ devolverElFoco: true });
+function toggle(focus: FocusOnOpen = 'none') {
+	if (open.value) {
+		close({ returnFocus: true });
 		return;
 	}
-	abrir(foco);
+	show(focus);
 }
 
-provide(CLAVE_DEL_MENU, {
-	abierto,
-	idDelMenu,
-	idDeLaEtiqueta,
-	ponerLaEtiqueta: (id: string | null) => {
-		idDeLaEtiqueta.value = id;
+provide(MENU_KEY, {
+	open,
+	menuId,
+	labelId,
+	setLabel: (id: string | null) => {
+		labelId.value = id;
 	},
-	disparador,
-	ponerElDisparador: (elemento: HTMLElement | null) => {
-		disparador.value = elemento;
+	trigger,
+	setTrigger: (element: HTMLElement | null) => {
+		trigger.value = element;
 	},
-	focoAlAbrir,
-	abrir,
-	cerrar,
-	alternar,
+	focusOnOpen,
+	show,
+	close,
+	toggle,
 });
 </script>
 

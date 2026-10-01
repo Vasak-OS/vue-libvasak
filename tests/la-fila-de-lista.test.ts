@@ -79,13 +79,24 @@ describe('las clases que la librería dibuja', () => {
 		const vista = mount(ListCard, { props: { clickable: false } });
 		const clases = vista.classes();
 
-		expect(clases).toContain('rounded-corner');
-		expect(clases).toContain('border-ui-border');
-		// El fondo se queda en `background`, que es lo que las dos versiones ya
-		// decían —`.background` la definen las aplicaciones y vale
-		// `bg-ui-bg/80`—. Cambiarlo sería colar una decisión de diseño sobre
-		// seis aplicaciones adentro de un PR que vino a otra cosa.
-		expect(clases).toContain('background');
+		expect(clases).toContain('rounded-corner-l');
+		expect(clases).toContain('border-ui-line');
+		// La superficie de todo lo que se apoya en la ventana. Hasta la 1.x era
+		// `.background`, una clase que definía cada aplicación como
+		// `bg-ui-bg/80` —el fondo de la ventana sobre la ventana— y que en una
+		// aplicación sin ella no pintaba nada (vue-libvasak#74).
+		expect(clases).toContain('bg-ui-surface/70');
+		expect(clases).not.toContain('background');
+	});
+
+	test('clicable, el velo de encima se pinta sobre la superficie y no en su lugar', () => {
+		// Reemplazar el color de fondo por el velo dejaría la fila más clara al
+		// pasar por encima. Como imagen de fondo, se suma.
+		const clases = mount(ListCard, { props: { clickable: true } }).classes();
+
+		expect(clases).toContain('bg-ui-surface/70');
+		expect(clases).toContain('hover:from-ui-hover');
+		expect(clases.join(' ')).not.toMatch(/hover:bg-ui-/);
 	});
 
 	test('ni una clase de color con sufijo `-dark`', async () => {

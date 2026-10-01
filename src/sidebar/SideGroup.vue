@@ -5,6 +5,10 @@
  * Plegada la barra, el título del grupo no se muestra —no entra— y el grupo se
  * abre sí o sí: un grupo cerrado sin título visible sería contenido escondido
  * detrás de nada.
+ *
+ * El título es una etiqueta de Once UI: `text-label-xs`, peso 600, en
+ * `tx-muted`, sin mayúsculas forzadas ni espaciado de letras. Se pliega con un
+ * botón sin borde que lleva el velo `ui-hover`.
  */
 import { ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -14,13 +18,13 @@ const props = withDefaults(
 	{ collapsed: false, defaultOpen: true }
 );
 
-const abierto = ref(props.defaultOpen);
+const open = ref(props.defaultOpen);
 
 watch(
 	() => props.collapsed,
-	(plegada) => {
-		if (plegada) {
-			abierto.value = true;
+	(isCollapsed) => {
+		if (isCollapsed) {
+			open.value = true;
 		}
 	}
 );
@@ -31,10 +35,10 @@ watch(
     <button
       v-if="!collapsed"
       type="button"
-      class="group flex w-full items-center justify-between rounded-corner px-2 py-1 text-tx-muted text-xs uppercase tracking-[0.08em] hover:bg-ui-surface/60"
-      :aria-expanded="abierto"
-      @click="abierto = !abierto">
-      <span>{{ title }}</span>
+      class="group flex w-full min-w-0 items-center justify-between gap-2 rounded-corner-m px-3 py-1 font-semibold text-label-xs text-tx-muted transition-colors duration-200 ease-ui hover:bg-ui-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+      :aria-expanded="open"
+      @click="open = !open">
+      <span class="min-w-0 truncate">{{ title }}</span>
       <!-- El icono del tema y no un carácter: una `v` suelta se dibuja con la
            tipografía de la interfaz, queda de otro tamaño que el resto de los
            símbolos de la ventana y no sigue al tema. -->
@@ -42,11 +46,11 @@ watch(
         name="pan-down-symbolic"
         type="symbol"
         :size="12"
-        class="transition-transform duration-200"
-        :class="abierto ? '' : '-rotate-90'" />
+        class="shrink-0 transition-transform duration-200 ease-ui"
+        :class="open ? '' : '-rotate-90'" />
     </button>
 
-    <div v-if="abierto || collapsed" class="flex flex-col gap-1">
+    <div v-if="open || collapsed" class="flex flex-col gap-1">
       <slot />
     </div>
   </section>

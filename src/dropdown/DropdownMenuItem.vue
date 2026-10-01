@@ -20,8 +20,22 @@
  * pasa a ser un evento del componente y no el nativo del `div`: así también
  * llega cuando se elige con el teclado, y —lo que antes no pasaba— deja de
  * llegar cuando el ítem está apagado.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * La opción de Once UI: `rounded-corner-m` dentro del `rounded-corner-l` del
+ * panel, 32 de alto como mínimo, `px-3` y un borde de un píxel transparente que
+ * la deja del mismo tamaño en todos los estados. **Pasar por encima ya no pinta
+ * el acento**: era `hover:bg-primary hover:text-tx-on-primary`, una fila rosa
+ * con el texto oscuro en cada movimiento del puntero; ahora es el velo neutro
+ * `ui-hover` con el texto de siempre, y `ui-pressed` al apretar. El foco del
+ * teclado suma el anillo **por dentro** (`outline-offset: -2px`): el menú
+ * desplaza, y un anillo de afuera lo recortaría en el primer y el último ítem.
+ *
+ * Un nombre largo se parte en dos líneas en vez de cortarse: en un menú, lo
+ * que no se lee no se puede elegir.
  */
-import { usarElMenu } from './tipos';
+import { useMenu } from './types';
 
 const props = withDefaults(
 	defineProps<{
@@ -34,16 +48,16 @@ const props = withDefaults(
 
 const emit = defineEmits<{
 	select: [];
-	click: [evento: Event];
+	click: [event: Event];
 }>();
 
-const menu = usarElMenu();
+const menu = useMenu();
 
-function elegir(evento: Event) {
+function choose(event: Event) {
 	if (props.disabled) return;
 	emit('select');
-	emit('click', evento);
-	menu.cerrar({ devolverElFoco: true });
+	emit('click', event);
+	menu.close({ returnFocus: true });
 }
 </script>
 
@@ -53,15 +67,16 @@ function elegir(evento: Event) {
     tabindex="0"
     :aria-disabled="disabled || undefined"
     :class="[
-      'px-3 py-2 text-sm transition-colors outline-none',
-      {
-        'opacity-50 cursor-not-allowed': disabled,
-        'cursor-pointer hover:bg-primary hover:text-tx-on-primary focus-visible:bg-primary focus-visible:text-tx-on-primary': !disabled,
-      },
+      'flex min-h-8 min-w-0 items-center gap-3 rounded-corner-m border border-transparent px-3 py-1 text-label-m text-tx-main',
+      'transition-colors duration-200 ease-ui',
+      'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus',
+      disabled
+        ? 'cursor-not-allowed opacity-50'
+        : 'cursor-pointer hover:bg-ui-hover focus-visible:bg-ui-hover active:bg-ui-pressed active:duration-100',
     ]"
-    @click="elegir"
-    @keydown.enter.prevent="elegir"
-    @keydown.space.prevent="elegir">
+    @click="choose"
+    @keydown.enter.prevent="choose"
+    @keydown.space.prevent="choose">
     <slot />
   </div>
 </template>

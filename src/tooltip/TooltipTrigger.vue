@@ -10,34 +10,34 @@
  * tooltip que sólo responde al puntero no existe para quien no lo usa.
  */
 import { onMounted, ref } from 'vue';
-import { usarElTooltip } from './tipos';
+import { useTooltip } from './types';
 
-const tooltip = usarElTooltip();
-const envoltorio = ref<HTMLElement | null>(null);
+const tooltip = useTooltip();
+const wrapper = ref<HTMLElement | null>(null);
 
-function elDisparadorDeVerdad(): HTMLElement | null {
-	if (!envoltorio.value) return null;
-	return (envoltorio.value.firstElementChild as HTMLElement | null) ?? envoltorio.value;
+function realTrigger(): HTMLElement | null {
+	if (!wrapper.value) return null;
+	return (wrapper.value.firstElementChild as HTMLElement | null) ?? wrapper.value;
 }
 
-function entrar() {
-	tooltip.ponerElDisparador(elDisparadorDeVerdad());
-	tooltip.abrir();
+function enter() {
+	tooltip.setTrigger(realTrigger());
+	tooltip.show();
 }
 
 onMounted(() => {
-	tooltip.ponerElDisparador(elDisparadorDeVerdad());
+	tooltip.setTrigger(realTrigger());
 });
 </script>
 
 <template>
   <div
-    ref="envoltorio"
+    ref="wrapper"
     class="inline-block"
-    @mouseenter="entrar"
-    @mouseleave="tooltip.cerrar()"
-    @focus="entrar"
-    @blur="tooltip.cerrar()">
+    @mouseenter="enter"
+    @mouseleave="tooltip.hide()"
+    @focusin="enter"
+    @focusout="tooltip.hide()">
     <slot />
   </div>
 </template>

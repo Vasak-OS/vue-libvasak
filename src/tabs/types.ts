@@ -9,7 +9,7 @@
  * cualquier ventana.
  */
 
-export interface ElementoDePestana {
+export interface TabEntry {
 	id: string;
 	/** Lo que se lee. Si se corta, el `title` lo dice entero. */
 	label: string;
@@ -31,7 +31,7 @@ export interface ElementoDePestana {
 }
 
 /** Una acción del menú contextual de una pestaña. */
-export interface AccionDePestana {
+export interface TabAction {
 	id: string;
 	label: string;
 	icon?: string;

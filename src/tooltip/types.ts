@@ -10,21 +10,24 @@
  * disparó: el contenido lo necesita para medir dónde ponerse, y no puede ser
  * el `div` envoltorio del disparador sino el hijo de verdad, que es el que
  * tiene el tamaño del botón.
+ *
+ * Hasta la 1.x los nombres estaban en castellano (`ContextoDelTooltip`,
+ * `usarElTooltip`…). Siguen exportados como alias obsoletos desde `index.ts`.
  */
 
 import { computed, inject, type InjectionKey, ref, type Ref } from 'vue';
 
-export interface ContextoDelTooltip {
-	abierto: Ref<boolean>;
+export interface TooltipContext {
+	open: Ref<boolean>;
 	/** El elemento que lo disparó, que es contra el que se mide la posición. */
-	disparador: Ref<HTMLElement | null>;
-	ponerElDisparador: (elemento: HTMLElement | null) => void;
+	trigger: Ref<HTMLElement | null>;
+	setTrigger: (element: HTMLElement | null) => void;
 	/** Abre tras el retardo. Sin retardo el tooltip parpadea al pasar de largo. */
-	abrir: () => void;
-	cerrar: () => void;
+	show: () => void;
+	hide: () => void;
 }
 
-export const CLAVE_DEL_TOOLTIP: InjectionKey<ContextoDelTooltip> = Symbol('tooltip de vasak');
+export const TOOLTIP_KEY: InjectionKey<TooltipContext> = Symbol('tooltip de vasak');
 
 /**
  * El tooltip que envuelve a este componente.
@@ -33,20 +36,20 @@ export const CLAVE_DEL_TOOLTIP: InjectionKey<ContextoDelTooltip> = Symbol('toolt
  * disparador montado solo —en una prueba, en una vista previa— tiene que
  * dibujarse igual aunque no haya nada que abrir.
  */
-export function usarElTooltip(): ContextoDelTooltip {
-	const contexto = inject(CLAVE_DEL_TOOLTIP, null);
-	if (contexto) return contexto;
+export function useTooltip(): TooltipContext {
+	const context = inject(TOOLTIP_KEY, null);
+	if (context) return context;
 
-	const abierto = ref(false);
+	const open = ref(false);
 	return {
-		abierto: computed(() => abierto.value) as Ref<boolean>,
-		disparador: ref(null),
-		ponerElDisparador: () => {},
-		abrir: () => {
-			abierto.value = true;
+		open: computed(() => open.value) as Ref<boolean>,
+		trigger: ref(null),
+		setTrigger: () => {},
+		show: () => {
+			open.value = true;
 		},
-		cerrar: () => {
-			abierto.value = false;
+		hide: () => {
+			open.value = false;
 		},
 	};
 }

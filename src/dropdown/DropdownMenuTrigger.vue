@@ -21,22 +21,22 @@
  * clic que viene detrás, y desde afuera parece que la tecla no hace nada.
  */
 import { cloneVNode, Comment, defineComponent, Fragment, h, ref, Text, type VNode } from 'vue';
-import { usarElMenu } from './tipos';
+import { useMenu } from './types';
 
 /** El único hijo de verdad, saltando comentarios, huecos y fragmentos. */
-function unicoHijo(hijos: VNode[]): VNode | null {
-	const reales = hijos.filter(
-		(nodo) =>
-			nodo.type !== Comment &&
-			!(nodo.type === Text && typeof nodo.children === 'string' && !nodo.children.trim())
+function onlyChild(children: VNode[]): VNode | null {
+	const real = children.filter(
+		(node) =>
+			node.type !== Comment &&
+			!(node.type === Text && typeof node.children === 'string' && !node.children.trim())
 	);
-	if (reales.length !== 1) return null;
+	if (real.length !== 1) return null;
 
-	const uno = reales[0] as VNode;
-	if (uno.type === Fragment && Array.isArray(uno.children)) {
-		return unicoHijo(uno.children as VNode[]);
+	const one = real[0] as VNode;
+	if (one.type === Fragment && Array.isArray(one.children)) {
+		return onlyChild(one.children as VNode[]);
 	}
-	return uno;
+	return one;
 }
 
 /**
@@ -46,10 +46,10 @@ function unicoHijo(hijos: VNode[]): VNode | null {
  * por ejemplo—, y ahí la referencia es su instancia y no un elemento. El menú
  * necesita el elemento: es lo que mide para ubicarse.
  */
-function elementoDe(valor: unknown): HTMLElement | null {
-	if (valor instanceof HTMLElement) return valor;
-	const raiz = (valor as { $el?: unknown } | null)?.$el;
-	return raiz instanceof HTMLElement ? raiz : null;
+function elementOf(value: unknown): HTMLElement | null {
+	if (value instanceof HTMLElement) return value;
+	const root = (value as { $el?: unknown } | null)?.$el;
+	return root instanceof HTMLElement ? root : null;
 }
 
 export default defineComponent({
@@ -62,75 +62,75 @@ export default defineComponent({
 		disabled: { type: Boolean, default: false },
 	},
 	setup(props, { slots, attrs }) {
-		const menu = usarElMenu();
-		const propia = ref<unknown>(null);
+		const menu = useMenu();
+		const own = ref<unknown>(null);
 
-		function anotarse() {
-			menu.ponerElDisparador(elementoDe(propia.value));
+		function register() {
+			menu.setTrigger(elementOf(own.value));
 		}
 
-		function alHacerClic() {
+		function onClick() {
 			if (props.disabled) return;
-			anotarse();
-			menu.alternar();
+			register();
+			menu.toggle();
 		}
 
-		function alTeclear(evento: KeyboardEvent) {
+		function onKeydown(event: KeyboardEvent) {
 			if (props.disabled) return;
 
-			switch (evento.key) {
+			switch (event.key) {
 				case 'Enter':
 				case ' ':
-					evento.preventDefault();
-					anotarse();
-					menu.alternar('primero');
+					event.preventDefault();
+					register();
+					menu.toggle('first');
 					break;
 				case 'ArrowDown':
-					evento.preventDefault();
-					anotarse();
-					menu.abrir('primero');
+					event.preventDefault();
+					register();
+					menu.show('first');
 					break;
 				case 'ArrowUp':
-					evento.preventDefault();
-					anotarse();
-					menu.abrir('ultimo');
+					event.preventDefault();
+					register();
+					menu.show('last');
 					break;
 				case 'Escape':
-					if (menu.abierto.value) {
-						evento.preventDefault();
-						menu.cerrar({ devolverElFoco: true });
+					if (menu.open.value) {
+						event.preventDefault();
+						menu.close({ returnFocus: true });
 					}
 					break;
 			}
 		}
 
 		return () => {
-			const comunes: Record<string, unknown> = {
-				ref: (valor: unknown) => {
-					propia.value = valor;
-					anotarse();
+			const shared: Record<string, unknown> = {
+				ref: (value: unknown) => {
+					own.value = value;
+					register();
 				},
 				'aria-haspopup': 'menu',
-				'aria-expanded': menu.abierto.value ? 'true' : 'false',
+				'aria-expanded': menu.open.value ? 'true' : 'false',
 				// Sólo cuando hay algo que controlar: `aria-controls` apuntando
 				// a un elemento que el lector no expone —el menú cerrado está
 				// `inert`— es una referencia rota.
-				'aria-controls': menu.abierto.value ? menu.idDelMenu : undefined,
-				onClick: alHacerClic,
-				onKeydown: alTeclear,
+				'aria-controls': menu.open.value ? menu.menuId : undefined,
+				onClick,
+				onKeydown,
 			};
 
-			const hijos = slots.default?.() ?? [];
+			const children = slots.default?.() ?? [];
 
 			if (props.asChild) {
-				const hijo = unicoHijo(hijos);
-				if (hijo) return cloneVNode(hijo, { ...attrs, ...comunes });
+				const child = onlyChild(children);
+				if (child) return cloneVNode(child, { ...attrs, ...shared });
 			}
 
 			return h(
 				'div',
-				{ ...attrs, class: ['dropdown-menu-trigger inline-block', attrs.class], ...comunes },
-				hijos
+				{ ...attrs, class: ['dropdown-menu-trigger inline-block', attrs.class], ...shared },
+				children
 			);
 		};
 	},
