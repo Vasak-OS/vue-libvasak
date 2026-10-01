@@ -86,23 +86,18 @@ describe('el icono se pide por nombre', () => {
 	}
 });
 
-describe('la ruta ya resuelta sigue andando, y avisa', () => {
+describe('la ruta ya resuelta se fue en la 2.0.0', () => {
 	for (const [nombre, componente, propios] of LOS_CUATRO) {
-		test(`${nombre} todavía dibuja lo que le pasen en «icon»`, async () => {
-			// Quien no haya migrado tiene que seguir viendo su icono. Sacarlo de
-			// una sería romper una ventana ajena para arreglar una propiedad.
-			const aviso = spyOn(console, 'warn').mockImplementation(() => {});
-
+		test(`${nombre} ya no dibuja lo que le pasen en «icon»`, async () => {
+			// Avisaba desde la 1.x que se iba «en la próxima mayor», y ninguna
+			// aplicación la usaba al sacarla. El icono es un nombre del tema.
 			const vista = montar(componente, { ...propios, icon: 'data:VIEJO' });
 			await asentar();
 
-			expect(vista.find('img').attributes('src')).toBe('data:VIEJO');
-			expect(aviso).toHaveBeenCalled();
-			aviso.mockRestore();
+			expect(vista.findAll('img').map((img) => img.attributes('src'))).not.toContain('data:VIEJO');
 		});
 
-		test(`${nombre} no avisa cuando ya se migró`, async () => {
-			// Un aviso que sale siempre deja de leerse.
+		test(`${nombre} no avisa de nada con el nombre del tema`, async () => {
 			ponerEnElTema('audio-volume-high', 'data:ALTO');
 			const aviso = spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -114,3 +109,4 @@ describe('la ruta ya resuelta sigue andando, y avisa', () => {
 		});
 	}
 });
+

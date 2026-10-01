@@ -21,21 +21,21 @@ import ToggleControl from '../src/controls/ToggleControl.vue';
 
 describe('el botón que alterna', () => {
 	test('tiene nombre, que un icono no puede dar', () => {
-		const vista = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Wi-Fi' } });
+		const vista = mount(ToggleControl, { props: { name: 'network-wireless', label: 'Wi-Fi' } });
 
 		expect(vista.attributes('aria-label')).toBe('Wi-Fi');
 		expect(vista.attributes('title')).toBe('Wi-Fi');
 	});
 
 	test('y su icono no se lee, para no decir lo mismo dos veces', () => {
-		const vista = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Wi-Fi' } });
+		const vista = mount(ToggleControl, { props: { name: 'network-wireless', label: 'Wi-Fi' } });
 
-		expect(vista.find('img').attributes('alt')).toBe('');
+		expect(vista.findComponent({ name: 'ThemeIcon' }).props('alt')).toBe('');
 	});
 
 	test('dice si está encendido cuando de verdad alterna algo', () => {
-		const encendido = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Wi-Fi', pressed: true } });
-		const apagado = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Wi-Fi', pressed: false } });
+		const encendido = mount(ToggleControl, { props: { name: 'network-wireless', label: 'Wi-Fi', pressed: true } });
+		const apagado = mount(ToggleControl, { props: { name: 'network-wireless', label: 'Wi-Fi', pressed: false } });
 
 		expect(encendido.attributes('aria-pressed')).toBe('true');
 		expect(apagado.attributes('aria-pressed')).toBe('false');
@@ -44,13 +44,13 @@ describe('el botón que alterna', () => {
 	test('y no lo dice cuando abre un panel en vez de alternar', () => {
 		// Ahí `aria-pressed` mentiría: diría «no presionado» sobre algo que no
 		// tiene dos estados. Es criterio, y por eso `pressed` es opcional.
-		const vista = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Red' } });
+		const vista = mount(ToggleControl, { props: { name: 'network-wired', label: 'Red' } });
 
 		expect(vista.attributes('aria-pressed')).toBeUndefined();
 	});
 
 	test('mientras carga lo dice, y no se puede apretar', () => {
-		const vista = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Wi-Fi', isLoading: true } });
+		const vista = mount(ToggleControl, { props: { name: 'network-wireless', label: 'Wi-Fi', isLoading: true } });
 
 		expect(vista.attributes('aria-busy')).toBe('true');
 		expect(vista.attributes('disabled')).toBeDefined();
@@ -59,7 +59,7 @@ describe('el botón que alterna', () => {
 
 describe('el deslizador', () => {
 	const armar = (props: Record<string, unknown> = {}) =>
-		mount(SliderControl, { props: { icon: 'x.svg', label: 'Volumen', modelValue: 47, ...props } });
+		mount(SliderControl, { props: { name: 'audio-volume-high', label: 'Volumen', modelValue: 47, ...props } });
 
 	test('dice qué regula', () => {
 		// Sin esto se anuncia «control deslizante, 47» y nada más.
@@ -84,7 +84,7 @@ describe('el deslizador', () => {
 	});
 
 	test('el icono no se lee: el control ya tiene nombre', () => {
-		expect(armar({ showButton: true }).find('img').attributes('alt')).toBe('');
+		expect(armar({ showButton: true, name: 'audio-volume-high' }).findComponent({ name: 'ThemeIcon' }).props('alt')).toBe('');
 	});
 });
 
@@ -94,18 +94,18 @@ describe('el foco se ve', () => {
 		// escritorio se lo agregaba por fuera con una clase suelta.
 		const vista = mount(SwitchToggle, { props: { modelValue: false, label: 'Wi-Fi' } });
 
-		expect(vista.attributes('class')).toContain('focus-visible:ring');
+		expect(vista.attributes('class')).toContain('focus-visible:outline-ui-focus');
 	});
 
 	test('en la fila entera', () => {
 		const vista = mount(SwitchRow, { props: { modelValue: false, label: 'Wi-Fi' } });
 
-		expect(vista.attributes('class')).toContain('focus-visible:ring');
+		expect(vista.attributes('class')).toContain('focus-visible:outline-ui-focus');
 	});
 
 	test('y en el botón que alterna', () => {
-		const vista = mount(ToggleControl, { props: { icon: 'x.svg', label: 'Wi-Fi' } });
+		const vista = mount(ToggleControl, { props: { name: 'network-wireless', label: 'Wi-Fi' } });
 
-		expect(vista.attributes('class')).toContain('focus-visible:ring');
+		expect(vista.attributes('class')).toContain('focus-visible:outline-ui-focus');
 	});
 });

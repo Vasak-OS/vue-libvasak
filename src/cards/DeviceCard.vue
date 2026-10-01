@@ -1,8 +1,12 @@
 <template>
   <div
-    class="flex items-center justify-between background rounded-corner border border-ui-border px-6 py-3 mb-4"
+    class="mb-4 flex min-w-0 items-center justify-between gap-3 rounded-corner-l border border-ui-line bg-ui-surface/70 px-6 py-3 text-tx-main transition-colors duration-200 ease-ui"
     :class="[
-      { 'border-l-4 border-status-success': isConnected, 'cursor-pointer': clickable },
+      {
+        'border-l-4 border-l-status-success': isConnected,
+        'cursor-pointer hover:bg-linear-to-r hover:from-ui-hover hover:to-ui-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus':
+          clickable,
+      },
       customClass,
     ]"
     :role="clickable ? 'button' : undefined"
@@ -14,19 +18,17 @@
   >
     <div class="flex items-center gap-3 flex-1 min-w-0">
       <ThemeIcon v-if="name" :name="name" :type="type" :size="28" :alt="title" />
-      <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
-      <img v-else :src="icon" :alt="title" class="h-7 w-7 shrink-0" />
       <div class="min-w-0">
-        <div class="font-semibold truncate">
+        <div class="truncate font-semibold text-label-m">
           {{ title }}
         </div>
-        <div v-if="subtitle" class="text-xs text-tx-muted truncate">
+        <div v-if="subtitle" class="truncate text-body-xs text-tx-muted">
           {{ subtitle }}
         </div>
-        <div v-if="metadata" class="text-xs text-tx-muted truncate">
+        <div v-if="metadata" class="truncate text-body-xs text-tx-muted">
           {{ metadata }}
         </div>
-        <div v-if="extraInfo.length > 0" class="text-xs text-tx-muted flex gap-3 mt-1 flex-wrap">
+        <div v-if="extraInfo.length > 0" class="mt-1 flex flex-wrap gap-3 text-body-xs text-tx-muted">
           <!-- Cada dato puede traer su icono. Una cadena suelta también vale:
                es lo que este componente recibía antes y sigue andando. -->
           <span v-for="(info, index) in extraInfo" :key="index" class="inline-flex items-center gap-1">
@@ -40,7 +42,7 @@
     <button
       v-if="showActionButton"
       type="button"
-      class="rounded-corner px-4 py-2 text-sm font-semibold cursor-pointer hover:opacity-70 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="min-h-8 shrink-0 cursor-pointer rounded-corner-m border px-4 py-1 font-semibold text-label-m transition-colors duration-200 ease-ui active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
       :class="actionClasses"
       :disabled="isConnecting"
       @click.stop="handleAction"
@@ -51,7 +53,7 @@
     <!-- Status indicator for connected state -->
     <div
       v-if="showStatusIndicator && isConnected"
-      class="w-2 h-2 rounded-full bg-status-success"
+      class="size-2 shrink-0 rounded-corner-full bg-status-success"
     />
   </div>
 </template>
@@ -79,13 +81,18 @@
  * las dos variantes. Lo dibuja `ThemeIcon`, así que sigue al tema y entra en el
  * planificador de recarga como cualquier otro.
  *
- * `icon` —la ruta ya resuelta— sigue funcionando y está **obsoleto**. Era lo
- * contrario de lo que hace el resto de la librería: obligaba a quien lo usara a
- * resolver la ruta por su cuenta, escuchar el cambio de tema y volver a
- * pedirla, que es exactamente el composable que este barrido viene borrando de
- * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
+ * `icon` —la ruta ya resuelta— se fue en la 2.0.0, como avisaba desde la 1.x:
+ * obligaba a quien lo usara a resolver la ruta por su cuenta, escuchar el
+ * cambio de tema y volver a pedirla. Ninguna aplicación lo usaba al sacarlo.
+ *
+ * ── La forma (vue-libvasak#74) ─────────────────────────────────────────────
+ *
+ * La tarjeta de Once UI: `rounded-corner-l`, canto `ui-line` y la superficie
+ * al 70 %, en vez de `.background`. Conectada conserva la franja del éxito a
+ * la izquierda, que es estado y no decoración. El botón de la acción es un
+ * botón de 32 con `rounded-corner-m`; ya no se aclara a la mitad al pasar.
  */
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
 /**
@@ -102,8 +109,6 @@ interface Props {
   name?: string;
   /** Cuál de las dos variantes del tema. */
   type?: 'icon' | 'symbol';
-  /** @deprecated La ruta ya resuelta. Usá `name`. Se va en la próxima mayor. */
-  icon?: string;
   title: string;
   subtitle?: string;
   metadata?: string;
@@ -140,7 +145,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   name: '',
   type: 'icon',
-  icon: '',
   subtitle: '',
   metadata: '',
   extraInfo: () => [],
@@ -168,8 +172,8 @@ const props = withDefaults(defineProps<Props>(), {
  */
 const actionClasses = computed(() =>
   props.actionKind === 'destructive'
-    ? 'border border-status-error/20 bg-status-error/10 text-status-error hover:bg-status-error/20'
-    : 'bg-primary text-tx-on-primary',
+    ? 'border-status-error/30 bg-status-error/10 text-status-error hover:bg-status-error/20'
+    : 'border-transparent bg-primary text-tx-on-primary hover:bg-primary/90 active:bg-primary/80',
 );
 
 /** El icono de un dato extra, si lo trae. */
@@ -195,11 +199,4 @@ const handleClick = () => {
   emit('click');
 };
 
-onMounted(() => {
-	if (props.icon && !props.name) {
-		console.warn(
-			'[DeviceCard] «icon» está obsoleto y se va en la próxima mayor: recibe una ruta ya resuelta. Usá «name» con el nombre del icono del tema, y «type» si hace falta el símbolo.'
-		);
-	}
-});
 </script>

@@ -12,7 +12,7 @@ prefix="${2:-}"
 url="${BENCH_URL:-http://localhost:5174}"
 mkdir -p "$out"
 for theme in light dark; do
-  for section in dropdown inputs buttons tooltip listcard tabs sidebar; do
+  for section in ${SECTIONS:-dropdown inputs buttons tooltip listcard tabs sidebar}; do
     file="$out/${prefix}${section}-${theme}.png"
     google-chrome-stable --headless=new --disable-gpu --hide-scrollbars \
       --window-size=1260,3000 --virtual-time-budget=6000 \

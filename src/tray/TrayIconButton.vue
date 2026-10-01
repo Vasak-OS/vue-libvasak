@@ -2,8 +2,13 @@
   <component
     :is="interactive ? 'button' : 'div'"
     v-bind="interactive ? { type: 'button', 'aria-label': accessibleName } : {}"
-    class="p-1 rounded-corner relative group transition-[background-color] duration-300"
-    :class="[customClass, interactive ? 'cursor-pointer hover:bg-primary' : '']"
+    class="relative rounded-corner-m p-1 text-tx-main transition-colors duration-200 ease-ui group"
+    :class="[
+      customClass,
+      interactive
+        ? 'cursor-pointer hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus'
+        : '',
+    ]"
     :title="tooltip"
     @click="handleClick"
     @mouseenter="showTooltip = true"
@@ -18,19 +23,11 @@
       class="m-auto"
       :class="iconClass"
     />
-    <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
-    <img
-      v-else
-      :src="icon"
-      :alt="alt"
-      class="m-auto h-5.5 w-auto"
-      :class="iconClass"
-    />
     
     <!-- Badge/Counter -->
     <div
       v-if="badge !== null && badge > 0"
-      class="absolute bottom-1 right-1 bg-primary text-tx-on-primary text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold animate-bounce"
+      class="absolute right-1 bottom-1 flex h-4 min-w-4 items-center justify-center rounded-corner-full bg-primary px-1 font-semibold text-label-xs text-tx-on-primary"
     >
       {{ badge }}
     </div>
@@ -38,11 +35,11 @@
     <!-- Tooltip personalizado -->
     <div 
       v-if="showCustomTooltip && customTooltipText"
-      class="absolute top-1 left-1/2 transform -translate-x-1/2 text-xs font-semibold p-1 rounded-corner transition-[opacity,translate] duration-300 pointer-events-none background"
+      class="pointer-events-none absolute top-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-corner-s border border-ui-line bg-ui-float px-2 py-1 text-body-xs text-tx-main shadow-surface-s transition-[opacity,translate] duration-150 ease-ui-out"
       :class="[
         tooltipClass,
         {
-          'opacity-0 -translate-y-2': !showTooltip,
+          'opacity-0 -translate-y-0.5': !showTooltip,
           'opacity-100 translate-y-0': showTooltip
         }
       ]"
@@ -71,13 +68,19 @@
  * las dos variantes. Lo dibuja `ThemeIcon`, así que sigue al tema y entra en el
  * planificador de recarga como cualquier otro.
  *
- * `icon` —la ruta ya resuelta— sigue funcionando y está **obsoleto**. Era lo
- * contrario de lo que hace el resto de la librería: obligaba a quien lo usara a
- * resolver la ruta por su cuenta, escuchar el cambio de tema y volver a
- * pedirla, que es exactamente el composable que este barrido viene borrando de
- * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
+ * `icon` —la ruta ya resuelta— se fue en la 2.0.0, como avisaba desde la 1.x:
+ * obligaba a quien lo usara a resolver la ruta por su cuenta, escuchar el
+ * cambio de tema y volver a pedirla. Ninguna aplicación lo usaba al sacarlo.
+ *
+ * ── La forma (vue-libvasak#74) ─────────────────────────────────────────────
+ *
+ * Un botón sin borde de Once UI: `rounded-corner-m` y el velo `ui-hover` al
+ * pasar —era el relleno del primario—. La insignia es una píldora
+ * `rounded-corner-full` en peso 600 y ya no rebota: un número que salta sin
+ * parar en el panel distrae de todo lo demás. El globo propio es el mismo
+ * globo de `TooltipContent`.
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
 
@@ -86,8 +89,6 @@ interface Props {
   name?: string;
   /** Cuál de las dos variantes del tema. */
   type?: 'icon' | 'symbol';
-  /** @deprecated La ruta ya resuelta. Usá `name`. Se va en la próxima mayor. */
-  icon?: string;
   alt?: string;
   tooltip?: string;
   badge?: number | null;
@@ -110,7 +111,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   name: '',
   type: 'icon',
-  icon: '',
   alt: '',
   tooltip: '',
   badge: null,
@@ -137,19 +137,6 @@ const accessibleName = computed(() => props.alt || props.tooltip || undefined);
 
 const showTooltip = ref(false);
 
-/**
- * El aviso de que `icon` está obsoleto.
- *
- * Por consola y no un error: quien todavía lo use tiene que seguir viendo su
- * icono, no una ventana rota. Y en `onMounted`, una vez por instancia.
- */
-onMounted(() => {
-	if (props.icon && !props.name) {
-		console.warn(
-			'[TrayIconButton] «icon» está obsoleto y se va en la próxima mayor: recibe una ruta ya resuelta. Usá «name» con el nombre del icono del tema, y «type» si hace falta el símbolo.'
-		);
-	}
-});
 
 const handleClick = () => {
   emit('click');

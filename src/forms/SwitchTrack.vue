@@ -12,6 +12,14 @@
  * No escucha nada y va marcado `aria-hidden`: lo que se anuncia es el botón que
  * lo contiene, con su `role="switch"` y su `aria-checked`. Sin eso un lector de
  * pantalla leería dos veces la misma cosa.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * La vía de Once UI: 40 × 24 con pulgar de 16 en el tamaño chico (era 44 × 24)
+ * y 48 × 28 con pulgar de 20 en el mediano, `rounded-corner-full`. Apagada, la
+ * superficie con el borde de 3:1 (decisión 5); encendida, el primario. El
+ * pulgar lleva `shadow-surface-xs` y recorre en 300 ms, con dos píxeles de aire
+ * a cada lado en los dos estados.
  */
 import { computed } from 'vue';
 
@@ -19,15 +27,15 @@ const props = withDefaults(defineProps<{ on: boolean; size?: 'small' | 'medium' 
 	size: 'small',
 });
 
-const chico = computed(() => props.size === 'small');
+const small = computed(() => props.size === 'small');
 </script>
 
 <template>
   <span
     aria-hidden="true"
-    class="inline-flex shrink-0 items-center rounded-full border transition-colors"
+    class="inline-flex shrink-0 items-center rounded-corner-full border transition-colors duration-200 ease-ui"
     :class="[
-      chico ? 'h-6 w-11' : 'h-7 w-12',
+      small ? 'h-6 w-10' : 'h-7 w-12',
       on ? 'border-transparent bg-primary' : 'border-ui-border-strong bg-ui-surface',
     ]">
     <!-- El pulgar es el primer plano de su vía. Con `bg-white` fijo daba 1,54 de
@@ -37,11 +45,11 @@ const chico = computed(() => props.size === 'small');
          sobre el acento sea el que sea, y `tx-main` sobre la superficie. Lo
          encontró el escritorio; acá vale para todos. -->
     <span
-      class="inline-block transform rounded-full shadow transition-transform"
+      class="inline-block rounded-corner-full shadow-surface-xs transition-[translate,background-color] duration-300 ease-ui"
       :class="[
-        chico ? 'h-4 w-4' : 'h-5 w-5',
+        small ? 'size-4' : 'size-5',
         on ? 'bg-tx-on-primary' : 'bg-tx-main',
-        on ? 'translate-x-6' : 'translate-x-1',
+        on ? (small ? 'translate-x-5' : 'translate-x-6') : 'translate-x-0.5',
       ]"></span>
   </span>
 </template>

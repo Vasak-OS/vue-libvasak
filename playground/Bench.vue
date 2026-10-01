@@ -31,11 +31,23 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '../src';
+import BenchForms from './BenchForms.vue';
 import VerticalTabs from './VerticalTabs.vue';
 
 const props = defineProps<{ widths: number[]; only: string }>();
 
-const sections = ['dropdown', 'inputs', 'buttons', 'tooltip', 'listcard', 'tabs', 'sidebar'] as const;
+const sections = [
+	'dropdown',
+	'inputs',
+	'buttons',
+	'tooltip',
+	'listcard',
+	'tabs',
+	'sidebar',
+	'forms',
+	'devices',
+] as const;
+const FORMS = ['forms', 'devices'];
 const shown = computed(() =>
 	props.only ? sections.filter((section) => props.only.split(',').includes(section)) : sections
 );
@@ -107,7 +119,7 @@ function forceStates() {
 
 /** Los globos se abren como se abren de verdad: con el puntero encima. */
 function openTooltips() {
-	for (const trigger of document.querySelectorAll<HTMLElement>('[data-bench-tooltip] > div')) {
+	for (const trigger of document.querySelectorAll<HTMLElement>('[data-bench-tooltip] > div, [data-bench-enter]')) {
 		trigger.dispatchEvent(new MouseEvent('mouseenter'));
 	}
 }
@@ -221,6 +233,8 @@ onMounted(async () => {
               <VerticalTabs :tabs="tabs" />
             </div>
           </div>
+
+          <BenchForms v-else-if="FORMS.includes(section)" :section="section" :width="width" />
 
           <!-- Barra lateral: desplegada y plegada. -->
           <div v-else-if="section === 'sidebar'" class="flex h-120 gap-2">

@@ -1,60 +1,3 @@
-<template>
-  <div
-    class="background rounded-corner flex flex-row items-center gap-2 justify-between w-full h-auto p-4 transition-[background-color] duration-200 hover:bg-ui-surface/80"
-  >
-    <button
-      v-if="showButton"
-      @click="handleButtonClick"
-      type="button"
-      :title="buttonLabel ?? label"
-      :aria-label="buttonLabel ?? label"
-      class="w-8 h-8 flex items-center justify-center rounded-corner transition-[background-color,scale] duration-200 hover:bg-ui-surface/80 hover:scale-110 active:scale-95"
-    >
-      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" :class="iconClass" />
-      <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
-      <img
-        v-else
-        :src="icon"
-        alt=""
-        class="w-6 h-6"
-        :class="iconClass"
-      />
-    </button>
-    
-    <div
-      v-else
-      class="w-8 h-8 flex items-center justify-center"
-    >
-      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" />
-      <!-- La ruta ya resuelta, mientras `icon` siga existiendo. -->
-      <img
-        v-else
-        :src="icon"
-        alt=""
-        class="w-6 h-6"
-      />
-    </div>
-
-    <input
-      type="range"
-      :min="min"
-      :max="max"
-      :value="modelValue"
-      @input="handleInput"
-      :aria-label="label"
-      :aria-valuetext="`${percentage}%`"
-      class="flex-1 transition-[scale] duration-200 hover:scale-105"
-    />
-    
-    <span
-      class="w-12 text-right transition-[color] duration-200 font-medium"
-      :class="percentageClass"
-    >
-      {{ percentage }}%
-    </span>
-  </div>
-</template>
-
 <script setup lang="ts">
 /**
  * Un deslizador con su icono y su porcentaje: el volumen, el brillo.
@@ -78,14 +21,20 @@
  * las dos variantes. Lo dibuja `ThemeIcon`, así que sigue al tema y entra en el
  * planificador de recarga como cualquier otro.
  *
- * `icon` —la ruta ya resuelta— sigue funcionando y está **obsoleto**. Era lo
- * contrario de lo que hace el resto de la librería: obligaba a quien lo usara a
- * resolver la ruta por su cuenta, escuchar el cambio de tema y volver a
- * pedirla, que es exactamente el composable que este barrido viene borrando de
- * cada repositorio. Se va en la próxima mayor; hasta entonces avisa por consola.
+ * `icon` —la ruta ya resuelta— se fue en la 2.0.0, como avisaba desde la 1.x:
+ * obligaba a quien lo usara a resolver la ruta por su cuenta, escuchar el
+ * cambio de tema y volver a pedirla. Ninguna aplicación lo usaba al sacarlo.
  * Lo pedía el issue #52.
+ *
+ * ── La forma (vue-libvasak#74) ─────────────────────────────────────────────
+ *
+ * Una tarjeta de Once UI —`rounded-corner-l`, canto `ui-line`, superficie al
+ * 70 %— en vez de `.background`, que era el fondo de la ventana puesto sobre la
+ * ventana. El botón es un botón sin borde de 32 con el velo `ui-hover`, y nada
+ * escala al pasar ni al apretar. La vía nativa toma el primario del esquema
+ * con `accent-color`.
  */
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
 interface Props {
@@ -93,8 +42,6 @@ interface Props {
   name?: string;
   /** Cuál de las dos variantes del tema. */
   type?: 'icon' | 'symbol';
-  /** @deprecated La ruta ya resuelta. Usá `name`. Se va en la próxima mayor. */
-  icon?: string;
   /**
    * Qué regula el deslizador, ya traducido. Obligatorio: el `input` no tiene
    * `<label>` asociado ni texto propio.
@@ -113,20 +60,11 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   name: '',
   type: 'icon',
-  icon: '',
   min: 0,
   max: 100,
   showButton: false,
   iconClass: () => ({}),
   getPercentageClass: () => '',
-});
-
-onMounted(() => {
-  if (props.icon && !props.name) {
-    console.warn(
-      '[SliderControl] «icon» está obsoleto y se va en la próxima mayor: recibe una ruta ya resuelta. Usá «name» con el nombre del icono del tema, y «type» si hace falta el símbolo.'
-    );
-  }
 });
 
 const emit = defineEmits<{
@@ -157,3 +95,45 @@ const handleButtonClick = () => {
   emit('buttonClick');
 };
 </script>
+
+<template>
+  <div
+    class="flex h-auto w-full min-w-0 flex-row items-center justify-between gap-2 rounded-corner-l border border-ui-line bg-ui-surface/70 p-4 text-tx-main"
+  >
+    <button
+      v-if="showButton"
+      @click="handleButtonClick"
+      type="button"
+      :title="buttonLabel ?? label"
+      :aria-label="buttonLabel ?? label"
+      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-corner-m transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+    >
+      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" :class="iconClass" />
+    </button>
+
+    <div
+      v-else
+      class="flex h-8 w-8 shrink-0 items-center justify-center"
+    >
+      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" />
+    </div>
+
+    <input
+      type="range"
+      :min="min"
+      :max="max"
+      :value="modelValue"
+      @input="handleInput"
+      :aria-label="label"
+      :aria-valuetext="`${percentage}%`"
+      class="min-w-0 flex-1 cursor-pointer accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+    />
+
+    <span
+      class="w-12 shrink-0 text-right font-semibold text-label-m tabular-nums transition-colors duration-200 ease-ui"
+      :class="percentageClass"
+    >
+      {{ percentage }}%
+    </span>
+  </div>
+</template>

@@ -26,6 +26,15 @@
  * acá adentro se ve y se comporta como cualquier otra búsqueda de cualquier
  * otra ventana. Qué opciones hay, de dónde salen y qué pasa al elegir siguen
  * siendo de la aplicación.
+ *
+ * # La forma (vue-libvasak#74)
+ *
+ * Cerrado es un campo: 32 de alto, `rounded-corner-m` y el borde de 3:1
+ * (decisión 5). Abierto, su lista es el panel de un desplegable —`ui-float`,
+ * canto `ui-line`, `rounded-corner-l`, `shadow-surface-m`— con opciones de
+ * `rounded-corner-m`: la que se recorre lleva el velo `ui-hover` y la elegida
+ * el de acento (decisión 4). La flecha es `pan-down-symbolic`, la misma de
+ * `SelectField`.
  */
 import { computed, nextTick, ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -74,14 +83,14 @@ const props = withDefaults(
 	}
 );
 
-const emit = defineEmits<{ 'update:modelValue': [valor: string] }>();
+const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 
-const busqueda = ref('');
-const abierto = ref(false);
-const activa = ref(0);
-const lista = ref<HTMLElement | null>(null);
-const boton = ref<HTMLButtonElement | null>(null);
-const campo = ref<InstanceType<typeof SearchField> | null>(null);
+const query = ref('');
+const isOpen = ref(false);
+const active = ref(0);
+const list = ref<HTMLElement | null>(null);
+const button = ref<HTMLButtonElement | null>(null);
+const field = ref<InstanceType<typeof SearchField> | null>(null);
 
 /**
  * Único por instancia, para que `aria-activedescendant` apunte a lo suyo.
@@ -91,61 +100,61 @@ const campo = ref<InstanceType<typeof SearchField> | null>(null);
  * pantalla anuncia la opción del otro—. Es además el mismo mecanismo que usan
  * los títulos de los diálogos.
  */
-const idLista = siguienteIdDeLista();
+const listId = siguienteIdDeLista();
 
-const seleccionada = computed(
+const selected = computed(
 	() => props.options.find((o) => o.valor === props.modelValue) ?? null
 );
 
-const ordenadas = computed(() => buscarOpciones(props.options, busqueda.value));
-const coincidencias = computed(() => ordenadas.value.slice(0, props.limit));
+const ranked = computed(() => buscarOpciones(props.options, query.value));
+const matches = computed(() => ranked.value.slice(0, props.limit));
 
 /** Cuántas quedaron afuera del recorte, para poder decirlo en vez de esconderlas. */
-const sobrantes = computed(() => Math.max(0, ordenadas.value.length - props.limit));
+const leftover = computed(() => Math.max(0, ranked.value.length - props.limit));
 
-const idDeLaActiva = computed(() =>
-	coincidencias.value.length > 0 ? `${idLista}-${activa.value}` : undefined
+const activeId = computed(() =>
+	matches.value.length > 0 ? `${listId}-${active.value}` : undefined
 );
 
-function elegir(valor: string) {
-	emit('update:modelValue', valor);
-	cerrar();
+function choose(value: string) {
+	emit('update:modelValue', value);
+	close();
 }
 
-async function abrir() {
-	abierto.value = true;
+async function open() {
+	isOpen.value = true;
 	// Arranca sobre la que está elegida, no sobre la primera: así bajar una vez
 	// lleva a la siguiente de la que se tiene, que es lo que se espera.
-	const donde = coincidencias.value.findIndex((o) => o.valor === props.modelValue);
-	activa.value = donde >= 0 ? donde : 0;
+	const where = matches.value.findIndex((o) => o.valor === props.modelValue);
+	active.value = where >= 0 ? where : 0;
 
 	await nextTick();
-	campo.value?.enfocar();
-	desplazarALaActiva();
+	field.value?.focus();
+	scrollToActive();
 }
 
-function cerrar(devolverElFoco = true) {
-	if (!abierto.value) return;
-	abierto.value = false;
-	busqueda.value = '';
+function close(returnFocus = true) {
+	if (!isOpen.value) return;
+	isOpen.value = false;
+	query.value = '';
 	// El foco vuelve al botón: si se quedara en un campo que ya no existe, el
 	// navegador lo manda al principio del documento y quien usa teclado pierde
 	// el lugar.
-	if (devolverElFoco) nextTick(() => boton.value?.focus());
+	if (returnFocus) nextTick(() => button.value?.focus());
 }
 
-function mover(paso: number) {
-	const total = coincidencias.value.length;
+function move(step: number) {
+	const total = matches.value.length;
 	if (total === 0) return;
 	// Da la vuelta: bajar desde la última lleva a la primera, que es lo que hace
 	// cualquier menú.
-	activa.value = (activa.value + paso + total) % total;
-	desplazarALaActiva();
+	active.value = (active.value + step + total) % total;
+	scrollToActive();
 }
 
-function irA(indice: number) {
-	activa.value = indice;
-	desplazarALaActiva();
+function goTo(index: number) {
+	active.value = index;
+	scrollToActive();
 }
 
 /**
@@ -156,35 +165,35 @@ function irA(indice: number) {
  * el contenedor y sesenta hijos, y son dos oyentes en vez de ciento veinte. Las
  * opciones son marcado; no escuchan nada.
  */
-function indiceBajoElRaton(evento: Event): number | null {
-	const fila = (evento.target as HTMLElement | null)?.closest?.('[data-indice]');
-	if (!fila) return null;
-	const indice = Number(fila.getAttribute('data-indice'));
-	return Number.isInteger(indice) ? indice : null;
+function indexUnderPointer(event: Event): number | null {
+	const row = (event.target as HTMLElement | null)?.closest?.('[data-index]');
+	if (!row) return null;
+	const index = Number(row.getAttribute('data-index'));
+	return Number.isInteger(index) ? index : null;
 }
 
-function alClic(evento: MouseEvent) {
-	const indice = indiceBajoElRaton(evento);
-	const opcion = indice === null ? undefined : coincidencias.value[indice];
-	if (opcion) elegir(opcion.valor);
+function onClick(event: MouseEvent) {
+	const index = indexUnderPointer(event);
+	const option = index === null ? undefined : matches.value[index];
+	if (option) choose(option.valor);
 }
 
-function alPasarElRaton(evento: MouseEvent) {
-	const indice = indiceBajoElRaton(evento);
-	if (indice !== null) activa.value = indice;
+function onPointerMove(event: MouseEvent) {
+	const index = indexUnderPointer(event);
+	if (index !== null) active.value = index;
 }
 
-function desplazarALaActiva() {
+function scrollToActive() {
 	nextTick(() => {
-		lista.value
-			?.querySelector(`[data-indice="${activa.value}"]`)
+		list.value
+			?.querySelector(`[data-index="${active.value}"]`)
 			?.scrollIntoView({ block: 'nearest' });
 	});
 }
 
-function elegirLaActiva() {
-	const opcion = coincidencias.value[activa.value];
-	if (opcion) elegir(opcion.valor);
+function chooseActive() {
+	const option = matches.value[active.value];
+	if (option) choose(option.valor);
 }
 
 /**
@@ -200,16 +209,16 @@ function elegirLaActiva() {
  */
 watch(
 	() => props.disabled,
-	(apagado) => {
-		if (apagado) cerrar(false);
+	(off) => {
+		if (off) close(false);
 	}
 );
 
 // Escribir mueve la lista bajo el cursor, así que la marca vuelve arriba. Sin
 // esto, `Enter` después de escribir elegía una opción que ya no estaba a la vista.
-watch(busqueda, () => {
-	activa.value = 0;
-	desplazarALaActiva();
+watch(query, () => {
+	active.value = 0;
+	scrollToActive();
 });
 
 /**
@@ -221,33 +230,33 @@ watch(busqueda, () => {
  *
  * `relatedTarget` es a dónde se fue el foco; si sigue adentro, no se cierra.
  */
-function alPerderElFoco(evento: FocusEvent) {
-	const destino = evento.relatedTarget as Node | null;
-	if (destino && (evento.currentTarget as HTMLElement).contains(destino)) return;
-	cerrar(false);
+function onFocusout(event: FocusEvent) {
+	const target = event.relatedTarget as Node | null;
+	if (target && (event.currentTarget as HTMLElement).contains(target)) return;
+	close(false);
 }
 </script>
 
 <template>
-  <div class="relative" @focusout="alPerderElFoco">
+  <div class="relative" @focusout="onFocusout">
     <button
-      ref="boton"
+      ref="button"
       type="button"
       :disabled="disabled"
-      class="flex w-full items-center justify-between gap-2 rounded-corner border border-ui-border-strong bg-ui-surface px-2 py-1 text-left text-sm text-tx-main transition-colors hover:bg-ui-bg/60 disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-corner-m border border-ui-border-strong bg-ui-surface/70 px-3 text-left text-label-m text-tx-main transition-colors duration-200 ease-ui hover:border-tx-main focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
       :aria-label="label || undefined"
-      :aria-expanded="abierto"
+      :aria-expanded="isOpen"
       aria-haspopup="listbox"
-      @click="abierto ? cerrar() : abrir()"
-      @keydown.down.prevent="abierto ? mover(1) : abrir()"
-      @keydown.up.prevent="abierto ? mover(-1) : abrir()">
+      @click="isOpen ? close() : open()"
+      @keydown.down.prevent="isOpen ? move(1) : open()"
+      @keydown.up.prevent="isOpen ? move(-1) : open()">
       <span class="min-w-0 flex-1 truncate">
-        {{ seleccionada?.etiqueta ?? placeholder }}
-        <span v-if="seleccionada?.detalle" class="ml-2 text-tx-muted text-xs">
-          {{ seleccionada.detalle }}
+        {{ selected?.etiqueta ?? placeholder }}
+        <span v-if="selected?.detalle" class="ml-2 text-body-xs text-tx-muted">
+          {{ selected.detalle }}
         </span>
       </span>
-      <ThemeIcon name="go-down" type="symbol" :size="12" class="shrink-0 opacity-60" />
+      <ThemeIcon name="pan-down-symbolic" type="symbol" :size="16" class="shrink-0 opacity-60" />
     </button>
 
     <!-- Dibujado acá y no por el sistema: ése es el punto de este componente.
@@ -256,53 +265,53 @@ function alPerderElFoco(evento: FocusEvent) {
          sirve de nada. Se pasa de ancho por encima de lo que tenga al lado, que
          es lo que hace cualquier menú. -->
     <div
-      v-if="abierto"
-      class="absolute z-20 w-full min-w-64 rounded-corner border border-ui-border-strong bg-ui-bg shadow-lg"
+      v-if="isOpen"
+      class="absolute z-20 w-full min-w-64 max-w-[calc(100vw-16px)] rounded-corner-l border border-ui-line bg-ui-float text-tx-main shadow-surface-m"
       :class="up ? 'bottom-full mb-1' : 'mt-1'"
-      @keydown.escape.prevent="cerrar()"
-      @keydown.down.prevent="mover(1)"
-      @keydown.up.prevent="mover(-1)"
-      @keydown.home.prevent="irA(0)"
-      @keydown.end.prevent="irA(coincidencias.length - 1)"
-      @keydown.enter.prevent="elegirLaActiva()"
-      @keydown.tab="cerrar(false)"
-      @click="alClic"
-      @mousemove="alPasarElRaton">
-      <div class="border-ui-border border-b p-2">
+      @keydown.escape.prevent="close()"
+      @keydown.down.prevent="move(1)"
+      @keydown.up.prevent="move(-1)"
+      @keydown.home.prevent="goTo(0)"
+      @keydown.end.prevent="goTo(matches.length - 1)"
+      @keydown.enter.prevent="chooseActive()"
+      @keydown.tab="close(false)"
+      @click="onClick"
+      @mousemove="onPointerMove">
+      <div class="border-ui-line-weak border-b p-2">
         <SearchField
-          ref="campo"
-          v-model="busqueda"
+          ref="field"
+          v-model="query"
           :label="label"
           :placeholder="searchPlaceholder"
-          :listbox-id="idLista"
-          :active-option-id="idDeLaActiva"
-          :expanded="abierto" />
+          :listbox-id="listId"
+          :active-option-id="activeId"
+          :expanded="isOpen" />
       </div>
 
-      <ul :id="idLista" ref="lista" role="listbox" class="max-h-56 overflow-y-auto p-1">
-        <li v-if="coincidencias.length === 0" class="p-3 text-center text-tx-muted text-xs">
+      <ul :id="listId" ref="list" role="listbox" class="max-h-56 overflow-y-auto p-1">
+        <li v-if="matches.length === 0" class="p-3 text-center text-body-xs text-tx-muted">
           {{ emptyText }}
         </li>
         <li
-          v-for="(opcion, indice) in coincidencias"
-          :id="`${idLista}-${indice}`"
-          :key="opcion.valor"
-          :data-indice="indice"
+          v-for="(option, index) in matches"
+          :id="`${listId}-${index}`"
+          :key="option.valor"
+          :data-index="index"
           role="option"
-          :aria-selected="opcion.valor === modelValue"
-          class="flex cursor-pointer items-baseline gap-2 rounded-corner px-2 py-1 text-sm"
+          :aria-selected="option.valor === modelValue"
+          class="flex min-h-8 cursor-pointer items-center gap-2 rounded-corner-m px-3 py-1 text-label-m text-tx-main transition-colors duration-200 ease-ui"
           :class="[
-            indice === activa ? 'bg-ui-surface' : '',
-            opcion.valor === modelValue ? 'font-medium text-primary' : 'text-tx-main',
+            option.valor === modelValue ? 'bg-ui-selected-accent font-semibold' : index === active ? 'bg-ui-hover' : '',
+            option.valor === modelValue && index === active ? 'outline-2 -outline-offset-2 outline-ui-focus' : '',
           ]">
-          <span class="min-w-0 flex-1 truncate">{{ opcion.etiqueta }}</span>
-          <span v-if="opcion.detalle" class="shrink-0 text-tx-muted text-xs">
-            {{ opcion.detalle }}
+          <span class="min-w-0 flex-1 truncate">{{ option.etiqueta }}</span>
+          <span v-if="option.detalle" class="shrink-0 text-body-xs text-tx-muted">
+            {{ option.detalle }}
           </span>
         </li>
         <!-- Lo que quedó afuera del recorte se dice. Que desaparezcan en silencio
              hace creer que la opción que se busca no existe. -->
-        <li v-if="sobrantes > 0" class="px-2 py-1 text-tx-muted text-xs">+{{ sobrantes }}</li>
+        <li v-if="leftover > 0" class="px-3 py-1 text-body-xs text-tx-muted">+{{ leftover }}</li>
       </ul>
     </div>
   </div>

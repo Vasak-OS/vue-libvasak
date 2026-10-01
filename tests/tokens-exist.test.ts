@@ -53,6 +53,17 @@ const MIGRATED = [
 	'sidebar/SideBar.vue',
 	'sidebar/SideButton.vue',
 	'sidebar/SideGroup.vue',
+	'forms/FormGroup.vue',
+	'forms/SelectField.vue',
+	'forms/SwitchTrack.vue',
+	'forms/SwitchToggle.vue',
+	'forms/SwitchRow.vue',
+	'forms/ProgressBar.vue',
+	'forms/SliderControl.vue',
+	'controls/ToggleControl.vue',
+	'search/SearchSelect.vue',
+	'tray/TrayIconButton.vue',
+	'cards/DeviceCard.vue',
 ];
 
 /** Sin comentarios: lo que se explica no es lo que se dibuja. */
