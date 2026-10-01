@@ -84,10 +84,20 @@ function onScroll() {
 watch(
 	() => [props.text, props.lines.length, props.lines[props.lines.length - 1]?.text],
 	async () => {
-		if (!props.follow || !atEnd.value) return;
+		if (!props.follow) return;
+		// Lo que importa es dónde estaba **antes** de que llegara lo nuevo. Y
+		// después se vuelve a medir: un contenido que dejó de desbordar no
+		// dispara `scroll`, y sin medir quedaría «subido» para siempre.
+		const wasAtEnd = atEnd.value;
 		await nextTick();
 		const element = root.value;
-		if (element) element.scrollTop = element.scrollHeight;
+		if (!element) return;
+		if (wasAtEnd) {
+			element.scrollTop = element.scrollHeight;
+			atEnd.value = true;
+		} else {
+			onScroll();
+		}
 	},
 	{ immediate: true, flush: 'post' }
 );

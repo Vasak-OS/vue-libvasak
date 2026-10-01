@@ -446,7 +446,12 @@ export function useThemeIcon(names: Ref<string> | Ref<readonly string[]>, type: 
 
 		let resolved = '';
 		for (const candidate of list) {
-			resolved = await resolveShared(candidate, type.value);
+			try {
+				resolved = await resolveShared(candidate, type.value);
+			} catch {
+				// Un nombre que falla no corta la lista: se prueba el siguiente.
+				resolved = '';
+			}
 			// Un pedido más nuevo ya está en camino: éste no decide nada.
 			if (mine !== lastRequest || unmounted) return;
 			if (resolved) break;

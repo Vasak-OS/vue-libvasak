@@ -172,7 +172,13 @@ const emit = defineEmits<{
  * anuncia un botón **vacío**. Se usa el `alt` del icono, y si no hay, el texto
  * del tooltip.
  */
-const accessibleName = computed(() => props.alt || props.tooltip || undefined);
+const accessibleName = computed(() => {
+  const name = props.alt || props.tooltip;
+  // El progreso va adentro del botón, y lo de adentro de un botón no se
+  // anuncia aparte: se suma a su nombre.
+  if (!hasProgress.value) return name || undefined;
+  return [name, progressText.value, `${Math.round(percent.value)} %`].filter(Boolean).join(', ');
+});
 
 const showTooltip = ref(false);
 

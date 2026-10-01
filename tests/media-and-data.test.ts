@@ -90,6 +90,14 @@ describe('el disco, con lo de la 2.2.0', () => {
 		expect(view.get('[data-progress-ring]').attributes('aria-valuenow')).toBe('100');
 	});
 
+	test('botón con aro: el avance va en el nombre y el aro se calla, porque adentro de un botón no se anuncia', () => {
+		const view = render(SpinningCover, { props: { interactive: true, label: 'Abrir', progress: 30 } });
+
+		expect(view.get('button').attributes('aria-label')).toBe('Abrir, Progress, 30 %');
+		expect(view.get('[data-progress-ring]').attributes('role')).toBeUndefined();
+		expect(view.get('[data-progress-ring]').attributes('aria-hidden')).toBe('true');
+	});
+
 	test('interactive lo vuelve un botón con nombre que avisa', async () => {
 		const view = render(SpinningCover, { props: { interactive: true, label: 'Abrir el reproductor' } });
 		const button = view.get('button');
@@ -225,6 +233,26 @@ describe('el bloque de código', () => {
 		await nextTick();
 		expect(element.scrollTop).toBe(100);
 	});
+
+	test('si lo que hay deja de desbordar, vuelve a seguir el final', async () => {
+		const view = render(CodeBlock, { props: { lines: [{ text: '1' }], maxHeight: 50, follow: true }, attachTo: document.body });
+		const element = view.element as HTMLElement;
+		Object.defineProperty(element, 'scrollHeight', { value: 500, configurable: true });
+		Object.defineProperty(element, 'clientHeight', { value: 50, configurable: true });
+		element.scrollTop = 100;
+		await view.trigger('scroll');
+
+		// Se vació: ya no desborda, y no llega ningún `scroll` que lo avise.
+		Object.defineProperty(element, 'scrollHeight', { value: 50, configurable: true });
+		element.scrollTop = 0;
+		await view.setProps({ lines: [] });
+		await nextTick();
+		// Y lo que llega después se sigue.
+		Object.defineProperty(element, 'scrollHeight', { value: 300, configurable: true });
+		await view.setProps({ lines: [{ text: 'nuevo' }] });
+		await nextTick();
+		expect(element.scrollTop).toBe(300);
+	});
 });
 
 describe('la zona de soltar', () => {
@@ -235,20 +263,29 @@ describe('la zona de soltar', () => {
 		expect(render(DropZone, { props: { locked: true } }).text()).toBe("Can't drop here");
 	});
 
-	test('activa, el velo de acento; trabada, el canto de advertencia y se anuncia', () => {
+	test('activa, el velo de acento; trabada, el canto de advertencia, y la región viva ya estaba', async () => {
 		expect(render(DropZone, { props: { active: true } }).classes()).toContain('bg-ui-selected-accent');
-		const locked = render(DropZone, { props: { locked: true } });
-		expect(locked.classes()).toContain('border-status-warning');
-		expect(locked.get('p').attributes('role')).toBe('status');
+		const view = render(DropZone);
+		const region = view.get('[role="status"]');
+		await view.setProps({ locked: true });
+
+		expect(view.classes()).toContain('border-status-warning');
+		// La misma región, con otro texto: eso es lo que se anuncia.
+		expect(view.get('[role="status"]').element).toBe(region.element);
+		expect(region.text()).toBe("Can't drop here");
 	});
 
-	test('encima: sólo mientras se arrastra, y sin atrapar el puntero', async () => {
+	test('encima: sólo mientras se arrastra, sin atrapar el puntero, y la región montada desde antes', async () => {
 		const view = render(DropZone, { props: { overlay: true } });
+		const visual = view.get('[data-drop-visual]').element as HTMLElement;
+		const region = view.get('[role="status"]');
 
-		expect((view.element as HTMLElement).style.display).toBe('none');
+		expect(visual.style.display).toBe('none');
+		expect(region.text()).toBe('');
 		expect(view.classes()).toContain('pointer-events-none');
 		await view.setProps({ active: true });
-		expect((view.element as HTMLElement).style.display).toBe('');
-		expect(view.find('[role="status"]').exists()).toBe(true);
+		expect(visual.style.display).toBe('');
+		expect(view.get('[role="status"]').element).toBe(region.element);
+		expect(region.text()).toBe('Drop files here');
 	});
 });

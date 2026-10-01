@@ -180,6 +180,8 @@ describe('el botón de la bandeja', () => {
 
 		expect(bar.attributes('aria-valuenow')).toBe('100');
 		expect(bar.attributes('aria-label')).toBe('Avance');
+		// Adentro de un botón no se anuncia aparte: va en el nombre.
+		expect(view.attributes('aria-label')).toBe('Firefox, Avance, 100 %');
 	});
 
 	test('el icono prueba los respaldos y, si no, el dibujo de la aplicación', async () => {
@@ -204,6 +206,16 @@ describe('el icono del tema, con respaldos', () => {
 		expect(view.get('img').attributes('src')).toBe('nautilus.svg');
 		// El tercero no se pidió: el segundo ya resolvió.
 		expect(pedidosDeIcono.map((asked) => asked.nombre)).toEqual(['nautilus', 'org.gnome.Nautilus']);
+	});
+
+	test('un nombre que falla al resolver no corta la lista', async () => {
+		ponerEnElTema('roto', () => Promise.reject(new Error('el complemento se cayó')));
+		ponerEnElTema('sano', 'sano.svg');
+		const view = render(ThemeIcon, { props: { name: 'roto', fallbacks: ['sano'] } });
+		await waitForIcons();
+		await waitForIcons();
+
+		expect(view.get('img').attributes('src')).toBe('sano.svg');
 	});
 
 	test('el nombre pedido le gana a los respaldos', async () => {

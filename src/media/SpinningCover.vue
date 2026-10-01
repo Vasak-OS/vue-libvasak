@@ -111,6 +111,17 @@ const percent = computed(() => Math.min(Math.max(props.progress ?? 0, 0), 100));
 const progressText = computed(() => props.progressLabel ?? translate('media.progress', 'Progress'));
 
 /**
+ * El nombre del botón. Lo de adentro de un `<button>` no se anuncia aparte
+ * —el aro dejaría de ser una barra de progreso para un lector de pantalla—,
+ * así que con `interactive` el avance se suma al nombre y el aro se calla.
+ */
+const buttonName = computed(() =>
+	hasProgress.value
+		? [props.label, progressText.value, `${Math.round(percent.value)} %`].filter(Boolean).join(', ')
+		: props.label
+);
+
+/**
  * El aro: el primario hasta donde va y el canto el resto, recortado en un
  * anillo de 3 px. La máscara usa `currentColor` porque sólo importa su opacidad.
  */
@@ -127,7 +138,7 @@ const ringStyle = computed(() => {
 <template>
   <component
     :is="interactive ? 'button' : 'div'"
-    v-bind="interactive ? { type: 'button', 'aria-label': label } : {}"
+    v-bind="interactive ? { type: 'button', 'aria-label': buttonName } : {}"
     class="relative aspect-square shrink-0 rounded-corner-full"
     :class="[
       hasProgress ? 'p-1' : '',
@@ -138,11 +149,17 @@ const ringStyle = computed(() => {
     @click="interactive && emit('click')">
     <span
       v-if="hasProgress"
-      role="progressbar"
-      aria-valuemin="0"
-      aria-valuemax="100"
-      :aria-valuenow="Math.round(percent)"
-      :aria-label="progressText"
+      v-bind="
+        interactive
+          ? { 'aria-hidden': 'true' }
+          : {
+              role: 'progressbar',
+              'aria-valuemin': 0,
+              'aria-valuemax': 100,
+              'aria-valuenow': Math.round(percent),
+              'aria-label': progressText,
+            }
+      "
       class="absolute inset-0 rounded-corner-full"
       :style="ringStyle"
       data-progress-ring />

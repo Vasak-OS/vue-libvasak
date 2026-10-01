@@ -38,15 +38,24 @@ describe('la tecla', () => {
 
 		expect(view.element.tagName).toBe('KBD');
 		expect(inner.map((key) => key.text())).toEqual(['Ctrl', 'Mayús', 'T']);
-		expect(view.attributes('aria-label')).toBe('Ctrl+Mayús+T');
+		// Un `<kbd>` no tiene rol: un `aria-label` encima no lo lee nadie.
+		expect(view.attributes('aria-label')).toBeUndefined();
 	});
 
-	test('el «+» de entre medio no se lee', () => {
+	test('el «+» de entre medio se lee, así la combinación no queda «Ctrl S»', () => {
 		const view = render(Kbd, { props: { keys: ['Ctrl', 'S'] } });
-		const plus = view.findAll('[aria-hidden="true"]');
 
-		expect(plus).toHaveLength(1);
-		expect(plus[0]?.text()).toBe('+');
+		expect(view.get('[data-separator]').attributes('aria-hidden')).toBeUndefined();
+		expect(view.find('[aria-hidden="true"]').exists()).toBe(false);
+		expect(view.text().replace(/\s+/g, '')).toBe('Ctrl+S');
+	});
+
+	test('con label, el texto escondido se lee y lo dibujado se calla', () => {
+		const view = render(Kbd, { props: { keys: ['Super', 'L'], label: 'Bloquear la sesión' } });
+
+		expect(view.get('.sr-only').text()).toBe('Bloquear la sesión');
+		for (const key of view.findAll('kbd kbd')) expect(key.attributes('aria-hidden')).toBe('true');
+		expect(view.get('[data-separator]').attributes('aria-hidden')).toBe('true');
 	});
 
 	test('con la ranura, una tecla suelta', () => {

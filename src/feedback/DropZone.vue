@@ -16,14 +16,16 @@
  * - `overlay`: tapa el contenedor —que tiene que ser `relative`— **sólo
  *   mientras** `active`, con el velo `ui-scrim` y una tarjeta flotante opaca
  *   (`ui-float`) con el texto, que es donde se lee. No atrapa el puntero: el
- *   `drop` llega a quien lo escucha debajo.
+ *   `drop` llega a quien lo escucha debajo. La región que se anuncia está
+ *   montada siempre y sólo cambia su texto: una región viva que aparece ya
+ *   llena no la anuncia casi ningún lector de pantalla.
  *
  * # Trabada
  *
  * `locked` es «acá no se puede soltar» (una carpeta de sólo lectura, una
  * instalación en curso): canto de advertencia, otro icono y otro texto. Se
- * anuncia: mientras se arrastra, quien no ve tiene que saber que soltar ahí no
- * hace nada.
+ * anuncia: el texto en línea es una región viva siempre montada, así que pasar
+ * a trabada cambia su texto y eso sí se oye.
  *
  * Los textos salen de la propiedad, del catálogo (`dropZone.label`,
  * `dropZone.locked`) o del respaldo en inglés.
@@ -63,16 +65,17 @@ const frame = computed(() => {
 <template>
   <div
     v-if="overlay"
-    v-show="active"
-    class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-ui-scrim p-4"
+    class="pointer-events-none absolute inset-0 z-40"
     :data-active="active"
     data-drop-zone="overlay">
-    <div
-      class="flex max-w-full min-w-0 flex-col items-center gap-2 rounded-corner-xl border-2 border-dashed bg-ui-float px-6 py-4 text-center text-tx-main shadow-surface-l"
-      :class="locked ? 'border-status-warning' : 'border-primary'"
-      role="status">
-      <ThemeIcon :name="shownIcon" :fallbacks="shownFallbacks" :size="32" />
-      <p class="m-0 break-words font-semibold text-label-m">{{ text }}</p>
+    <span role="status" class="sr-only">{{ active ? text : '' }}</span>
+    <div v-show="active" aria-hidden="true" class="flex size-full items-center justify-center bg-ui-scrim p-4" data-drop-visual>
+      <div
+        class="flex max-w-full min-w-0 flex-col items-center gap-2 rounded-corner-xl border-2 border-dashed bg-ui-float px-6 py-4 text-center text-tx-main shadow-surface-l"
+        :class="locked ? 'border-status-warning' : 'border-primary'">
+        <ThemeIcon :name="shownIcon" :fallbacks="shownFallbacks" :size="32" />
+        <p class="m-0 break-words font-semibold text-label-m">{{ text }}</p>
+      </div>
     </div>
   </div>
   <div
@@ -82,7 +85,7 @@ const frame = computed(() => {
     :data-active="active"
     data-drop-zone="inline">
     <ThemeIcon :name="shownIcon" :fallbacks="shownFallbacks" :size="32" class="hidden @[10rem]:block" />
-    <p class="m-0 min-w-0 break-words font-semibold text-label-m" :role="locked ? 'status' : undefined">{{ text }}</p>
+    <p class="m-0 min-w-0 break-words font-semibold text-label-m" role="status">{{ text }}</p>
     <slot />
   </div>
 </template>
