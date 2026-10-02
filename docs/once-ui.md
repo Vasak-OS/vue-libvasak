@@ -921,3 +921,34 @@ para eso. Es una minor: no cambia nada de lo que ya había.
   nombre (`labels`, o «N de M»), `aria-current` en el activo, un solo Tab y las
   flechas, Inicio y Fin. Con una página o ninguna no dibuja nada. Con
   `prefers-reduced-motion`, el cambio de ancho no se anima.
+
+## 16. La 2.6.0 (02/10/2026): la órbita del dispositivo conectado
+
+`DeviceOrbit` es la vista radial de vasak-desktop#132, imitando el video de
+referencia (§2 de `.worktrees/video-reference.md`): el dispositivo o la red en
+el centro y sus datos alrededor. Es la otra forma de `DeviceCard`; no la
+reemplaza.
+
+- **Centro:** círculo `bg-primary` con `text-tx-on-primary` y `shadow-surface-m`,
+  con un halo `bg-primary/20` 12 px más ancho. Mide una sexta parte del lado
+  menor de la caja, entre 88 y 176 px de diámetro. Sin nada conectado, el
+  círculo es `bg-ui-surface/50` con canto `ui-line` y el halo punteado.
+- **Satélites:** pastillas `rounded-corner-l`, canto `ui-line`,
+  `bg-ui-surface/70`, icono de 20 a la izquierda, el valor en `label-m` 600 y
+  la etiqueta debajo en `label-xs` `tx-muted`; hasta 192 px de ancho, con el
+  valor truncado y entero en `title`. La acción lleva el canto `primary` y los
+  estados de siempre (`ui-hover`, `ui-pressed`, foco `ui-focus`). El tono
+  `accent` pinta el valor de `primary` (la batería baja).
+- **Reparto:** parejo desde arriba en el sentido del reloj, sobre una elipse
+  que se abre hasta el borde y hasta 1,6 veces más ancha que alta.
+- **Líneas:** en codo —horizontal y después vertical—, del canto del círculo al
+  canto de la pastilla, de 1 px en `ui-line`. Son SVG por ser geometría de
+  datos: la única excepción de la guardia (§8).
+- **Fondo:** dos anillos de `ui-line-weak` a 2,1 y 3,1 veces el radio.
+- **Angosto:** si un satélite de costado pisaría el círculo, apila —el círculo
+  de 120 arriba y un satélite por renglón, a lo ancho—, sin líneas ni anillos.
+  Lo decide un `ResizeObserver` con el tope de la pastilla, no con lo que mide
+  cada una, para que al volver a crecer vuelva a la órbita.
+- **Movimiento:** al cambiar `orbitKey`, 200 ms con `ease-ui-out`: los viejos
+  se contraen al centro con media escala y salen los nuevos desde ahí. El halo
+  late en 1,6 s mientras `pulsing`. Con movimiento reducido, sólo opacidad.

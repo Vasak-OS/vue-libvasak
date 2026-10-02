@@ -105,10 +105,24 @@ async function findAll(files: string[], regex: RegExp, keep: (match: RegExpMatch
 	for (const file of files) {
 		const text = await read(SOURCE + file);
 		for (const match of text.matchAll(regex)) {
-			if (keep(match)) found.push(`${file}: ${match[0].trim()}`);
+			if (keep(Object.assign(match, { file }))) found.push(`${file}: ${match[0].trim()}`);
 		}
 	}
 	return found;
+}
+
+/**
+ * Los archivos que pueden tener un `<svg>`, con su porqué.
+ *
+ * - `cards/DeviceOrbit.vue`: las líneas del centro a cada satélite
+ *   (vasak-desktop#132). Lo que pueden tener está atado en la prueba de la
+ *   excepción, más abajo.
+ */
+const SVG_EXCEPTIONS = ['cards/DeviceOrbit.vue'];
+
+/** `<svg` en un archivo de la lista: lo mira su propia prueba. */
+function isNamedSvgException(match: RegExpMatchArray & { file?: string }): boolean {
+	return match[0].startsWith('<svg') && SVG_EXCEPTIONS.includes(match.file ?? '');
 }
 
 const END = '(?![a-z0-9-])';
@@ -334,7 +348,30 @@ describe('en toda la librería', () => {
 		const embedded =
 			/<svg[\s>]|data:image\/|['"][^'"\s]+\.(?:svg|png|ico|webp|gif)['"]|(?<![\w-])(?:fa[srlbd]?-[a-z0-9-]+|mdi-[a-z0-9-]+|material-icons|material-symbols(?:-[a-z]+)?)(?![\w-])/g;
 
-		expect(await findAll(sources('**/*.{vue,ts}'), embedded)).toEqual([]);
+		const found = await findAll(sources('**/*.{vue,ts}'), embedded, (match) => !isNamedSvgException(match));
+		expect(found).toEqual([]);
+	});
+
+	test('la única excepción de SVG son las líneas de la órbita, y no dibujan nada más', async () => {
+		// `DeviceOrbit` une el centro con cada satélite con una línea que
+		// depende de dónde quedó la pastilla: geometría de datos, no un icono
+		// (vasak-desktop#132). Se deja pasar sólo eso: un `<svg>` oculto al
+		// lector, nada más que `<path>`, con el trazo en `currentColor` —el
+		// color lo pone la clase, que es un token— y sin relleno.
+		for (const file of SVG_EXCEPTIONS) {
+			const text = await read(SOURCE + file);
+			const svgs = [...text.matchAll(/<svg[\s\S]*?<\/svg>/g)].map((m) => m[0]);
+
+			expect(svgs).toHaveLength(1);
+			const svg = svgs[0] as string;
+			expect(svg).toMatch(/aria-hidden="true"/);
+			expect(svg).toMatch(/fill="none"/);
+			const tags = [...svg.matchAll(/<([a-zA-Z]+)[\s>]/g)].map((m) => m[1]);
+			expect(new Set(tags)).toEqual(new Set(['svg', 'path']));
+			const strokes = [...svg.matchAll(/stroke="([^"]*)"/g)].map((m) => m[1]);
+			expect(strokes.length).toBeGreaterThan(0);
+			expect(strokes.every((stroke) => stroke === 'currentColor')).toBe(true);
+		}
 	});
 
 	test('ningún punto de corte de la pantalla: un componente no sabe en qué ventana está', async () => {

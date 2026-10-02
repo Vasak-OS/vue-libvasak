@@ -85,6 +85,8 @@ import PasswordField from "./forms/PasswordField.vue";
 import ClockDisplay from "./data/ClockDisplay.vue";
 import PowerActions from "./controls/PowerActions.vue";
 import TextContextMenu from "./text/TextContextMenu.vue";
+/* 2.6.0: la órbita del dispositivo conectado. */
+import DeviceOrbit from "./cards/DeviceOrbit.vue";
 import type { App } from "vue";
 
 const components = [
@@ -172,6 +174,7 @@ const components = [
   ClockDisplay,
   PowerActions,
   TextContextMenu,
+  DeviceOrbit,
 ];
 
 export default {
@@ -267,6 +270,7 @@ export {
   ClockDisplay,
   PowerActions,
   TextContextMenu,
+  DeviceOrbit,
 };
 
 export type { PlaybackState } from "./media/playback";
@@ -296,6 +300,8 @@ export type { PropertyItem } from "./data/PropertyList.vue";
 export type { CodeLine, CodeLineTone } from "./data/CodeBlock.vue";
 export type { ToggleIndicator } from "./controls/ToggleControl.vue";
 export type { PowerAction } from "./controls/PowerActions.vue";
+export type { OrbitCenter, OrbitSatellite } from "./cards/DeviceOrbit.vue";
+export type { OrbitBox, OrbitCircle, OrbitFrame, OrbitPoint, OrbitRadii } from "./cards/orbit-layout";
 export type {
   TextAction,
   TextClipboard,

@@ -4,6 +4,8 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.6.0 se sumó la órbita del dispositivo conectado (`DeviceOrbit`).
+ *
  * En la 2.5.0 se sumaron la pastilla (`Chip`) y los puntos de página
  * (`PageDots`), del reproductor desplegable del escritorio.
  *
@@ -54,6 +56,7 @@ const PUBLIC_SURFACE = [
 	'CoverArt',
 	'default',
 	'DeviceCard',
+	'DeviceOrbit',
 	'Dialog',
 	'DIALOG_KEY',
 	'DialogBody',
