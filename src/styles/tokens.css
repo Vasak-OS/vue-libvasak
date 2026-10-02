@@ -133,11 +133,23 @@
   --color-ui-pressed: color-mix(in srgb, var(--use-text-main) 12%, transparent);
   --color-ui-selected: color-mix(in srgb, var(--use-text-main) 10%, transparent);
   --color-ui-selected-accent: color-mix(in srgb, var(--use-primary) 16%, transparent);
-  /* Lo que flota sobre la ventana —desplegable, globo, applet—: el fondo con
-     un poco de superficie, **opaco**. Sin desenfoque (decisión 3): en una
-     superficie de capa el WebView no ve el escritorio, así que un
-     `backdrop-blur` no desenfoca nada y sólo cuesta. */
+  /* Lo que flota **dentro** de una ventana —desplegable, globo, diálogo—: el
+     fondo con un poco de superficie, **opaco**. Detrás tiene el resto de la
+     misma página, que nadie desenfoca, así que translúcido se leería encima de
+     otro texto. Sin `backdrop-blur`: en WebKitGTK cuesta y no se adopta. */
   --color-ui-float: color-mix(in srgb, var(--use-ui-background) 88%, var(--use-ui-surface));
+  /* La superficie del escritorio —panel, menú, applets, centro de control,
+     OSD, sesión, widgets—: el fondo de la ventana **translúcido**. Lo que
+     tiene detrás es el escritorio, y el desenfoque lo pone Wayfire (el
+     complemento `blur`, por espacio de nombres de capa): el WebView no lo
+     dibuja, así que tampoco lleva `backdrop-blur`. Una superficie opaca
+     taparía ese desenfoque (decisión del usuario del 02/10/2026, que corrige
+     la «superficie opaca» del 30/09).
+     Al 85 % y no al 80 % de antes: detrás puede haber cualquier fondo de
+     pantalla, y al 85 % el texto principal llega a 4,5:1 aunque sea negro o
+     blanco puro (5,01:1 el peor caso, en claro); al 80 % daba 4,42:1. Lo mide
+     `tests/surface-contrast.test.ts`, igual que el velo de medios. */
+  --color-ui-shell: color-mix(in srgb, var(--use-ui-background) 85%, transparent);
   --color-ui-scrim: color-mix(in srgb, var(--use-ui-background) 55%, transparent);
   /* Lo que va **encima de una imagen o un vídeo**: los botones y las pastillas
      del visor de fotos, la duración sobre una miniatura. No hay un fondo

@@ -1,6 +1,28 @@
 # Cambios de vue-libvasak
 
-## 2.2.0 — sin publicar
+## 2.3.0 — sin publicar
+
+La superficie translúcida del escritorio (`vue-libvasak#74`, corrección del
+usuario del 02/10/2026). Es una minor: suma un token y no cambia nada de lo
+que ya había.
+
+### Nuevo
+
+- **`ui-shell`** (`bg-ui-shell`): el fondo de la ventana al 85 %, translúcido,
+  para las superficies del escritorio —panel, menú, applets, centro de
+  control, OSD, sesión, widgets—. El desenfoque lo pone Wayfire; sin
+  `backdrop-blur`. Al 85 % el texto principal llega a 4,5:1 sobre un fondo de
+  pantalla negro o blanco puro con cada esquema del sistema (al 80 % de antes
+  daba 4,42:1); lo mide `tests/surface-contrast.test.ts`.
+
+### Cambia
+
+- La especificación (`docs/once-ui.md`) corrige la «superficie opaca» del menú
+  y los applets (decisión 3 del §10): van en `ui-shell`. `ui-float` queda
+  para lo que flota dentro de una ventana, opaco como hasta ahora (§13).
+- `vue-tsc` 3.3.12.
+
+## 2.2.0
 
 Globos, teclas, identidad, carátulas, datos, plegables y soltar
 (`vue-libvasak#74`, decisión 1 del 01/10/2026; el relevamiento está en

@@ -121,7 +121,7 @@ describe('lo que se usa existe', () => {
 		// compara, pasa siempre.
 		const tokens = await declaredTokens();
 
-		for (const color of ['ui-line', 'ui-line-weak', 'ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-scrim', 'ui-overlay', 'ui-focus', 'primary', 'tx-main']) {
+		for (const color of ['ui-line', 'ui-line-weak', 'ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-shell', 'ui-scrim', 'ui-overlay', 'ui-focus', 'primary', 'tx-main']) {
 			expect(tokens.colors.has(color)).toBe(true);
 		}
 		for (const radius of ['corner-xs', 'corner-s', 'corner-m', 'corner-l', 'corner-xl', 'corner-full', 'corner', 'corner-sm', 'corner-window']) {
