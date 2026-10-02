@@ -210,6 +210,25 @@
      formato a la pantalla (decisión 8). */
   --text-heading-l: 1.5rem;
   --text-heading-l--line-height: 2rem;
+  /* Los números grandes (2.4.0): el reloj del inicio de sesión y del bloqueo,
+     que era un `text-6xl` suelto. Son los `display` de Once UI, en peso
+     liviano: `display-l` mide lo mismo que aquel `text-6xl` (60 px), así que
+     pasar a la librería no le cambia el formato a la pantalla. */
+  --text-display-m: 3rem;
+  --text-display-m--line-height: 3.5rem;
+  --text-display-l: 3.75rem;
+  --text-display-l--line-height: 4.5rem;
+
+  /* La sombra que sostiene un texto puesto **directo** sobre un fondo de
+     pantalla o una foto (2.4.0): el reloj del inicio de sesión, que usaba
+     `drop-shadow-md`, una sombra negra fija. Acá es el fondo de la ventana del
+     esquema —oscuro en oscuro, claro en claro—, que es el color contra el que
+     el texto ya llega a 4,5:1: un halo de ese color alrededor de cada letra
+     la separa de lo que pase detrás. Es un refuerzo, no una garantía: lo que
+     va escrito sobre una foto con texto chico va sobre `ui-overlay`. */
+  --text-shadow-legible:
+    0 0 2px color-mix(in srgb, var(--use-ui-background) 80%, transparent),
+    0 1px 12px color-mix(in srgb, var(--use-ui-background) 60%, transparent);
 
   /* ── Curvas ──────────────────────────────────────────────────────────────
      `ease-ui` es el `ease-in-out` de Once UI para todo; `ease-ui-out` arranca
@@ -242,3 +261,57 @@
   outline-offset: 2px;
 }
 
+
+/*
+ * El velo de medios en degradado (2.4.0): bajo los controles de un vídeo, el
+ * pie de una foto. Lo pidió la galería, que lo armaba con
+ * `bg-linear-to-t from-ui-overlay via-ui-overlay to-transparent` (gallery#46),
+ * y resonance tiene la misma copia.
+ *
+ * La mitad del lado de los controles es `ui-overlay` pleno —el velo que ya
+ * sostiene el texto a 4,5:1 sobre una foto negra o blanca, ver
+ * `tests/surface-contrast.test.ts`— y la otra mitad se desvanece. Lo que va
+ * escrito tiene que caer en la mitad plena, que es donde se ponen los
+ * controles: `overlay-fade-up` es el velo abajo que se desvanece hacia arriba,
+ * `overlay-fade-down` el de arriba que se desvanece hacia abajo.
+ */
+@utility overlay-fade-up {
+  background-image: linear-gradient(
+    to top,
+    var(--color-ui-overlay) 0%,
+    var(--color-ui-overlay) 50%,
+    transparent 100%
+  );
+}
+
+@utility overlay-fade-down {
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-ui-overlay) 0%,
+    var(--color-ui-overlay) 50%,
+    transparent 100%
+  );
+}
+
+/*
+ * El desenfoque de las pantallas de sesión (2.4.0): **sólo** el inicio de
+ * sesión y el bloqueo (vasak-session-manager).
+ *
+ * En el resto del escritorio el desenfoque lo pone Wayfire detrás de una
+ * superficie `ui-shell`, y `backdrop-blur` está prohibido. El inicio de sesión
+ * y el bloqueo no tienen a Wayfire detrás —corren antes de la sesión o tapan la
+ * sesión entera con su propio fondo dibujado en la página—, así que si se
+ * quiere ver el fondo desenfocado lo tiene que dibujar el WebView (decisión
+ * del usuario del 02/10/2026). Los widgets del escritorio son el otro caso
+ * permitido y siguen con su `backdrop-blur-md`.
+ *
+ * Va con nombre propio, y no como `backdrop-blur-*` suelto, para que la
+ * guardia de cada aplicación pueda seguir prohibiendo el desenfoque y dejar
+ * pasar éste sólo donde corresponde. Se usa **junto con** `bg-ui-shell`: el
+ * velo sigue siendo el 85 % que sostiene el texto sobre cualquier fondo, y el
+ * desenfoque sólo promedia lo de atrás, así que no puede dar menos contraste.
+ */
+@utility shell-blur {
+  -webkit-backdrop-filter: blur(1rem);
+  backdrop-filter: blur(1rem);
+}

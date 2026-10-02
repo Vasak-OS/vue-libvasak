@@ -122,6 +122,11 @@ aplicación, y si la clave no está, del respaldo de la librería:
 | `media.progress` | el aro de `SpinningCover` con `progress` | «Progress» |
 | `tray.progress` | la línea de `TrayIconButton` con `progress` | «Progress» |
 | `dropZone.label` / `dropZone.locked` | el texto de `DropZone` | «Drop files here» / «Can't drop here» |
+| `password.show` / `password.hide` | el ojo de `PasswordField` | «Show password» / «Hide password» |
+| `password.capsLock` | el aviso de Bloq Mayús de `PasswordField` | «Caps Lock is on» |
+| `power.title` | el nombre del grupo de `PowerActions` | «Power» |
+| `power.suspend` / `power.hibernate` / `power.reboot` / `power.poweroff` / `power.logout` / `power.lock` | los botones de `PowerActions` | «Suspend» / «Hibernate» / «Restart» / «Power off» / «Log out» / «Lock» |
+| `textMenu.copy` / `textMenu.cut` / `textMenu.paste` / `textMenu.selectAll` | el menú de `TextContextMenu` | «Copy» / «Cut» / «Paste» / «Select all» |
 
 ## Qué componente para qué (2.1.0)
 
@@ -154,6 +159,24 @@ salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
   `StatTile`; texto de máquina o un registro: `CodeBlock`;
 - algo que se despliega: `Disclosure`; dónde soltar lo que se arrastra:
   `DropZone`.
+
+## Qué componente para qué (2.4.0)
+
+- una contraseña, con el ojo y el aviso de Bloq Mayús: `PasswordField`;
+- la hora grande (inicio de sesión, bloqueo, un reloj): `ClockDisplay`;
+- suspender, reiniciar, apagar, cerrar la sesión, bloquear: `PowerActions`
+  (fila de iconos o círculos con nombre);
+- elegir una cuenta: `OptionGroup` con `avatar` en cada opción;
+- un desplegable corto dibujado por la página y no por el sistema (la sesión,
+  el idioma): `SearchSelect` con `:searchable="false"`;
+- copiar, cortar, pegar y seleccionar todo con el clic derecho en los campos:
+  `TextContextMenu`, una vez por ventana, con `:show` del complemento del menú
+  contextual;
+- un número sobre un icono: `Badge counter` (con `max` para «99+»);
+- el pie de una foto o los controles de un vídeo: `overlay-fade-up` /
+  `overlay-fade-down`;
+- el desenfoque del inicio de sesión y del bloqueo, y **sólo ahí**:
+  `bg-ui-shell shell-blur`.
 
 ## Reproductor
 

@@ -25,6 +25,14 @@ export interface OptionGroupOption<V extends string | number = string | number> 
 	/** Una insignia a la derecha: «Predeterminado». */
 	badge?: string | number;
 	disabled?: boolean;
+	/**
+	 * La foto de una persona, en lugar del icono (2.4.0): elegir una cuenta.
+	 * `null` es una persona sin foto, que lleva sus iniciales; sin el campo, no
+	 * hay avatar.
+	 */
+	avatar?: string | null;
+	/** El nombre para las iniciales, si no es `label`. */
+	avatarName?: string;
 }
 
 /** Una opción de `SegmentedControl`. */

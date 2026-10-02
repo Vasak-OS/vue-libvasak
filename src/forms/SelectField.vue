@@ -34,6 +34,13 @@
  * sus 26 usos, y lo único que tenía de más (además de su flecha, que era un
  * SVG empotrado en un `data:`). Con las dos cosas, gana la lista y la ranura
  * se ignora.
+ *
+ * # `id` y `disabled` (2.4.0)
+ *
+ * Declarados, con su tipo. Ya llegaban al `select` como atributos, pero con
+ * `strictTemplates` escribirlos sobre el componente era un error de tipos, y
+ * Configuración los pasaba por `v-bind` de un objeto en nueve lugares, que no
+ * se comprueba. Apagado, la etiqueta también se atenúa.
  */
 import { computed, useAttrs, useId } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -45,6 +52,9 @@ defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
 	label?: string;
+	/** El `id` del `select`. Sin esto se genera uno, que es el que nombra la etiqueta. */
+	id?: string;
+	disabled?: boolean;
 	/** Las opciones, en vez de la ranura. Una cadena es etiqueta y valor a la vez. */
 	options?: Array<SelectOption<T> | (T & string)>;
 }>();
@@ -60,7 +70,7 @@ const attrs = useAttrs();
 
 // El `id` propio sólo si hace falta uno y quien lo usa no trajo el suyo.
 const generatedId = useId();
-const id = computed(() => (attrs.id as string | undefined) ?? generatedId);
+const id = computed(() => props.id ?? (attrs.id as string | undefined) ?? generatedId);
 
 const emit = defineEmits<{
 	/**
@@ -98,13 +108,14 @@ const [model, modifiers] = defineModel<T>({
 
 <template>
   <div class="flex min-w-0 flex-col gap-1">
-    <label v-if="props.label" :for="id" class="text-label-s text-tx-muted">{{ props.label }}</label>
+    <label v-if="props.label" :for="id" class="text-label-s text-tx-muted" :class="props.disabled ? 'opacity-50' : ''">{{ props.label }}</label>
     <div class="relative flex min-w-0 items-center">
       <select
         :id="id"
         v-model="model"
         class="h-8 min-w-0 flex-1 appearance-none truncate rounded-corner-m border border-ui-border-strong bg-ui-surface/70 pr-8 pl-3 text-label-m text-tx-main transition-colors duration-200 ease-ui hover:border-tx-main focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
         v-bind="attrs"
+        :disabled="props.disabled"
         @change="emit('change', $event)">
         <template v-if="normalized">
           <option v-for="option in normalized" :key="option.value" :value="option.value" :disabled="option.disabled">

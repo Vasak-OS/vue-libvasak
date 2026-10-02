@@ -80,8 +80,13 @@ const props = withDefaults(
 		 * renombrar, crear una carpeta, comprimir. El gestor de archivos la
 		 * conseguía pisando el ancho con `w-[420px]` en cuatro diálogos, que es
 		 * justo lo que no es estable (ver arriba).
+		 *
+		 * `wide` (2.4.0) es el paso entre `md` y `lg`: 576 px (`max-w-xl`). Es el
+		 * ancho de los diálogos de Configuración que mostraban una lista con
+		 * detalle —una red con su contraseña, una impresora con sus opciones—,
+		 * que en `md` se partían y en `lg` quedaban flojos.
 		 */
-		size?: 'sm' | 'md' | 'lg' | 'full';
+		size?: 'sm' | 'md' | 'wide' | 'lg' | 'full';
 		/**
 		 * Cómo se llama el diálogo cuando no hay un `DialogTitle` visible.
 		 *
@@ -133,7 +138,7 @@ const otherAttrs = computed(() => {
 const BOX =
 	'relative z-10 max-h-full w-full overflow-y-auto rounded-corner-xl border border-ui-line bg-ui-float p-6 text-tx-main shadow-surface-xl outline-none has-[>[data-dialog-body]]:flex has-[>[data-dialog-body]]:flex-col has-[>[data-dialog-body]]:overflow-hidden';
 
-const WIDTH = { sm: 'max-w-[420px]', md: 'max-w-lg', lg: 'max-w-2xl' } as const;
+const WIDTH = { sm: 'max-w-[420px]', md: 'max-w-lg', wide: 'max-w-xl', lg: 'max-w-2xl' } as const;
 
 const panelShape = computed(() => {
 	if (props.size === 'full') {
@@ -280,9 +285,13 @@ onUnmounted(() => {
              esquinas redondeadas: un rectángulo recto asoma tres o cuatro
              píxeles de gris en cada esquina, fuera del marco y sobre lo que
              haya detrás. `WindowFrame` usa el mismo radio. -->
+        <!-- Todas las cajas llevan velo; sólo `full` no, porque la tapa entera.
+             Hasta la 2.3 `lg` tampoco lo dibujaba, y la receta y la vista
+             previa de la tienda se abrían sin oscurecer lo de atrás (store#36). -->
         <div
-          v-if="props.size === 'md' || props.size === 'sm'"
-          class="absolute inset-0 rounded-corner-window bg-ui-scrim"></div>
+          v-if="props.size !== 'full'"
+          class="absolute inset-0 rounded-corner-window bg-ui-scrim"
+          data-dialog-scrim></div>
         <div
           ref="panel"
           tabindex="-1"

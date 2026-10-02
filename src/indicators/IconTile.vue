@@ -34,7 +34,7 @@ const props = withDefaults(
 	defineProps<{
 		name: string;
 		type?: 'icon' | 'symbol';
-		size?: 'sm' | 'md' | 'lg';
+		size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 		tone?: IconTileTone;
 		shape?: 'square' | 'circle';
 		status?: IconTileStatus | null;
@@ -54,9 +54,13 @@ const TONE: Record<IconTileTone, string> = {
 	error: 'border-status-error bg-status-error/15',
 };
 
-/** 32, 40 y 48 de lado, con el icono a 20, 24 y 32. */
-const BOX = { sm: 'size-8', md: 'size-10', lg: 'size-12' } as const;
-const ICON = { sm: 20, md: 24, lg: 32 } as const;
+/**
+ * 32, 40 y 48 de lado, con el icono a 20, 24 y 32; y desde la 2.4.0 `xl` (64,
+ * icono de 40) y `2xl` (80, icono de 48): el círculo de las acciones de la
+ * sesión del escritorio, que seguía local porque el recuadro llegaba a 48.
+ */
+const BOX = { sm: 'size-8', md: 'size-10', lg: 'size-12', xl: 'size-16', '2xl': 'size-20' } as const;
+const ICON = { sm: 20, md: 24, lg: 32, xl: 40, '2xl': 48 } as const;
 
 const STATUS_ICON: Record<IconTileStatus, string> = {
 	success: 'object-select',
@@ -87,11 +91,14 @@ const announced = computed(() => Boolean(props.label || props.statusLabel));
 /**
  * Las esquinas del recuadro: la `m` del sistema hasta 40, la `l` en el grande
  * —el anidado de Once UI, para que el icono no quede en una caja más curva que
- * la tarjeta que la contiene—. El círculo es círculo.
+ * la tarjeta que la contiene— y la `xl` en los de 64 y 80. El círculo es
+ * círculo.
  */
-const corner = computed(() =>
-	props.shape === 'circle' ? 'rounded-corner-full' : props.size === 'lg' ? 'rounded-corner-l' : 'rounded-corner-m'
-);
+const corner = computed(() => {
+	if (props.shape === 'circle') return 'rounded-corner-full';
+	if (props.size === 'xl' || props.size === '2xl') return 'rounded-corner-xl';
+	return props.size === 'lg' ? 'rounded-corner-l' : 'rounded-corner-m';
+});
 </script>
 
 <template>

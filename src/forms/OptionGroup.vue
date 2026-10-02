@@ -23,6 +23,14 @@
  *   falta donde el icono **es** lo que se elige: un disco, un sistema de
  *   archivos.
  *
+ * # Cuentas (2.4.0)
+ *
+ * Una opción con `avatar` lleva la cara de la persona —`Avatar`, con sus
+ * iniciales si no hay foto— en lugar del icono: es elegir una cuenta en el
+ * inicio de sesión, o la identidad con la que se autentica polkit. Las dos
+ * copias que había (el `UserSelector` del inicio de sesión y la lista de
+ * polkit) eran esto mismo con sus propios colores.
+ *
  * # Semántica
  *
  * `role="radiogroup"` con un `role="radio"` por opción: se anuncia «opción 2
@@ -33,6 +41,7 @@
  */
 import { computed, nextTick } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
+import Avatar from '../identity/Avatar.vue';
 import Badge from '../indicators/Badge.vue';
 import { focusableValue, rovingStep } from './roving';
 import type { OptionGroupOption } from './types';
@@ -135,8 +144,15 @@ function rowClasses(checked: boolean, disabled: boolean) {
         <span v-if="option.value === model" class="size-2 rounded-corner-full bg-tx-on-primary" />
       </span>
 
+      <!-- La cara de la persona: el nombre ya está escrito al lado. -->
+      <Avatar
+        v-if="option.avatar !== undefined"
+        :src="option.avatar"
+        :name="option.avatarName ?? option.label"
+        alt=""
+        :size="isCard ? 'ml' : size === 'sm' ? 'sm' : 'md'" />
       <span
-        v-if="isCard && option.icon"
+        v-else-if="isCard && option.icon"
         aria-hidden="true"
         class="flex size-10 shrink-0 items-center justify-center rounded-corner-m border transition-colors duration-200 ease-ui"
         :class="option.value === model ? 'border-primary bg-ui-selected-accent' : 'border-ui-line bg-ui-surface/70'">

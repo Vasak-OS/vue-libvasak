@@ -57,6 +57,7 @@ export default defineConfig({
           'vue-router': 'VueRouter',
           '@tauri-apps/api/event': 'TauriEvent',
           '@tauri-apps/api/window': 'TauriWindow',
+          '@tauri-apps/api/core': 'TauriCore',
           '@vasakgroup/plugin-vicons': 'VasakVicons',
           '@vasakgroup/tauri-plugin-i18n': 'VasakI18n',
         },

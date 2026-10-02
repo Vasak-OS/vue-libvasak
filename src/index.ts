@@ -78,6 +78,11 @@ import PropertyList from "./data/PropertyList.vue";
 import StatTile from "./data/StatTile.vue";
 import CodeBlock from "./data/CodeBlock.vue";
 import DropZone from "./feedback/DropZone.vue";
+/* 2.4.0: contraseña, reloj, energía y el menú de texto. */
+import PasswordField from "./forms/PasswordField.vue";
+import ClockDisplay from "./data/ClockDisplay.vue";
+import PowerActions from "./controls/PowerActions.vue";
+import TextContextMenu from "./text/TextContextMenu.vue";
 import type { App } from "vue";
 
 const components = [
@@ -159,6 +164,10 @@ const components = [
   StatTile,
   CodeBlock,
   DropZone,
+  PasswordField,
+  ClockDisplay,
+  PowerActions,
+  TextContextMenu,
 ];
 
 export default {
@@ -248,6 +257,10 @@ export {
   StatTile,
   CodeBlock,
   DropZone,
+  PasswordField,
+  ClockDisplay,
+  PowerActions,
+  TextContextMenu,
 };
 
 export type { PlaybackState } from "./media/playback";
@@ -276,6 +289,23 @@ export type { CoverArtSize } from "./media/CoverArt.vue";
 export type { PropertyItem } from "./data/PropertyList.vue";
 export type { CodeLine, CodeLineTone } from "./data/CodeBlock.vue";
 export type { ToggleIndicator } from "./controls/ToggleControl.vue";
+export type { PowerAction } from "./controls/PowerActions.vue";
+export type {
+  TextAction,
+  TextClipboard,
+  TextField,
+  TextMenuEntry,
+  TextMenuState,
+  TextRange,
+} from "./text/text-context-menu";
+export {
+  getTextField,
+  isTextAction,
+  readTextMenuState,
+  runTextAction,
+  TEXT_INPUT_TYPES,
+  textMenuEntries,
+} from "./text/text-context-menu";
 
 /*
  * Los nombres de la 1.x, como alias obsoletos.

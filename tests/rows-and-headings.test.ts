@@ -67,7 +67,10 @@ describe('la fila de ajuste', () => {
 		const vista = montar(SettingRow, { props: { label: 'x' } });
 
 		expect(vista.classes()).toContain('@container');
-		expect(vista.html()).toContain('@xs:flex-row');
+		// Desde 256 px (`@3xs`) y no desde 320: el centro de control mide 350
+		// con su relleno y la fila quedaba apilada (desktop#147).
+		expect(vista.html()).toContain('@3xs:flex-row');
+		expect(vista.html()).not.toContain('@xs:flex-row');
 		expect(vista.html()).not.toMatch(/\s(sm|md):/);
 	});
 

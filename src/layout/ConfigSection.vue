@@ -29,11 +29,19 @@
  *
  * La cabecera se acomoda por el ancho de la sección (`@container`): angosta, lo
  * de `aside` baja debajo del título.
+ *
+ * # Sin título (2.4.0)
+ *
+ * `title` es opcional. Sin título, sin descripción y sin las ranuras `header`
+ * ni `aside`, la cabecera no se dibuja: hasta la 2.3 quedaba un `h3` vacío y el
+ * hueco de su `gap`, y Configuración pasó 57 secciones sin título a `Panel`
+ * para no verlo (settings#142).
  */
+import { computed, useSlots } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
 interface Props {
-  title: string;
+  title?: string;
   /** Nombre de icono del tema, antes del título. */
   icon?: string;
   iconType?: 'icon' | 'symbol';
@@ -43,7 +51,8 @@ interface Props {
   as?: 'h2' | 'h3' | 'h4';
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
+  title: '',
   icon: '',
   iconType: 'symbol',
   description: '',
@@ -57,6 +66,10 @@ defineSlots<{
   aside?: () => unknown;
   actions?: () => unknown;
 }>();
+
+const slots = useSlots();
+/** Si hay algo que poner arriba. */
+const hasHeader = computed(() => Boolean(props.title || props.description || props.icon || slots.header || slots.aside));
 </script>
 
 <template>
@@ -64,13 +77,13 @@ defineSlots<{
     class="flex min-w-0 flex-col gap-4 rounded-corner-l border border-ui-line bg-ui-surface/70 p-4 text-tx-main"
     :class="customClass"
   >
-    <div class="@container min-w-0">
+    <div v-if="hasHeader" class="@container min-w-0" data-config-section-header>
       <div class="flex min-w-0 flex-col gap-2 @xs:flex-row @xs:items-start @xs:justify-between @xs:gap-4">
         <slot name="header">
           <div class="flex min-w-0 items-start gap-2">
             <ThemeIcon v-if="icon" :name="icon" :type="iconType" :size="20" class="shrink-0" />
             <div class="flex min-w-0 flex-col gap-1">
-              <component :is="as" class="m-0 break-words font-semibold text-heading-xs text-tx-main">
+              <component :is="as" v-if="title" class="m-0 break-words font-semibold text-heading-xs text-tx-main">
                 {{ title }}
               </component>
               <p v-if="description" class="m-0 break-words text-body-s text-tx-muted">{{ description }}</p>
