@@ -176,6 +176,7 @@ ven como un hueco y no como un canto.
   --color-ui-selected: color-mix(in srgb, var(--use-text-main) 10%, transparent);
   --color-ui-selected-accent: color-mix(in srgb, var(--use-primary) 16%, transparent);
   --color-ui-float:    color-mix(in srgb, var(--use-ui-background) 88%, var(--use-ui-surface));
+  --color-ui-shell:    color-mix(in srgb, var(--use-ui-background) 85%, transparent);
   --color-ui-scrim:    color-mix(in srgb, var(--use-ui-background) 55%, transparent);
   --color-ui-focus:    var(--use-ui-focus);
 }
@@ -188,11 +189,19 @@ ven como un hueco y no como un canto.
 - `ui-selected-accent` es el `brand-alpha-weak` de la tarjeta elegida, para lo que
   se **elige** (una tarjeta de dispositivo, un esquema de color), no para lo que se
   recorre.
-- `ui-float` es la superficie de lo que flota sobre la ventana —desplegable, globo,
-  menú, applet—: el fondo de ventana con un poco de superficie, **opaco**. Hoy es
-  `bg-ui-bg/80`, que deja ver lo de atrás sin desenfocarlo, que es lo peor de las
-  dos cosas. No contradice [[tokens-de-fondo]]: lo flotante no se apoya en la
-  ventana, es su propia capa.
+- `ui-float` es la superficie de lo que flota **dentro** de una ventana
+  —desplegable, globo, diálogo—: el fondo de ventana con un poco de superficie,
+  **opaco**. Detrás tiene el resto de la misma página, que nadie desenfoca, así
+  que translúcido se leería encima de otro texto. No contradice
+  [[tokens-de-fondo]]: lo flotante no se apoya en la ventana, es su propia capa.
+- `ui-shell` (2.3.0) es la superficie **del escritorio** —panel, menú, applets,
+  centro de control, OSD, sesión, widgets—: el fondo de ventana al 85 %,
+  **translúcido**, porque lo que tiene detrás es el escritorio y el desenfoque lo
+  pone Wayfire (el complemento `blur`, por espacio de nombres de capa). Sin
+  `backdrop-blur`: el WebView no ve el escritorio. Al 85 % el texto principal
+  llega a 4,5:1 aunque el fondo de pantalla sea negro o blanco puro (ver §12).
+  Reemplaza el `ui-float` que el §5.3 y la decisión 3 del §10 le daban al menú
+  y a los applets (corrección del 02/10/2026, §13).
 - `ui-scrim` reemplaza al `bg-ui-border/40` del velo del diálogo.
 
 ### 2.4 Sombras — las de Once UI tal cual
@@ -488,7 +497,7 @@ pantalla de 768 con el panel puesto.
 
 ```
 ┌──────────────────────────────────────┐  rounded-corner-xl, borde ui-line,
-│ ⌕  Buscar aplicaciones               │  bg-ui-float, shadow-surface-l
+│ ⌕  Buscar aplicaciones               │  bg-ui-shell, shadow-surface-l
 ├──────────────────────────────────────┤  ← ui-line-weak
 │ [Todas] Internet  Oficina  Sistema › │  chips h-7, se desplazan con la rueda
 │                                      │
@@ -528,7 +537,8 @@ pantalla de 768 con el panel puesto.
 - `rounded-corner-xl` en las cuatro esquinas; sin flecha (Once UI no usa flechas
   en sus desplegables, y con 8 px de separación la relación con el botón la da la
   animación).
-- Borde `ui-line` de 1 px y `shadow-surface-l`. Superficie `bg-ui-float` opaca.
+- Borde `ui-line` de 1 px y `shadow-surface-l`. Superficie `bg-ui-shell`,
+  translúcida (era `bg-ui-float` opaca hasta la corrección del 02/10/2026, §13).
 - **La sombra necesita lugar.** La superficie de capa es del tamaño exacto del
   applet y la página es `h-screen w-screen`, así que cualquier sombra se corta en
   el borde de la superficie. Propuesta, que sirve para los applets también:
@@ -614,7 +624,9 @@ Todas con títulos en español; archivos nuevos con nombre en inglés.
 - **`tests/surface-contrast.test.ts`** — para cada esquema del sistema, claro y
   oscuro: `tx-main` y `tx-muted` sobre `ui-hover`, `ui-selected`,
   `ui-selected-accent` y `ui-float` compuestos sobre el fondo ≥ 4,5:1; `ui-focus`
-  contra el fondo y contra `ui-float` ≥ 3:1.
+  contra el fondo y contra `ui-float` ≥ 3:1. Y `ui-shell` (2.3.0) compuesta sobre
+  un fondo de pantalla negro y uno blanco: `tx-main` ≥ 4,5:1, también sobre un
+  panel, `ui-hover` y `ui-selected-accent` apoyados en ella.
 - **En el plugin**: `--ui-focus` cumple 3:1 con el esquema por omisión (hoy
   `primary` da 2,64) y con uno de acento claro.
 - **Por componente**: las pruebas de clases que ya existen, actualizadas; una
@@ -674,7 +686,9 @@ Todas con títulos en español; archivos nuevos con nombre en inglés.
 
 1. **El menú mantiene el formato de hoy**: la misma distribución, el mismo tamaño (900×620) y el mismo contenido, clima incluido. Lo que cambia es dónde se abre (anclado a su botón) y el estilo visual. La propuesta de 400×560 en una columna del §7 **no se hace**.
 2. **Con el panel abajo el contenido no se da vuelta**: la búsqueda siempre arriba; sólo cambian el borde del que cuelga y la dirección de la animación.
-3. **Superficie opaca**, sin desenfoque. Sale el `backdrop-blur` de `AppletPopover`.
+3. ~~**Superficie opaca**, sin desenfoque.~~ Sale el `backdrop-blur` de
+   `AppletPopover`. **Corregida el 02/10/2026** (§13): la superficie es
+   translúcida (`ui-shell`) y el desenfoque lo pone Wayfire.
 4. **Lo elegido en una lista o barra lateral se marca con el color de acento** (`ui-selected-accent`), no en gris. Reemplaza la propuesta del §9.4.
 5. **Los campos mantienen el borde de 3:1.**
 6. **`ActionButton` `secondary` se redefine** al estilo contorno de Once UI: es una versión **mayor** de `vue-libvasak` (2.0.0). `ghost` se suma como variante nueva.
@@ -758,3 +772,30 @@ arriba igual que el §10.
   de `main.css` ya lo había corregido a `#555869`. No es de los velos nuevos, es
   del esquema; la prueba lo deja marcado como `failing` para que se ponga roja
   sola cuando el esquema se corrija.
+
+## 13. Corrección del usuario (02/10/2026): el escritorio es translúcido
+
+Con los releases de la migración (`vasak-desktop` 1.21–1.23) el panel, el menú,
+los applets, las notificaciones y los widgets quedaron **opacos**. Sacar el
+`backdrop-blur` del HTML estuvo bien: el desenfoque lo pone Wayfire. Lo que
+estuvo mal fue dejarlos opacos, porque una superficie opaca tapa ese
+desenfoque. La decisión 3 del §10 queda corregida así:
+
+- **Lo que es superficie del escritorio va en `ui-shell`**, translúcida y sin
+  `backdrop-blur`: el panel, el menú y los applets (`AppletPopover`), el centro
+  de control, el OSD, el diálogo de sesión, el menú de Connect y el marco de
+  los widgets.
+- **Lo que flota dentro de una ventana sigue en `ui-float`, opaco**:
+  `DropdownMenuContent`, `PopoverContent`, `TooltipContent`, `DialogContent`,
+  `ToastArea`, la lista de `SearchSelect` y `BarSearch`, el globo de
+  `TabItem` y de `TrayIconButton`, `DropZone`. Detrás tienen la propia página,
+  no el escritorio, y Wayfire no la desenfoca.
+- **El 85 % es por el contraste**: al 80 % de antes, el texto principal sobre
+  un fondo de pantalla negro con el tema claro daba 4,42:1. Al 85 %, 5,01:1.
+- **Un hueco medido y atado**: el anillo de foco **de respaldo** con el acento
+  claro de prueba, en claro y sobre negro puro, da 2,44:1 (no hay opacidad
+  translúcida que lo lleve a 3:1; al 95 % da 3,08). Ya llegaba justo sobre el
+  fondo pelado (3,44:1). Se arregla en el config-manager, que calcula
+  `--ui-focus` contra el esquema (`config-manager#31`); la prueba lo deja atado
+  a 2,4 para que no empeore.
+

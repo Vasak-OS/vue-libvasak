@@ -93,7 +93,7 @@ function surfacesOf(palette: ResolvedPalette): Record<string, Rgb | string> {
 describe('los tokens se leyeron', () => {
 	test('cada mezcla que se mide está en tokens.css', () => {
 		// Sin esto, una mezcla renombrada deja la prueba midiendo `undefined`.
-		for (const name of ['ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-overlay', 'use-ui-focus']) {
+		for (const name of ['ui-hover', 'ui-pressed', 'ui-selected', 'ui-selected-accent', 'ui-float', 'ui-overlay', 'ui-shell', 'use-ui-focus']) {
 			expect(mixes[name]).toBeDefined();
 		}
 		expect(schemes.map((scheme) => scheme.id)).toContain('vasak-default');
@@ -265,6 +265,87 @@ for (const scheme of schemes) {
 
 			test('el canto de la zona en reposo se percibe: 3:1', () => {
 				expect(contrast(palette['ui-border-strong'], background)).toBeGreaterThanOrEqual(NON_TEXT_MINIMUM);
+			});
+		});
+	}
+}
+
+/**
+ * Lo que sumó la 2.3.0: la superficie translúcida del escritorio (`ui-shell`).
+ *
+ * El panel, el menú, los applets y los widgets dejan ver el escritorio para
+ * que Wayfire lo desenfoque detrás. Lo que hay ahí es el fondo de pantalla que
+ * eligió la persona, sin color conocido, así que se mide como el velo de
+ * medios: contra negro y blanco puros, que son el peor caso para un texto
+ * claro y para uno oscuro. El desenfoque sólo promedia, así que no puede dar
+ * algo peor que esos dos extremos.
+ */
+for (const scheme of schemes) {
+	for (const mode of ['light', 'dark'] as const) {
+		const palette = resolvePalette(scheme.colors[mode]);
+		const shell = mixes['ui-shell'] as Mix;
+		const label = `${scheme.id}, ${mode === 'light' ? 'claro' : 'oscuro'}`;
+		const overEach = (paint: (wallpaper: Rgb) => Rgb) =>
+			[BLACK, WHITE].map((wallpaper) => paint(compose(palette, shell, wallpaper)));
+
+		describe(`${label}: la 2.3.0`, () => {
+			test('ui-shell es translúcida: mezcla el fondo con transparente', () => {
+				// Si alguien la vuelve opaca, el desenfoque de Wayfire deja de verse.
+				expect(shell).toBeDefined();
+				expect(shell.color).toBe('ui-background');
+				expect(shell.with).toBeNull();
+				expect(shell.percent).toBeLessThan(100);
+			});
+
+			test('el texto principal llega a 4,5:1 sobre ui-shell con un fondo de pantalla negro o blanco', () => {
+				for (const surface of overEach((under) => under)) {
+					expect(contrast(palette['text-main'], surface)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+				}
+			});
+
+			test('y también sobre lo que se apoya en ella: un panel, el velo de pasar y el elegido', () => {
+				const hover = mixes['ui-hover'] as Mix;
+				const accent = mixes['ui-selected-accent'] as Mix;
+				const short: string[] = [];
+				for (const [name, paint] of [
+					['panel', (under: Rgb) => mix(palette['ui-surface'], 70, under)],
+					['ui-hover', (under: Rgb) => compose(palette, hover, under)],
+					['ui-selected-accent', (under: Rgb) => compose(palette, accent, under)],
+				] as const) {
+					for (const surface of overEach(paint)) {
+						const ratio = contrast(palette['text-main'], surface);
+						if (ratio < TEXT_MINIMUM) short.push(`${name}: ${ratio.toFixed(2)}`);
+					}
+				}
+				expect(short).toEqual([]);
+			});
+
+			// El texto apagado: mismo criterio que arriba. Donde el esquema no
+			// llega ni sobre el fondo pelado (el de fábrica, en claro), queda
+			// marcado como `failing` hasta que el esquema se corrija.
+			const mutedFailsOnBackground = contrast(palette['text-muted'], palette['ui-background']) < TEXT_MINIMUM;
+			(mutedFailsOnBackground ? test.failing : test)(
+				'tx-muted llega a 4,5:1 sobre ui-shell con un fondo de pantalla negro o blanco',
+				() => {
+					for (const surface of overEach((under) => under)) {
+						expect(contrast(palette['text-muted'], surface)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+					}
+				}
+			);
+
+			// El anillo de foco de respaldo con el acento claro de prueba, en
+			// claro, sobre un fondo de pantalla negro puro: 2,44:1. Ya llega
+			// justo sobre el fondo pelado (3,44:1), y no hay opacidad que siga
+			// siendo translúcida y lo salve (al 95 % da 3,08). El arreglo es
+			// del config-manager, que calcula `--ui-focus` contra el esquema
+			// (config-manager#31); mientras tanto el piso queda atado acá para
+			// que no empeore, y cualquier otro esquema tiene que llegar a 3:1.
+			const focusFloor = label === 'light-accent, claro' ? 2.4 : NON_TEXT_MINIMUM;
+			test(`el anillo de foco llega a ${focusFloor}:1 sobre ui-shell`, () => {
+				const focus = compose(palette, mixes['use-ui-focus'] as Mix, palette['ui-background']);
+				for (const surface of overEach((under) => under)) {
+					expect(contrast(focus, surface)).toBeGreaterThanOrEqual(focusFloor);
+				}
 			});
 		});
 	}
