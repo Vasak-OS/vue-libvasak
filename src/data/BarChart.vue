@@ -33,7 +33,8 @@
  * # Responsive
  *
  * Ocupa el ancho y el alto que le den (`h-full` por omisión; el alto lo pone
- * quien lo usa). Por debajo de 16 rem de ancho cada barra muestra su nombre
+ * quien lo usa), con un piso de 80 px: un contenedor que no le dé alto —un
+ * `flex-1` en una columna— no lo deja en cero. Por debajo de 16 rem de ancho cada barra muestra su nombre
  * corto (`shortLabel`, «L» en lugar de «Lun»), por consulta de contenedor.
  */
 import { computed } from 'vue';
@@ -92,7 +93,7 @@ const rows = computed(() =>
 </script>
 
 <template>
-  <figure class="@container m-0 flex h-full min-h-0 w-full min-w-0 flex-col" :aria-label="label" data-bar-chart>
+  <figure class="@container m-0 flex h-full min-h-20 w-full min-w-0 flex-col" :aria-label="label" data-bar-chart>
     <ul class="m-0 flex min-h-0 flex-1 list-none items-stretch gap-1 p-0 @[16rem]:gap-2">
       <li
         v-for="row in rows"

@@ -47,14 +47,14 @@ const apps = [
 <template>
   <div v-if="section === 'charts-28'" class="bench-wallpaper rounded-corner-l p-3">
     <div class="flex flex-col gap-3 rounded-corner-xl border border-ui-line bg-ui-shell p-3">
-      <div class="@container flex flex-col gap-3 @[32rem]:flex-row">
-        <div class="flex h-44 min-w-0 flex-1 flex-col rounded-corner-l border border-ui-line bg-ui-surface/70 p-3">
+      <div class="@container"><div class="flex flex-col gap-3 @[32rem]:flex-row">
+        <div class="flex h-44 min-w-0 flex-col @[32rem]:flex-1 rounded-corner-l border border-ui-line bg-ui-surface/70 p-3">
           <BarChart :bars="week" label="Esta semana" />
         </div>
         <div class="min-w-0 rounded-corner-l border border-ui-line bg-ui-surface/70 p-3 @[32rem]:w-56">
           <CalendarHeatmap :year="2026" :month="3" :values="month" :today="20" :selected="20" locale="es-AR" :format-value="minutes" />
         </div>
-      </div>
+      </div></div>
       <div class="flex flex-col gap-1 rounded-corner-l border border-ui-line bg-ui-surface/70 p-1">
         <ListRow
           v-for="([name, icon, seconds], index) in apps"

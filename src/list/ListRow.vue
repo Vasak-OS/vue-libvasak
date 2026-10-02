@@ -42,8 +42,11 @@
  * llega a 3:1 sobre la vía y sobre cualquier superficie (`tokens.css`), y la
  * barra es decorativa (`aria-hidden`): el dato escrito va en `meta`, que es lo
  * que se lee. Con espacio, el título y la barra van en el mismo renglón —el
- * título en un tercio, la barra en el resto—; por debajo de 20 rem la barra
- * baja debajo del título, por consulta de contenedor sobre la fila.
+ * título en el 30 % del ancho de la fila (`cqw`, así las barras de todas las
+ * filas arrancan en la misma columna aunque el dato de la derecha mida
+ * distinto), la barra en el resto—; por debajo de 20 rem la barra baja debajo
+ * del título, por consulta de contenedor sobre la fila. Apilada, la barra no
+ * lleva `flex-1`: en una columna eso le daría alto cero.
  *
  * `hoverable` realza la fila al pasar por encima aunque no haga nada al
  * tocarla: en una lista para leer, seguir con la vista la fila que se apunta.
@@ -170,13 +173,13 @@ const classes = computed(() => [
     <span v-if="$slots.leading" class="flex shrink-0 items-center"><slot name="leading" /></span>
     <ThemeIcon v-else-if="icon" :name="icon" :type="iconType" :size="24" />
     <span v-if="hasBar" class="flex min-w-0 flex-1 flex-col gap-1 @[20rem]:flex-row @[20rem]:items-center @[20rem]:gap-3">
-      <span class="flex min-w-0 flex-col @[20rem]:w-1/3 @[20rem]:shrink-0">
+      <span class="flex min-w-0 flex-col @[20rem]:w-[30cqw] @[20rem]:shrink-0">
         <slot>
           <span v-if="title" class="truncate text-label-m">{{ title }}</span>
           <span v-if="description" class="truncate text-body-xs font-normal text-tx-muted">{{ description }}</span>
         </slot>
       </span>
-      <span class="block h-1.5 w-full min-w-0 flex-1 overflow-hidden rounded-corner-full bg-ui-line-weak" aria-hidden="true" data-row-bar>
+      <span class="block h-1.5 w-full min-w-0 shrink-0 overflow-hidden rounded-corner-full bg-ui-line-weak @[20rem]:flex-1" aria-hidden="true" data-row-bar>
         <span
           class="block h-full rounded-corner-full bg-ui-data transition-[width] duration-200 ease-ui"
           :style="{ width: `${barWidth}%` }"

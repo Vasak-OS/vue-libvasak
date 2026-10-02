@@ -98,7 +98,7 @@ describe('el gráfico de barras', () => {
 		const view = render(BarChart, { props: { bars: WEEK, label: 'Semana' } });
 		const label = view.findAll('li')[0];
 
-		expect(view.get('figure').classes()).toContain('@container');
+		expect(view.get('figure').classes()).toEqual(expect.arrayContaining(['@container', 'h-full', 'min-h-20']));
 		expect(label?.text()).toContain('L');
 		expect(label?.find('.\\@\\[16rem\\]\\:hidden').text()).toBe('L');
 		expect(label?.find('.\\@\\[16rem\\]\\:inline').text()).toBe('Lun');
@@ -233,6 +233,12 @@ describe('la fila de lista con barra', () => {
 		const content = view.get('[data-row-bar]').element.parentElement as HTMLElement;
 		expect(content.className).toContain('flex-col');
 		expect(content.className).toContain('@[20rem]:flex-row');
+		// Apilada, la barra no crece en la columna (le daría alto cero); en
+		// renglón, sí, y el título mide lo mismo en todas las filas.
+		const track = view.get('[data-row-bar]').classes();
+		expect(track).not.toContain('flex-1');
+		expect(track).toContain('@[20rem]:flex-1');
+		expect(content.firstElementChild?.className).toContain('@[20rem]:w-[30cqw]');
 	});
 
 	test('hoverable realza al pasar aunque la fila no haga nada', () => {
