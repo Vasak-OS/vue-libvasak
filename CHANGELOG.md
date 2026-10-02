@@ -1,5 +1,21 @@
 # Cambios de vue-libvasak
 
+## 2.10.0 — sin publicar
+
+El cambio de esquema se funde en lugar de saltar (Vasak-OS/vasak-settings#134).
+Es una minor: sin la clase `scheme-transition` no cambia nada.
+
+### Nuevo
+
+- **El fundido del esquema.** Las variables que escribe `tauri-plugin-config-manager`
+  (`--primary`, `--secondary`, `--ui-background`, `--ui-surface`, `--ui-border`,
+  `--text-main`, `--text-muted` y sus `-dark`) se registran con `@property` como
+  colores, y con la clase `scheme-transition` en `:root` van del color viejo al
+  nuevo en 300 ms. Con `prefers-reduced-motion: reduce`, directo. La clase la pone
+  quien aplica el esquema después de la primera carga, para que abrir una ventana
+  no parpadee. No se registran `--ui-border-strong`, `--ui-focus` ni los
+  `--text-on-*`: se leen con respaldo, y un color registrado nunca cae en él.
+
 ## 2.9.0 — sin publicar
 
 Las piezas del tablero de fecha del escritorio (vasak-desktop#130), que
