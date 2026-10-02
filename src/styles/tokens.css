@@ -335,3 +335,108 @@
   -webkit-backdrop-filter: blur(1rem);
   backdrop-filter: blur(1rem);
 }
+
+/*
+ * El cambio de esquema, con un fundido (2.9.0, Vasak-OS/vasak-settings#134).
+ *
+ * Cuando el esquema cambia —a mano o porque «Seguir al fondo» sacó colores
+ * nuevos del fondo de pantalla—, `tauri-plugin-config-manager` reescribe las
+ * variables del esquema en `:root` y todo salta de golpe al color nuevo. Con
+ * esto las variables se registran como colores (`@property`), y un color
+ * registrado **se puede animar**: el navegador interpola entre el valor viejo y
+ * el nuevo, y todo lo que depende de él —`--use-*`, los `color-mix` de esta
+ * hoja, las sombras— lo sigue cuadro a cuadro. Igual en todas las
+ * aplicaciones, sin una línea de código en ninguna.
+ *
+ * Se registran sólo las que el piso de cada aplicación **declara siempre**. Un
+ * color registrado nunca queda vacío, así que un `var(--x, respaldo)` dejaría de
+ * caer en su respaldo: por eso no están `--ui-border-strong`, `--ui-focus` ni
+ * los `--text-on-*` que el plugin calcula y las hojas leen con respaldo.
+ *
+ * **Sólo con la clase `scheme-transition` en `:root`.** Sin ella no hay
+ * fundido: la primera aplicación del esquema, al abrir la ventana, iría del
+ * color de fábrica del piso al del esquema en 300 ms, y eso se ve como un
+ * parpadeo. Quien aplica el esquema pone la clase después de la primera vez.
+ * Con `prefers-reduced-motion: reduce`, el cambio es directo.
+ */
+@property --primary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --secondary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --primary-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --secondary-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --ui-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --ui-surface {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --ui-border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --ui-background-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --ui-surface-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --ui-border-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --text-main {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --text-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --text-main-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --text-muted-dark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root.scheme-transition {
+    transition-property:
+      --primary, --secondary, --primary-dark, --secondary-dark, --ui-background, --ui-surface,
+      --ui-border, --ui-background-dark, --ui-surface-dark, --ui-border-dark, --text-main,
+      --text-muted, --text-main-dark, --text-muted-dark;
+    transition-duration: 300ms;
+    transition-timing-function: ease;
+  }
+}
