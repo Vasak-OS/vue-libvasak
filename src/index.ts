@@ -75,6 +75,8 @@ import IdentityBlock from "./identity/IdentityBlock.vue";
 import IconTile from "./indicators/IconTile.vue";
 import Skeleton from "./feedback/Skeleton.vue";
 import CoverArt from "./media/CoverArt.vue";
+import WallpaperCarousel from "./media/WallpaperCarousel.vue";
+import WallpaperThumbnail from "./media/WallpaperThumbnail.vue";
 import Disclosure from "./disclosure/Disclosure.vue";
 import PropertyList from "./data/PropertyList.vue";
 import StatTile from "./data/StatTile.vue";
@@ -175,6 +177,8 @@ const components = [
   PowerActions,
   TextContextMenu,
   DeviceOrbit,
+  WallpaperCarousel,
+  WallpaperThumbnail,
 ];
 
 export default {
@@ -271,6 +275,8 @@ export {
   PowerActions,
   TextContextMenu,
   DeviceOrbit,
+  WallpaperCarousel,
+  WallpaperThumbnail,
 };
 
 export type { PlaybackState } from "./media/playback";
@@ -296,6 +302,15 @@ export { POPOVER_KEY, usePopover } from "./popover/types";
 export type { AvatarSize } from "./identity/Avatar.vue";
 export type { IconTileStatus, IconTileTone } from "./indicators/IconTile.vue";
 export type { CoverArtSize } from "./media/CoverArt.vue";
+export type { CardPlacement, WallpaperItem } from "./media/carousel";
+export {
+  clampIndex,
+  initialIndex,
+  placeCard,
+  previewId,
+  stepIndex,
+  wheelSteps,
+} from "./media/carousel";
 export type { PropertyItem } from "./data/PropertyList.vue";
 export type { CodeLine, CodeLineTone } from "./data/CodeBlock.vue";
 export type { ToggleIndicator } from "./controls/ToggleControl.vue";

@@ -952,3 +952,24 @@ reemplaza.
 - **Movimiento:** al cambiar `orbitKey`, 200 ms con `ease-ui-out`: los viejos
   se contraen al centro con media escala y salen los nuevos desde ahí. El halo
   late en 1,6 s mientras `pulsing`. Con movimiento reducido, sólo opacidad.
+
+## 17. La 2.7.0: el carrusel de fondos (vasak-desktop#133)
+
+- **`WallpaperThumbnail`**: la miniatura de un fondo, imagen o video. Quieta
+  siempre, salvo con `playing`: entonces monta un `<video>` mudo y en bucle, y
+  al dejar de pedirlo **lo saca del DOM** (un video pausado sigue con su
+  decodificador abierto). ▶ arriba a la derecha sobre `ui-overlay`; el fondo
+  aplicado, con la verificación en `primary` abajo a la izquierda —las dos
+  esquinas que una tarjeta inclinada a la derecha no recorta—. Apaisada 16:9
+  con canto `ui-line` y radio `corner-m`, o `fill` dentro de otra caja.
+- **`WallpaperCarousel`**: la fila de tarjetas en paralelogramo (sesgo de 12°,
+  la imagen enderezada adentro), solapadas un 38 %, la del centro a 1,1 con el
+  borde en `primary` y las demás más chicas y atenuadas; sombra `surface-l`
+  porque se apoyan sobre un fondo de pantalla cualquiera. El tamaño sale del
+  contenedor (`38cqi`, entre 7 y 20 rem). Es un `listbox` con
+  `aria-activedescendant`; flechas, rueda y arrastre, sin dar la vuelta; Enter
+  o clic aplica, Escape cierra; `moreLabel` suma la tarjeta del final.
+  **Un solo video a la vez**: lo decide `previewId` (el del puntero si es
+  video, si no el enfocado) y lo avisa `preview`.
+- El movimiento es `transition-transform` de 300 ms con `ease-ui-out`; con
+  `prefers-reduced-motion`, sin transición.

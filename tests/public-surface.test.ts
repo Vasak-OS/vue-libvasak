@@ -4,6 +4,10 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.7.0 se sumaron el carrusel de fondos y la miniatura de un fondo
+ * (`WallpaperCarousel`, `WallpaperThumbnail`), con las cuentas del carrusel
+ * (vasak-desktop#133).
+ *
  * En la 2.6.0 se sumó la órbita del dispositivo conectado (`DeviceOrbit`).
  *
  * En la 2.5.0 se sumaron la pastilla (`Chip`) y los puntos de página
@@ -45,6 +49,7 @@ const PUBLIC_SURFACE = [
 	'buscarOpciones',
 	'Checkbox',
 	'Chip',
+	'clampIndex',
 	'CLASES_POR_TONO',
 	'CLAVE_DE_LA_BARRA',
 	'CLAVE_DEL_DIALOGO',
@@ -80,6 +85,7 @@ const PUBLIC_SURFACE = [
 	'FormGroup',
 	'getTextField',
 	'IconTile',
+	'initialIndex',
 	'IdentityBlock',
 	'isTextAction',
 	'Kbd',
@@ -98,6 +104,7 @@ const PUBLIC_SURFACE = [
 	'PageHeader',
 	'Panel',
 	'PasswordField',
+	'placeCard',
 	'Popover',
 	'POPOVER_KEY',
 	'PopoverAnchor',
@@ -105,6 +112,7 @@ const PUBLIC_SURFACE = [
 	'PopoverTrigger',
 	'posicionDe',
 	'POSICIONES',
+	'previewId',
 	'PowerActions',
 	'ProgressBar',
 	'PropertyList',
@@ -127,6 +135,7 @@ const PUBLIC_SURFACE = [
 	'SpinningCover',
 	'StatTile',
 	'StatusDot',
+	'stepIndex',
 	'SwitchRow',
 	'SwitchToggle',
 	'SwitchTrack',
@@ -159,6 +168,9 @@ const PUBLIC_SURFACE = [
 	'usePopover',
 	'useThemeVersion',
 	'useTooltip',
+	'WallpaperCarousel',
+	'WallpaperThumbnail',
+	'wheelSteps',
 	'WindowControls',
 	'WindowFrame',
 ];
