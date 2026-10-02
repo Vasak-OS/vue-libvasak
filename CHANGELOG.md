@@ -1,5 +1,16 @@
 # Cambios de vue-libvasak
 
+## 2.10.1 — sin publicar
+
+### Arreglado
+
+- **`NowPlayingCard` en un contenedor angosto pasa a una columna.** Mira su
+  propio ancho (`@container`): desde 20 rem es la de siempre, con el disco al
+  costado; por debajo, el disco arriba (80 px) y los datos centrados debajo,
+  cortados con puntos suspensivos. A 240 px el título se quedaba en seis
+  letras, el artista se cortaba de los dos lados y los chips de `details` se
+  aplastaban. En el ancho de siempre dibuja lo mismo (`docs/once-ui.md` §15).
+
 ## 2.10.0 — sin publicar
 
 El cambio de esquema se funde en lugar de saltar (Vasak-OS/vasak-settings#134).

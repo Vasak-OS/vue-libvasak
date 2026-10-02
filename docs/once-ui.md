@@ -922,6 +922,14 @@ para eso. Es una minor: no cambia nada de lo que ya había.
   flechas, Inicio y Fin. Con una página o ninguna no dibuja nada. Con
   `prefers-reduced-motion`, el cambio de ancho no se anima.
 
+
+- **2.10.1, `NowPlayingCard` angosta**: la tarjeta mira su ancho
+  (`@container`). Desde `@xs` (20 rem) es la de siempre; por debajo, el disco
+  arriba en `w-20` y el texto debajo, centrado y estirado al ancho para que
+  `truncate` corte con puntos suspensivos (centrado y del ancho del texto, un
+  renglón largo se salía por los dos lados). Los chips de `details` se
+  reparten centrados.
+
 ## 16. La 2.6.0 (02/10/2026): la órbita del dispositivo conectado
 
 `DeviceOrbit` es la vista radial de vasak-desktop#132, imitando el video de

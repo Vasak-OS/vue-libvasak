@@ -351,3 +351,30 @@ describe('la tarjeta', () => {
 		expect(view.find('[data-album]').exists()).toBe(false);
 	});
 });
+
+describe('la tarjeta angosta (2.10.1)', () => {
+	test('mira su propio ancho y desde 20 rem es la de siempre: el disco al costado', () => {
+		const view = mount(NowPlayingCard, { props: { title: 'Clocks', artist: 'Coldplay' } });
+		const head = view.find('[data-now-playing-head]');
+
+		expect(view.find('[data-now-playing]').classes()).toContain('@container');
+		// Lo de siempre va con `@xs:`; lo de abajo de eso, sin prefijo.
+		expect(head.classes()).toEqual(expect.arrayContaining(['flex-col', '@xs:flex-row']));
+		expect(view.find('[data-spinning-cover]').element.closest('.w-20')).not.toBeNull();
+		expect(view.find('[data-spinning-cover]').element.closest('.\\@xs\\:w-24')).not.toBeNull();
+	});
+
+	test('por debajo, los datos van centrados debajo del disco y los chips se reparten', () => {
+		const view = mount(NowPlayingCard, {
+			props: { title: 'Clocks', artist: 'Coldplay' },
+			slots: { details: '<span data-chip>Auriculares</span>' },
+		});
+		const text = view.find('[data-now-playing-text]');
+
+		expect(text.classes()).toEqual(expect.arrayContaining(['w-full', 'text-center', '@xs:text-left']));
+		const details = view.find('[data-chip]').element.parentElement as HTMLElement;
+		expect(details.className).toContain('flex-wrap');
+		expect(details.className).toContain('justify-center');
+		expect(details.className).toContain('@xs:justify-start');
+	});
+});
