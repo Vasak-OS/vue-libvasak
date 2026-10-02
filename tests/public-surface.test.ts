@@ -4,6 +4,9 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.8.0 se sumaron los dos gráficos chicos del tablero de tiempo de
+ * pantalla del escritorio: `BarChart` y `CalendarHeatmap`.
+ *
  * En la 2.7.0 se sumaron el carrusel de fondos y la miniatura de un fondo
  * (`WallpaperCarousel`, `WallpaperThumbnail`), con las cuentas del carrusel
  * (vasak-desktop#133).
@@ -45,8 +48,10 @@ const PUBLIC_SURFACE = [
 	'AppBar',
 	'Avatar',
 	'Badge',
+	'BarChart',
 	'BarSearch',
 	'buscarOpciones',
+	'CalendarHeatmap',
 	'Checkbox',
 	'Chip',
 	'clampIndex',

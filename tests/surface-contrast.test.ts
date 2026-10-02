@@ -22,6 +22,7 @@ import { describe, expect, test } from 'bun:test';
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
+	clampOklchLightness,
 	contrast,
 	mix,
 	NON_TEXT_MINIMUM,
@@ -401,3 +402,118 @@ describe('la 2.4.0', () => {
 		expect([...shadow.matchAll(/var\(--use-([a-z-]+)\)/g)].map((m) => m[1])).toEqual(['ui-background', 'ui-background']);
 	});
 });
+
+/**
+ * Lo que sumó la 2.8.0: la tinta de los datos (`ui-data`), con la que dibujan
+ * `BarChart`, `CalendarHeatmap` y la barra de `ListRow`.
+ *
+ * Se mide contra todas las superficies donde puede caer un gráfico: el fondo
+ * de la ventana, un panel (`ui-surface/70`), el escritorio translúcido
+ * (`ui-shell`, con un fondo de pantalla negro o blanco detrás) y un panel
+ * encima del escritorio, y también contra la vía de la barra (`ui-line-weak`
+ * sobre cada una). WCAG 1.4.11 pide 3:1 a un gráfico que hace falta para
+ * entender el dato.
+ *
+ * Los topes de luminosidad se leen de `tokens.css`, como las mezclas: la
+ * prueba mide lo que se publica.
+ */
+async function readDataBounds() {
+	const css = await Bun.file(TOKENS_CSS).text();
+	const light = css.match(/--use-ui-data:\s*var\(--ui-data,\s*oklch\(from var\(--use-primary\) min\(l, ([\d.]+)\) c h\)\)/);
+	const dark = css.match(/--use-ui-data:\s*var\(--ui-data-dark,\s*oklch\(from var\(--use-primary\) max\(l, ([\d.]+)\) c h\)\)/);
+	return { light: light ? Number(light[1]) : null, dark: dark ? Number(dark[1]) : null };
+}
+
+const dataBounds = await readDataBounds();
+
+describe('la 2.8.0: los tokens se leyeron', () => {
+	test('ui-data topa la luminosidad del primario en claro y le pone piso en oscuro', () => {
+		// Sin esto, un cambio de forma en tokens.css deja la prueba midiendo el
+		// primario a secas, que en claro no llega.
+		expect(dataBounds.light).not.toBeNull();
+		expect(dataBounds.dark).not.toBeNull();
+	});
+
+	test('el primario a secas no llegaba: por eso existe ui-data', () => {
+		const scheme = schemes.find((each) => each.id === 'vasak-default') as SchemeDocument;
+		const palette = resolvePalette(scheme.colors.light);
+		const panel = mix(palette['ui-surface'], 70, palette['ui-background']);
+
+		expect(contrast(palette.primary, panel)).toBeLessThan(NON_TEXT_MINIMUM);
+	});
+
+	test('el tope no cambia un primario que ya llega', () => {
+		// La cuenta de ida y vuelta por OKLCH sin tope devuelve el mismo color.
+		const same = clampOklchLightness('#dd7878', {});
+		expect(contrast(same, '#dd7878')).toBeCloseTo(1, 3);
+	});
+});
+
+for (const scheme of schemes) {
+	for (const mode of ['light', 'dark'] as const) {
+		const palette = resolvePalette(scheme.colors[mode]);
+		const background = palette['ui-background'];
+		const panel = mix(palette['ui-surface'], 70, background);
+		const label = `${scheme.id}, ${mode === 'light' ? 'claro' : 'oscuro'}`;
+		const data = clampOklchLightness(
+			palette.primary,
+			mode === 'light' ? { max: dataBounds.light ?? 1 } : { min: dataBounds.dark ?? 0 }
+		);
+
+		/** Todas las superficies donde cae un gráfico, con su nombre. */
+		const surfaces: Array<[string, Rgb | string]> = [
+			['el fondo', background],
+			['un panel', panel],
+		];
+		for (const [photo, name] of [
+			[BLACK, 'negro'],
+			[WHITE, 'blanco'],
+		] as const) {
+			const shell = mix(background, 85, photo);
+			surfaces.push([`ui-shell sobre ${name}`, shell]);
+			surfaces.push([`un panel sobre ui-shell sobre ${name}`, mix(palette['ui-surface'], 70, shell)]);
+		}
+
+		describe(`${label}: la 2.8.0`, () => {
+			test('la tinta de los datos llega a 3:1 sobre cada superficie', () => {
+				const short = surfaces
+					.map(([name, under]) => [name, contrast(data, under)] as const)
+					.filter(([, ratio]) => ratio < NON_TEXT_MINIMUM)
+					.map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}`);
+
+				expect(short).toEqual([]);
+			});
+
+			test('y sobre la vía de la barra de ListRow, en cada superficie', () => {
+				const short = surfaces
+					.map(([name, under]) => [name, contrast(data, mix(palette['text-main'], 10, under))] as const)
+					.filter(([, ratio]) => ratio < NON_TEXT_MINIMUM)
+					.map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}`);
+
+				expect(short).toEqual([]);
+			});
+
+			test('las barras que no son de ahora (tx-muted) también llegan a 3:1', () => {
+				// `BarChart` pinta el resto de las barras con el texto apagado.
+				const short = surfaces
+					.map(([name, under]) => [name, contrast(palette['text-muted'], under)] as const)
+					.filter(([, ratio]) => ratio < NON_TEXT_MINIMUM)
+					.map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}`);
+
+				expect(short).toEqual([]);
+			});
+
+			test('el contorno del día elegido (tx-main) llega a 3:1 sobre cada superficie', () => {
+				// Va separado del cuadro (`outline-offset-1`), así que lo que tiene
+				// detrás es la superficie y no el relleno del día: se ve igual
+				// sobre el nivel más alto que sobre la vía.
+				const short = surfaces
+					.map(([name, under]) => [name, contrast(palette['text-main'], under)] as const)
+					.filter(([, ratio]) => ratio < NON_TEXT_MINIMUM)
+					.map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}`);
+
+				expect(short).toEqual([]);
+			});
+		});
+	}
+}

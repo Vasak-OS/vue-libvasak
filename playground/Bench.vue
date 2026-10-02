@@ -33,6 +33,7 @@ import {
 } from '../src';
 import Bench24 from './Bench24.vue';
 import BenchOrbit from './BenchOrbit.vue';
+import Bench28 from './Bench28.vue';
 import BenchExtras from './BenchExtras.vue';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
@@ -83,6 +84,7 @@ const sections = [
 	'dialog-lg',
 	'toast-top',
 	'orbit',
+	'charts-28',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -308,6 +310,11 @@ onMounted(async () => {
           <BenchRows v-else-if="ROWS.includes(section)" :section="section" :width="width" />
           <BenchExtras v-else-if="EXTRAS.includes(section)" :section="section" :width="width" />
           <BenchOrbit v-else-if="section === 'orbit'" :section="section" :width="width" />
+          <Bench28
+            v-else-if="section === 'charts-28'"
+            :section="section"
+            :width="width"
+            :first="width === widths[0]" />
           <Bench24
             v-else-if="NEXT.includes(section)"
             :section="section"
