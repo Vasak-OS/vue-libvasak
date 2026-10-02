@@ -23,7 +23,7 @@ const wifiSatellites = [
 	{ id: 'networks', icon: 'view-list', value: 'Ver redes', label: 'Cambiar de vista', action: true },
 	{ id: 'signal', icon: 'network-wireless-signal-good', value: '78 %', label: 'Señal' },
 	{ id: 'security', icon: 'security-high', value: 'WPA2 personal', label: 'Seguridad' },
-	{ id: 'ip', icon: 'network-workgroup', value: '192.168.0.42', label: 'Dirección IP' },
+	{ id: 'ip', icon: 'network-workgroup', value: '192.0.2.42', label: 'Dirección IP' },
 	{ id: 'battery', icon: 'battery-level-10', value: '8 %', label: 'Batería', tone: 'accent' as const },
 ];
 </script>
