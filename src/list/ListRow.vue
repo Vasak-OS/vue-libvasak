@@ -32,6 +32,21 @@
  * que nada fallara (ver la memoria `desplazador-virtual-del-taller`). Para esas
  * listas está `truncate`: el título y la descripción en una línea, con el texto
  * entero en el globo nativo, que es la única forma de cortar sin perder nada.
+ *
+ * # Con barra (2.8.0)
+ *
+ * `bar` (de 0 a 1) suma una barra horizontal proporcional: la parte de algo
+ * que es esta fila —el tiempo de una aplicación frente a la que más se usó, el
+ * espacio de una carpeta frente al disco—. La pidió el tablero de tiempo de
+ * pantalla del escritorio (vasak-desktop#150). El relleno va en `ui-data`, que
+ * llega a 3:1 sobre la vía y sobre cualquier superficie (`tokens.css`), y la
+ * barra es decorativa (`aria-hidden`): el dato escrito va en `meta`, que es lo
+ * que se lee. Con espacio, el título y la barra van en el mismo renglón —el
+ * título en un tercio, la barra en el resto—; por debajo de 20 rem la barra
+ * baja debajo del título, por consulta de contenedor sobre la fila.
+ *
+ * `hoverable` realza la fila al pasar por encima aunque no haga nada al
+ * tocarla: en una lista para leer, seguir con la vista la fila que se apunta.
  */
 import { computed, inject } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -56,8 +71,12 @@ const props = withDefaults(
 		/** Todo en una línea, con el texto entero en el globo. Para listas de alto fijo. */
 		truncate?: boolean;
 		id?: string;
+		/** Una barra proporcional, de 0 a 1. Sin esto, no hay barra. */
+		bar?: number;
+		/** Realzar al pasar por encima aunque la fila no haga nada. */
+		hoverable?: boolean;
 	}>(),
-	{ iconType: 'icon', role: 'none', selected: false, disabled: false, truncate: false }
+	{ iconType: 'icon', role: 'none', selected: false, disabled: false, truncate: false, bar: undefined, hoverable: false }
 );
 
 const emit = defineEmits<{ click: [event: MouseEvent | KeyboardEvent] }>();
@@ -91,6 +110,14 @@ const tabindex = computed(() => {
 	return undefined;
 });
 
+const hasBar = computed(() => props.bar !== undefined && props.bar !== null);
+/** El ancho del relleno, en porcentaje: lo que no es un número es cero. */
+const barWidth = computed(() => {
+	const value = Number(props.bar);
+	if (!Number.isFinite(value) || value <= 0) return 0;
+	return Math.min(100, value * 100);
+});
+
 const tooltip = computed(() =>
 	props.truncate ? [props.title, props.description].filter(Boolean).join(' — ') || undefined : undefined
 );
@@ -119,6 +146,8 @@ const classes = computed(() => [
 	interactive.value && !props.disabled && !props.selected
 		? 'cursor-pointer hover:bg-ui-hover active:bg-ui-pressed active:duration-100'
 		: '',
+	props.hoverable && !interactive.value && !props.selected ? 'hover:bg-ui-hover' : '',
+	hasBar.value ? '@container' : '',
 	interactive.value ? 'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus' : '',
 	props.disabled ? 'cursor-not-allowed opacity-50' : '',
 ]);
@@ -140,7 +169,21 @@ const classes = computed(() => [
     @keydown="onKeydown">
     <span v-if="$slots.leading" class="flex shrink-0 items-center"><slot name="leading" /></span>
     <ThemeIcon v-else-if="icon" :name="icon" :type="iconType" :size="24" />
-    <span class="flex min-w-0 flex-1 flex-col">
+    <span v-if="hasBar" class="flex min-w-0 flex-1 flex-col gap-1 @[20rem]:flex-row @[20rem]:items-center @[20rem]:gap-3">
+      <span class="flex min-w-0 flex-col @[20rem]:w-1/3 @[20rem]:shrink-0">
+        <slot>
+          <span v-if="title" class="truncate text-label-m">{{ title }}</span>
+          <span v-if="description" class="truncate text-body-xs font-normal text-tx-muted">{{ description }}</span>
+        </slot>
+      </span>
+      <span class="block h-1.5 w-full min-w-0 flex-1 overflow-hidden rounded-corner-full bg-ui-line-weak" aria-hidden="true" data-row-bar>
+        <span
+          class="block h-full rounded-corner-full bg-ui-data transition-[width] duration-200 ease-ui"
+          :style="{ width: `${barWidth}%` }"
+          data-row-bar-fill />
+      </span>
+    </span>
+    <span v-else class="flex min-w-0 flex-1 flex-col">
       <slot>
         <span v-if="title" class="text-label-m" :class="truncate ? 'truncate' : 'break-words'">{{ title }}</span>
         <span

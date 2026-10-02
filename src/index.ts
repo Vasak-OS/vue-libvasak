@@ -89,6 +89,9 @@ import PowerActions from "./controls/PowerActions.vue";
 import TextContextMenu from "./text/TextContextMenu.vue";
 /* 2.6.0: la órbita del dispositivo conectado. */
 import DeviceOrbit from "./cards/DeviceOrbit.vue";
+/* 2.8.0: los gráficos chicos del tablero de tiempo de pantalla. */
+import BarChart from "./data/BarChart.vue";
+import CalendarHeatmap from "./data/CalendarHeatmap.vue";
 import type { App } from "vue";
 
 const components = [
@@ -179,6 +182,8 @@ const components = [
   DeviceOrbit,
   WallpaperCarousel,
   WallpaperThumbnail,
+  BarChart,
+  CalendarHeatmap,
 ];
 
 export default {
@@ -277,6 +282,8 @@ export {
   DeviceOrbit,
   WallpaperCarousel,
   WallpaperThumbnail,
+  BarChart,
+  CalendarHeatmap,
 };
 
 export type { PlaybackState } from "./media/playback";
@@ -317,6 +324,7 @@ export type { ToggleIndicator } from "./controls/ToggleControl.vue";
 export type { PowerAction } from "./controls/PowerActions.vue";
 export type { OrbitCenter, OrbitSatellite } from "./cards/DeviceOrbit.vue";
 export type { OrbitBox, OrbitCircle, OrbitFrame, OrbitPoint, OrbitRadii } from "./cards/orbit-layout";
+export type { BarChartItem } from "./data/BarChart.vue";
 export type {
   TextAction,
   TextClipboard,

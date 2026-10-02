@@ -1,5 +1,36 @@
 # Cambios de vue-libvasak
 
+## 2.8.0 — sin publicar
+
+Los gráficos chicos del tablero de tiempo de pantalla del escritorio
+(vasak-desktop#150; la especificación, `docs/once-ui.md` §18). Es una minor:
+nada de lo que exporta la 2.7.0 cambia, y `ListRow` dibuja lo mismo si no se
+le pide la barra.
+
+### Nuevo
+
+- **`BarChart`**: un gráfico de barras chico (la semana, las horas de un día).
+  Cajas con el alto en porcentaje, sin SVG; la barra de ahora (`current`) en
+  el acento y con `aria-current`, las demás en el texto apagado, las dos a
+  3:1 sobre cualquier superficie. Cada barra se anuncia «nombre: valor».
+  Ocupa el alto que le den y pasa a los nombres cortos por debajo de 16 rem.
+- **`CalendarHeatmap`**: el mes en una grilla de siete columnas, con el día en
+  que empieza la semana (lunes por omisión) y los nombres de `Intl`. Cinco
+  niveles según la parte del máximo; cada día dice su valor en su nombre
+  (`formatValue`) y en el globo, hoy lleva `aria-current="date"` y el elegido
+  un contorno.
+- **El token `ui-data`**: la tinta de un dato dibujado. Es el primario con la
+  luminosidad OKLCH topada (0,52 en claro, piso de 0,7 en oscuro), así que
+  conserva el tono de la marca y llega a 3:1 contra el fondo, un panel y el
+  escritorio translúcido sobre negro o blanco. El config-manager puede
+  escribir el suyo (`--ui-data`, `--ui-data-dark`).
+
+### Extensiones
+
+- `ListRow`: `bar` (de 0 a 1), una barra proporcional en `ui-data` sobre la
+  vía `ui-line-weak`, al lado del título con espacio y debajo por debajo de
+  20 rem; y `hoverable`, el velo al pasar en una fila que no hace nada.
+
 ## 2.6.0 — sin publicar
 
 La vista radial del dispositivo conectado (vasak-desktop#132). Es una minor:
@@ -21,7 +52,6 @@ sólo suma.
 - **La guardia nombra su única excepción de SVG**: las líneas de
   `DeviceOrbit`, atadas a un `<svg>` oculto al lector, con sólo `<path>`, sin
   relleno y con el trazo en `currentColor`.
-
 ## 2.5.0 — sin publicar
 
 Las dos piezas del reproductor desplegable del escritorio

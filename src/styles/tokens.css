@@ -52,12 +52,29 @@
  * borde del esquema, que en los esquemas oscuros es más oscuro que el fondo
  * (`#11111b` contra `#1e1e2e` en el de fábrica). En oscuro la sombra casi no se
  * ve, igual que en Once UI: ahí lo que separa es el borde `ui-line`.
+ *
+ * `--use-ui-data` es la tinta de un dato dibujado (2.8.0): la barra de hoy en
+ * `BarChart`, el día con más uso en `CalendarHeatmap`, el relleno de la barra
+ * de `ListRow`. Es el acento con el **tono y la saturación** del esquema, pero
+ * con la luminosidad topada para que llegue a 3:1 (WCAG 1.4.11) contra las
+ * superficies donde se dibuja: el fondo, un panel (`ui-surface/70`), el
+ * escritorio translúcido (`ui-shell` sobre un fondo de pantalla negro o
+ * blanco) y la vía de una barra. El primario a secas no llega en claro: el de
+ * fábrica (`#dd7878`) da 1,87:1 en el peor caso y un acento claro (`#e5c890`),
+ * 1,01:1. Mezclarlo con el texto, como el foco, llega sólo con un 25 % de
+ * acento, y ahí ya no se ve el color de la marca. Topando la luminosidad OKLCH
+ * en 0,52 queda el mismo rosa, más hondo: 3,69:1 el de fábrica y 3,48:1 el
+ * acento claro, en el peor caso. En oscuro el acento ya es claro; el piso de
+ * 0,7 sólo actúa con un esquema oscuro de acento oscuro. Lo mide
+ * `tests/surface-contrast.test.ts`. Como el foco, el config-manager puede
+ * escribir el suyo (`--ui-data` / `--ui-data-dark`).
  */
 :root {
   --use-ui-focus: var(
     --ui-focus,
     color-mix(in srgb, var(--use-primary) 40%, var(--use-text-main))
   );
+  --use-ui-data: var(--ui-data, oklch(from var(--use-primary) min(l, 0.52) c h));
   --use-shadow-ink: var(--use-text-main);
 }
 
@@ -66,6 +83,7 @@
     --ui-focus-dark,
     color-mix(in srgb, var(--use-primary) 40%, var(--use-text-main))
   );
+  --use-ui-data: var(--ui-data-dark, oklch(from var(--use-primary) max(l, 0.7) c h));
   --use-shadow-ink: var(--use-ui-border);
 }
 
@@ -159,6 +177,8 @@
      el peor caso da 5,01:1 en claro). Al 80 % ya no llegaba (4,42:1). */
   --color-ui-overlay: color-mix(in srgb, var(--use-ui-background) 85%, transparent);
   --color-ui-focus: var(--use-ui-focus);
+  /* La tinta de un dato dibujado: ver `--use-ui-data` arriba. */
+  --color-ui-data: var(--use-ui-data);
 
   /* ── Sombras: las tres capas de Once UI, con la tinta del esquema ─────── */
   --shadow-surface-xs:

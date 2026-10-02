@@ -973,3 +973,48 @@ reemplaza.
   video, si no el enfocado) y lo avisa `preview`.
 - El movimiento es `transition-transform` de 300 ms con `ease-ui-out`; con
   `prefers-reduced-motion`, sin transición.
+
+## 18. La 2.8.0 (02/10/2026): los gráficos del tiempo de pantalla
+
+Lo que pidió el tablero de tiempo de pantalla del escritorio (vasak-desktop#150,
+la referencia del video, segundo 14): la semana en barras con hoy en el acento,
+el mes en un mapa de calor y la lista de aplicaciones con una barra por fila.
+Es una minor.
+
+### 18.1 La tinta de los datos: `ui-data`
+
+Un gráfico que hace falta para entender el dato pide 3:1 (WCAG 1.4.11), y el
+primario a secas no llega en claro: el de fábrica da 2,13:1 sobre un panel y
+1,87:1 en el peor caso (un panel sobre el escritorio translúcido con un fondo
+blanco); un acento claro, 1,01:1. Mezclarlo con el texto, como el anillo de
+foco, llega recién con un 25 % de acento, y ahí el color de la marca ya no se
+reconoce.
+
+`ui-data` topa la **luminosidad** OKLCH del primario y deja el tono y la
+saturación: `oklch(from var(--use-primary) min(l, 0.52) c h)` en claro (el mismo
+rosa, más hondo: 3,69:1 el de fábrica y 3,48:1 el acento claro, en el peor
+caso) y un piso de 0,7 en oscuro, que con los esquemas del sistema no cambia
+nada. Lo mide `tests/surface-contrast.test.ts` contra el fondo, un panel,
+`ui-shell` sobre negro y sobre blanco, un panel encima de eso y la vía de una
+barra. Como el foco, el config-manager puede escribir el suyo.
+
+### 18.2 Los componentes nuevos
+
+| componente | forma |
+|---|---|
+| `BarChart` | cajas con el alto en porcentaje y `rounded-corner-s`, hasta 32 px de ancho cada una; la de ahora en `ui-data` con el nombre en `tx-main` y peso 600, el resto en `tx-muted` (las dos a 3:1); un valor chico se dibuja con el 4 % para que se vea; nombres cortos por debajo de 16 rem |
+| `CalendarHeatmap` | siete columnas de cuadros `aspect-square` con `rounded-corner-xs` y `gap-1`; sin valor la vía `ui-line-weak`, con valor `ui-data` al 35, 60, 80 y 100 %; el título es el mes de `Intl` con la primera letra en mayúscula; el elegido, un contorno de 2 px del texto principal separado del cuadro |
+
+Los dos son cajas y no SVG: el radio sale de la escala, el color de los tokens
+y el tamaño del contenedor, y la guardia de iconos no necesita una excepción.
+El color no es lo único que dice el dato: cada barra y cada día llevan su
+valor escrito en el nombre accesible y en el globo nativo.
+
+### 18.3 Lo que se suma a `ListRow`
+
+- `bar`: la barra proporcional. Con 20 rem o más, el título en un tercio y la
+  barra en el resto del renglón, como en la referencia; por debajo, la barra
+  baja debajo del título. La barra es decorativa: el dato escrito va en
+  `meta`.
+- `hoverable`: el velo `ui-hover` en una fila sin rol, para seguir con la vista
+  la fila que se apunta.
