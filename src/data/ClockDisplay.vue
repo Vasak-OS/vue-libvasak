@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * La hora grande, con la fecha debajo (2.4.0).
+ * La hora grande, con la fecha debajo (2.9.0).
  *
  * Sale del `GreeterClock` de vasak-session-manager, que la dibujan el inicio
  * de sesión y el bloqueo, y sirve igual para un reloj de escritorio o el OSD.
@@ -33,6 +33,15 @@
  * fecha pasa del texto apagado al principal: sobre una foto, el apagado se
  * pierde (se vio en el banco, sobre el degradado del esquema).
  *
+ * # Los segundos más chicos (2.9.0)
+ *
+ * Con `smallSeconds` los segundos van aparte, en `heading-m` y en `tx-muted`,
+ * pegados arriba a la derecha de los minutos: es el reloj grande del tablero de
+ * fecha del escritorio (vasak-desktop#130), donde la hora y los minutos se leen
+ * de lejos y los segundos sólo dicen que el reloj anda. Las partes salen de
+ * `formatToParts`, así que el orden y el separador siguen siendo los del
+ * idioma, y lo de después de los segundos —«p. m.»— va con ellos.
+ *
  * Los tamaños: `md` es `display-m` (48 px) y `lg`, `display-l` (60 px), que es
  * el de la copia. Se achica sola si el lugar es más angosto que la hora
  * (`@container`), así que no se sale ni se corta en una ventana angosta. Por
@@ -57,6 +66,8 @@ const props = withDefaults(
 		/** Una hora fija, sin temporizador. */
 		now?: Date;
 		align?: 'start' | 'center';
+		/** Con `seconds`, los segundos más chicos y atenuados. */
+		smallSeconds?: boolean;
 	}>(),
 	{
 		size: 'lg',
@@ -67,6 +78,7 @@ const props = withDefaults(
 		legible: false,
 		now: undefined,
 		align: 'center',
+		smallSeconds: false,
 	}
 );
 
@@ -117,6 +129,29 @@ const time = computed(() =>
 		hour12: props.hour12,
 	})
 );
+/**
+ * La hora partida en lo grande y lo chico: lo de antes de los segundos, y los
+ * segundos con lo que venga después. Sin `smallSeconds`, todo va en la parte
+ * grande y la chica queda vacía.
+ */
+const timeParts = computed(() => {
+	if (!props.seconds || !props.smallSeconds) return { main: time.value, small: '' };
+	const parts = new Intl.DateTimeFormat(props.locale, {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: props.hour12,
+	}).formatToParts(current.value);
+	const index = parts.findIndex((part) => part.type === 'second');
+	if (index < 0) return { main: time.value, small: '' };
+	// El separador justo antes de los segundos («:») se va con ellos: lo grande
+	// termina en los minutos.
+	const cut = parts[index - 1]?.type === 'literal' ? index - 1 : index;
+	const main = parts.slice(0, cut).map((part) => part.value).join('');
+	const small = parts.slice(index).map((part) => part.value).join('').trim();
+	return { main, small };
+});
+
 const date = computed(() =>
 	current.value.toLocaleDateString(props.locale, { weekday: 'long', day: 'numeric', month: 'long' })
 );
@@ -132,7 +167,10 @@ const machineTime = computed(() => current.value.toISOString());
       :datetime="machineTime"
       class="block max-w-full font-light text-tx-main tabular-nums whitespace-nowrap"
       :class="size === 'lg' ? 'text-display-m @xs:text-display-l' : 'text-heading-l @xs:text-display-m'">
-      {{ time }}
+      <template v-if="timeParts.small">{{ timeParts.main }}<span
+          class="ms-1 inline-block align-top text-heading-m font-normal text-tx-muted"
+          data-clock-seconds>{{ timeParts.small }}</span></template>
+      <template v-else>{{ time }}</template>
     </time>
     <p
       v-if="showDate"

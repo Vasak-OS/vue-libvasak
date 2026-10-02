@@ -92,6 +92,11 @@ import DeviceOrbit from "./cards/DeviceOrbit.vue";
 /* 2.8.0: los gráficos chicos del tablero de tiempo de pantalla. */
 import BarChart from "./data/BarChart.vue";
 import CalendarHeatmap from "./data/CalendarHeatmap.vue";
+/* 2.9.0: el tablero de fecha (vasak-desktop#130). */
+import MonthCalendar from "./calendar/MonthCalendar.vue";
+import EventList from "./calendar/EventList.vue";
+import HourlyForecast from "./data/HourlyForecast.vue";
+import ProgressRing from "./data/ProgressRing.vue";
 import type { App } from "vue";
 
 const components = [
@@ -184,6 +189,10 @@ const components = [
   WallpaperThumbnail,
   BarChart,
   CalendarHeatmap,
+  MonthCalendar,
+  EventList,
+  HourlyForecast,
+  ProgressRing,
 ];
 
 export default {
@@ -284,6 +293,10 @@ export {
   WallpaperThumbnail,
   BarChart,
   CalendarHeatmap,
+  MonthCalendar,
+  EventList,
+  HourlyForecast,
+  ProgressRing,
 };
 
 export type { PlaybackState } from "./media/playback";
@@ -325,6 +338,24 @@ export type { PowerAction } from "./controls/PowerActions.vue";
 export type { OrbitCenter, OrbitSatellite } from "./cards/DeviceOrbit.vue";
 export type { OrbitBox, OrbitCircle, OrbitFrame, OrbitPoint, OrbitRadii } from "./cards/orbit-layout";
 export type { BarChartItem } from "./data/BarChart.vue";
+export type { ForecastHour } from "./data/HourlyForecast.vue";
+export type { CalendarDay, CalendarEntry, IsoDate, IsoMonth } from "./calendar/dates";
+export {
+  addDays,
+  addMonths,
+  daysInMonth,
+  entriesOn,
+  entryDays,
+  isOngoing,
+  markedDates,
+  monthGrid,
+  monthOf,
+  parseIsoDate,
+  safeCalendarColor,
+  toIsoDate,
+  weekdayNames,
+  weekStartOf,
+} from "./calendar/dates";
 export type {
   TextAction,
   TextClipboard,

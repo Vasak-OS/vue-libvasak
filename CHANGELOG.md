@@ -1,5 +1,39 @@
 # Cambios de vue-libvasak
 
+## 2.9.0 — sin publicar
+
+Las piezas del tablero de fecha del escritorio (vasak-desktop#130), que
+comparten los widgets de calendario (#112) y `vasak-calendar`; la
+especificación, `docs/once-ui.md` §19. Es una minor: lo que ya había dibuja lo
+mismo si no se pide lo nuevo.
+
+### Nuevo
+
+- **`MonthCalendar`**: el mes en cuadrícula de seis semanas, con la semana que
+  empieza donde dice el idioma, hoy relleno en el acento, el día elegido con el
+  canto en el acento y un punto en el secundario en los días con eventos
+  (`markedDates`). Un solo Tab; las flechas, Inicio, Fin, Re Pág y Av Pág
+  recorren y cambian de mes solas. `v-model` del día y `v-model:month`; la
+  ranura `actions` para el «+».
+- **`EventList`**: los eventos de un día como tarjetas con hora, título, lugar
+  y calendario, y la barra del color del calendario (sólo un hexadecimal; si no,
+  el secundario). El que está pasando lleva el canto en el acento. Se reparten
+  en las columnas que entren sin desplazar de costado; sin eventos lo dice.
+- **`HourlyForecast`**: las horas en arco alrededor de lo que vaya en la ranura
+  (el reloj), con la de ahora en una píldora en el acento; en angosto, una tira
+  que baja de renglón.
+- **`ProgressRing`**: un anillo chico con el valor adentro y el nombre debajo,
+  dibujado con CSS (`role="meter"`).
+- **`dates.ts`**: las cuentas que comparten —`monthGrid`, `weekStartOf`,
+  `entryDays`, `markedDates`, `entriesOn`, `isOngoing`, `safeCalendarColor` y
+  las de días y meses como texto—. Un evento de día completo se lee en UTC, que
+  es como lo manda el almacén de vasak-accounts.
+
+### Cambia, si se pide
+
+- **`ClockDisplay`** con `smallSeconds`: los segundos aparte, en `heading-m` y
+  atenuados.
+
 ## 2.8.0 — sin publicar
 
 Los gráficos chicos del tablero de tiempo de pantalla del escritorio
