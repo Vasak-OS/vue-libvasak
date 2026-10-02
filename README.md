@@ -187,6 +187,12 @@ salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
 - el desenfoque del inicio de sesión y del bloqueo, y **sólo ahí**:
   `bg-ui-shell shell-blur`.
 
+## Qué componente para qué (2.6.0)
+
+- el dispositivo o la red conectada, con sus datos alrededor (la vista
+  radial del Bluetooth y de la red): `DeviceOrbit`; para elegir entre varios
+  sigue siendo una lista de `DeviceCard`.
+
 ## Reproductor
 
 `NowPlayingCard`, `SpinningCover` y `SeekBar` dibujan lo que suena sin saber de

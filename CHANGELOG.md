@@ -1,5 +1,27 @@
 # Cambios de vue-libvasak
 
+## 2.6.0 — sin publicar
+
+La vista radial del dispositivo conectado (vasak-desktop#132). Es una minor:
+sólo suma.
+
+### Nuevo
+
+- **`DeviceOrbit`**: el dispositivo o la red al centro, en un círculo de
+  acento con su halo, y sus datos alrededor como satélites unidos por líneas
+  en codo, con dos anillos tenues de fondo. Genérico: recibe el centro
+  (`OrbitCenter`) y los satélites (`OrbitSatellite`: icono, valor, etiqueta,
+  acción opcional y tono de acento) ya armados. Un satélite sin dato no se
+  dibuja —una batería que no se publica no aparece como «0 %»—, sin centro
+  queda el círculo vacío con `emptyLabel`, `pulsing` hace latir el halo
+  mientras se busca y cambiar `orbitKey` contrae los satélites al centro y
+  saca los nuevos. Se lee como lista, con la etiqueta antes del valor; la
+  acción es un botón. Mide la caja con un `ResizeObserver` y, si la órbita no
+  entra, apila: el círculo arriba y un satélite por renglón.
+- **La guardia nombra su única excepción de SVG**: las líneas de
+  `DeviceOrbit`, atadas a un `<svg>` oculto al lector, con sólo `<path>`, sin
+  relleno y con el trazo en `currentColor`.
+
 ## 2.5.0 — sin publicar
 
 Las dos piezas del reproductor desplegable del escritorio

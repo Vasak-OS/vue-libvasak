@@ -32,6 +32,7 @@ import {
 	TooltipTrigger,
 } from '../src';
 import Bench24 from './Bench24.vue';
+import BenchOrbit from './BenchOrbit.vue';
 import BenchExtras from './BenchExtras.vue';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
@@ -81,6 +82,7 @@ const sections = [
 	'dialog-wide',
 	'dialog-lg',
 	'toast-top',
+	'orbit',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -305,6 +307,7 @@ onMounted(async () => {
           <BenchSelection v-else-if="SELECTION.includes(section)" :section="section" :width="width" />
           <BenchRows v-else-if="ROWS.includes(section)" :section="section" :width="width" />
           <BenchExtras v-else-if="EXTRAS.includes(section)" :section="section" :width="width" />
+          <BenchOrbit v-else-if="section === 'orbit'" :section="section" :width="width" />
           <Bench24
             v-else-if="NEXT.includes(section)"
             :section="section"
