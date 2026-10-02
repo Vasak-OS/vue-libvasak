@@ -337,7 +337,7 @@
 }
 
 /*
- * El cambio de esquema, con un fundido (2.9.0, Vasak-OS/vasak-settings#134).
+ * El cambio de esquema, con un fundido (2.10.0, Vasak-OS/vasak-settings#134).
  *
  * Cuando el esquema cambia —a mano o porque «Seguir al fondo» sacó colores
  * nuevos del fondo de pantalla—, `tauri-plugin-config-manager` reescribe las
