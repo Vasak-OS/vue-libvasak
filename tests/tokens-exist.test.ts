@@ -284,6 +284,11 @@ describe('lo que la forma de Once UI deja afuera', () => {
 			'data/ClockDisplay.vue',
 			'controls/PowerActions.vue',
 			'text/TextContextMenu.vue',
+			// La 2.9.0.
+			'calendar/MonthCalendar.vue',
+			'calendar/EventList.vue',
+			'data/HourlyForecast.vue',
+			'data/ProgressRing.vue',
 		]) {
 			expect(MIGRATED).toContain(file);
 		}

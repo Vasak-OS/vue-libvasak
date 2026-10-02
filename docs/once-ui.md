@@ -1018,3 +1018,35 @@ valor escrito en el nombre accesible y en el globo nativo.
   `meta`.
 - `hoverable`: el velo `ui-hover` en una fila sin rol, para seguir con la vista
   la fila que se apunta.
+
+## 19. La 2.9.0 (02/10/2026): el tablero de fecha
+
+Las piezas del tablero que se abre al tocar el reloj del panel
+(vasak-desktop#130, §3 de la referencia del video), que comparten los widgets
+de calendario (#112) y `vasak-calendar`.
+
+| componente | forma |
+|---|---|
+| `MonthCalendar` | el mes y el año en `label-s` en mayúsculas entre dos botones `ghost` chicos; los días de la semana en `tx-muted`; casillas de 32 (`rounded-corner-m`, la zona de toque mínima); **hoy** `bg-primary` + `tx-on-primary`; el **elegido** `border-primary`; los **días con eventos**, un punto de 4 px en `secondary` (sobre hoy, en `tx-on-primary`); los de otro mes en `tx-muted`, sin opacidad. Seis semanas siempre. `role="grid"` con un solo Tab |
+| `EventList` | tarjeta `rounded-corner-l`, canto `ui-line`, `ui-surface/70`; barra de 4 px a la izquierda en el color del calendario o `secondary`; en curso, `border-primary`. Columnas de al menos 12 rem que bajan de renglón |
+| `HourlyForecast` | cada hora en una columna de 48: hora en `label-xs` `tx-muted`, icono del tema de 20, temperatura en `tx-main`; la de ahora, píldora `bg-primary` con `shadow-surface-s`. Arco desde los 20 rem del contenedor (`@xs:`); debajo, tira |
+| `ProgressRing` | degradado cónico de `--use-primary` sobre el velo de `ui-line`, recortado a un aro de 4 px por una máscara radial; el valor en `label-xs` 600 adentro —con `unit`, la unidad en otro renglón, atenuada—, el nombre debajo en `tx-muted` |
+
+**Por qué el anillo es CSS y no SVG.** La librería no dibuja nada propio en SVG
+—la guardia lo prohíbe en toda la librería, sin excepciones nombradas— y un aro
+es exactamente lo que da un `conic-gradient` con una máscara. Los dos colores
+salen del esquema. Y va en **utilidades** (`bg-[conic-gradient(…)]`,
+`[mask:…]`), no en un `<style>` del componente: las aplicaciones no cargan la
+hoja de la librería (`style.css`), sólo toman sus clases con el `@source` del
+dist, así que un estilo propio del componente no les llegaría.
+
+**El color de un calendario no es un color de la interfaz.** Lo eligió la
+persona en su servidor y es lo que distingue un calendario de otro, como la
+foto de un contacto. Por eso no sale del esquema; pero lo escribió el servidor,
+así que sólo un hexadecimal llega al `style` (`safeCalendarColor`), y sin uno
+válido la barra va en `secondary`.
+
+**Los días completos van en UTC.** `ListOccurrences` de vasak-accounts manda un
+día completo a medianoche UTC con `all_day`. Leído en la hora local, al oeste
+de Greenwich caía el día anterior; `entryDays` toma la fecha civil de UTC, y un
+`AAAA-MM-DD` suelto tal cual.

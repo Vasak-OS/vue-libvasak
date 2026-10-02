@@ -4,6 +4,10 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.9.0 se sumaron las piezas del tablero de fecha del escritorio: el
+ * calendario del mes, la lista de eventos, el pronóstico por hora, el anillo y
+ * las cuentas de fechas que comparten (`dates.ts`).
+ *
  * En la 2.8.0 se sumaron los dos gráficos chicos del tablero de tiempo de
  * pantalla del escritorio: `BarChart` y `CalendarHeatmap`.
  *
@@ -44,6 +48,8 @@ import * as library from '../src/index';
  */
 const PUBLIC_SURFACE = [
 	'ActionButton',
+	'addDays',
+	'addMonths',
 	'AlertMessage',
 	'AppBar',
 	'Avatar',
@@ -65,6 +71,7 @@ const PUBLIC_SURFACE = [
 	'ConfigSection',
 	'CoverArt',
 	'default',
+	'daysInMonth',
 	'DeviceCard',
 	'DeviceOrbit',
 	'Dialog',
@@ -83,15 +90,20 @@ const PUBLIC_SURFACE = [
 	'DropdownMenuSeparator',
 	'DropdownMenuTrigger',
 	'DropZone',
+	'entriesOn',
+	'entryDays',
+	'EventList',
 	'EmptyState',
 	'esPosicion',
 	'forgetThemeIcons',
 	'formatPlaybackTime',
 	'FormGroup',
+	'HourlyForecast',
 	'getTextField',
 	'IconTile',
 	'initialIndex',
 	'IdentityBlock',
+	'isOngoing',
 	'isTextAction',
 	'Kbd',
 	'ListCard',
@@ -99,7 +111,11 @@ const PUBLIC_SURFACE = [
 	'ListRow',
 	'LoadingState',
 	'LOS_TRES_CONTROLES',
+	'markedDates',
 	'MENU_KEY',
+	'monthGrid',
+	'MonthCalendar',
+	'monthOf',
 	'NowPlayingCard',
 	'NumberField',
 	'olvidarLosIconosDelTema',
@@ -107,6 +123,7 @@ const PUBLIC_SURFACE = [
 	'orientacionDe',
 	'PageDots',
 	'PageHeader',
+	'parseIsoDate',
 	'Panel',
 	'PasswordField',
 	'placeCard',
@@ -120,9 +137,11 @@ const PUBLIC_SURFACE = [
 	'previewId',
 	'PowerActions',
 	'ProgressBar',
+	'ProgressRing',
 	'PropertyList',
 	'readTextMenuState',
 	'rolDelTono',
+	'safeCalendarColor',
 	'runTextAction',
 	'SearchField',
 	'SearchSelect',
@@ -151,6 +170,7 @@ const PUBLIC_SURFACE = [
 	'TextContextMenu',
 	'TextInput',
 	'textMenuEntries',
+	'toIsoDate',
 	'ThemeIcon',
 	'TOAST_TONE_CLASSES',
 	'ToastArea',
@@ -173,6 +193,8 @@ const PUBLIC_SURFACE = [
 	'usePopover',
 	'useThemeVersion',
 	'useTooltip',
+	'weekdayNames',
+	'weekStartOf',
 	'WallpaperCarousel',
 	'WallpaperThumbnail',
 	'wheelSteps',
