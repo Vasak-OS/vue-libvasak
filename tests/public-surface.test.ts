@@ -94,6 +94,7 @@ const PUBLIC_SURFACE = [
 	'entryDays',
 	'EventList',
 	'EmptyState',
+	'Equalizer',
 	'esPosicion',
 	'forgetThemeIcons',
 	'formatPlaybackTime',

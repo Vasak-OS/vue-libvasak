@@ -1,5 +1,21 @@
 # Cambios de vue-libvasak
 
+## 2.11.0 — sin publicar
+
+El ecualizador del reproductor desplegable del escritorio (`vasak-desktop#131`)
+y de la sección Sonido de Configuración, sobre el ecualizador de sistema de
+vasak-wireplumber-modules (`docs/once-ui.md` §15). Es una minor: sólo suma.
+
+### Nuevo
+
+- **`Equalizer`**: diez bandas verticales (`role="slider"`, flechas, Re Pág /
+  Av Pág, Inicio / Fin, arrastrar en toda la columna) unidas por una curva
+  suave con un velo debajo —sin SVG: cajas recortadas con `clip-path`, que se
+  animan hacia las ganancias nuevas—, el encabezado «Guardado · Rock» y la
+  grilla de perfiles de 4 × 2 (2 × 4 en angosto) con el elegido en el primario.
+  Sin el servicio dice que no está disponible; apagado atenúa las bandas. No
+  sabe de D-Bus: emite `gain` y `preset`.
+
 ## 2.10.1 — sin publicar
 
 ### Arreglado

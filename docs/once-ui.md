@@ -929,6 +929,16 @@ para eso. Es una minor: no cambia nada de lo que ya había.
   `truncate` corte con puntos suspensivos (centrado y del ancho del texto, un
   renglón largo se salía por los dos lados). Los chips de `details` se
   reparten centrados.
+- **2.11.0, `Equalizer`**: el pie del reproductor. Sin línea propia (la pone
+  el pie de `NowPlayingCard`); título a la izquierda y «Guardado · perfil» en `tx-muted` a
+  la derecha; diez columnas con la vía en `ui-line` y el tirador de 14 px en
+  `bg-primary` con canto `ui-float`; la curva que los une en el primario (2 px)
+  y un velo `primary/10` debajo, hechos con `clip-path: polygon()` de la misma
+  cantidad de puntos para que la transición de 200 ms los lleve a las
+  ganancias nuevas; frecuencias en cifras tabulares; perfiles en
+  `bg-ui-surface/70`, el elegido en `bg-primary`, 4 × 2 desde `@xs` y 2 × 4
+  por debajo. Las bandas son `role="slider"` verticales y no `input` girados:
+  el tirador tiene que quedar sobre la curva en todos los WebKit.
 
 ## 16. La 2.6.0 (02/10/2026): la órbita del dispositivo conectado
 
