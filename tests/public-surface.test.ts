@@ -4,6 +4,9 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.5.0 se sumaron la pastilla (`Chip`) y los puntos de página
+ * (`PageDots`), del reproductor desplegable del escritorio.
+ *
  * En la 2.4.0 se sumaron el campo de contraseña, el reloj, los botones de
  * energía y el menú de texto del clic derecho (`TextContextMenu`, con las
  * funciones que deciden qué ofrece y qué hace).
@@ -39,6 +42,7 @@ const PUBLIC_SURFACE = [
 	'BarSearch',
 	'buscarOpciones',
 	'Checkbox',
+	'Chip',
 	'CLASES_POR_TONO',
 	'CLAVE_DE_LA_BARRA',
 	'CLAVE_DEL_DIALOGO',
@@ -87,6 +91,7 @@ const PUBLIC_SURFACE = [
 	'olvidarLosIconosDelTema',
 	'OptionGroup',
 	'orientacionDe',
+	'PageDots',
 	'PageHeader',
 	'Panel',
 	'PasswordField',

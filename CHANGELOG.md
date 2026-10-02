@@ -1,5 +1,20 @@
 # Cambios de vue-libvasak
 
+## 2.5.0 — sin publicar
+
+Las dos piezas del reproductor desplegable del escritorio
+(`vasak-desktop#131`; la especificación, `docs/once-ui.md` §15). Es una minor:
+no cambia nada de lo que exporta la 2.4.0.
+
+### Nuevo
+
+- **`Chip`**: una pastilla chica con icono del tema, etiqueta atenuada
+  (`caption`) y el dato, que se corta en un renglón y queda entero en el globo.
+  Con `interactive` es un botón; sin él sólo informa y no se pinta al pasar.
+- **`PageDots`**: puntos para pasar de una página a otra, con el activo en el
+  primario, nombre por punto, un solo Tab y las flechas. Con una página no
+  dibuja nada.
+
 ## 2.4.0 — sin publicar
 
 Lo que pidieron las aplicaciones al adoptar la 2.2 y la 2.3, y las piezas

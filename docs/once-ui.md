@@ -902,3 +902,22 @@ selector de usuario es `OptionGroup` con `avatar`; el de sesión y el de idioma,
   La salida en la aplicación es llevar el texto a una constante del
   `<script setup>` (`:placeholder="serverPlaceholder"`), que pasa con la
   3.3.12, y sacar el pin.
+
+## 15. La 2.5.0 (02/10/2026): el reproductor desplegable
+
+Dos piezas que pidió el reproductor del panel del escritorio
+(vasak-desktop#131), que con la 2.4.0 quedaba armado con piezas que no eran
+para eso. Es una minor: no cambia nada de lo que ya había.
+
+- **`Chip`**: la pastilla chica con icono del tema, `caption` atenuada
+  («VIA», como en el video de referencia) y el dato. `bg-ui-surface/70` como
+  los bloques internos, canto `ui-line-weak`, `rounded-corner-full`, 32 px de
+  alto. Con `interactive` es un `<button>` con el anillo de foco; sin él, un
+  `<span>` que no se pinta al pasar. El dato se corta en un renglón y queda
+  entero en el `title`. Reemplaza al `ActionButton secondary` que se partía en
+  dos renglones con un nombre de dispositivo largo, y a la `Badge` sin icono.
+- **`PageDots`**: un punto por página, el activo estirado en `bg-primary` y los
+  demás en `ui-border-strong` (3:1 contra el fondo). Botones de 32 × 32 con
+  nombre (`labels`, o «N de M»), `aria-current` en el activo, un solo Tab y las
+  flechas, Inicio y Fin. Con una página o ninguna no dibuja nada. Con
+  `prefers-reduced-motion`, el cambio de ancho no se anima.
