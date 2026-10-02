@@ -135,7 +135,18 @@ function choose(value: string) {
 	close();
 }
 
+/**
+ * Si la lista se abre hacia la izquierda: un botón pegado al borde derecho
+ * de una ventana angosta la mandaría afuera.
+ */
+const alignEnd = ref(false);
+
 async function open() {
+	const rect = button.value?.getBoundingClientRect();
+	if (rect && window.innerWidth > 0) {
+		const width = Math.max(rect.width, Math.min(256, window.innerWidth - 16));
+		alignEnd.value = rect.left + width > window.innerWidth - 8;
+	}
 	isOpen.value = true;
 	// Arranca sobre la que está elegida, no sobre la primera: así bajar una vez
 	// lleva a la siguiente de la que se tiene, que es lo que se espera.
@@ -231,6 +242,19 @@ watch(
 
 // Escribir mueve la lista bajo el cursor, así que la marca vuelve arriba. Sin
 // esto, `Enter` después de escribir elegía una opción que ya no estaba a la vista.
+// Cambiar de forma con la lista abierta: lo buscado deja de filtrar y el foco
+// pasa a lo que quedó, en vez de perderse con el campo que se fue.
+watch(
+	() => props.searchable,
+	async (searchable) => {
+		if (!isOpen.value) return;
+		query.value = '';
+		await nextTick();
+		if (searchable) field.value?.focus();
+		else list.value?.focus();
+	}
+);
+
 watch(query, () => {
 	active.value = 0;
 	scrollToActive();
@@ -284,7 +308,7 @@ function onFocusout(event: FocusEvent) {
     <div
       v-if="isOpen"
       class="absolute z-20 w-full min-w-[min(16rem,calc(100vw-16px))] max-w-[calc(100vw-16px)] rounded-corner-l border border-ui-line bg-ui-float text-tx-main shadow-surface-m"
-      :class="up ? 'bottom-full mb-1' : 'mt-1'"
+      :class="[up ? 'bottom-full mb-1' : 'mt-1', alignEnd ? 'right-0' : 'left-0']"
       @keydown.escape.prevent="close()"
       @keydown.down.prevent="move(1)"
       @keydown.up.prevent="move(-1)"

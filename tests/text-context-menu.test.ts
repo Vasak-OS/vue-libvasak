@@ -33,6 +33,7 @@ function fakeField(value: string, start: number, end: number, extra: Partial<HTM
 		selectionEnd: end,
 		readOnly: false,
 		disabled: false,
+		maxLength: -1,
 		type: 'text',
 		focus() {},
 		select() {},
@@ -93,6 +94,37 @@ describe('cortar', () => {
 		await runTextAction('cut', field, 'hola', fakeClipboard({}), range);
 
 		expect(field.value).toBe(' mundo');
+	});
+});
+
+describe('lo que cambió mientras se esperaba al portapapeles', () => {
+	test('pegar respeta maxLength', async () => {
+		const field = fakeField('abc', 3, 3, { maxLength: 4 });
+
+		await runTextAction('paste', field, '', fakeClipboard({ content: 'def' }));
+
+		expect(field.value).toBe('abcd');
+	});
+
+	test('pegar reemplazando lo seleccionado cuenta lo que se va', async () => {
+		const field = fakeField('abcd', 0, 2, { maxLength: 4 });
+
+		await runTextAction('paste', field, 'ab', fakeClipboard({ content: 'xyz' }));
+
+		expect(field.value).toBe('xycd');
+	});
+
+	test('si el campo se apagó o se fue, ni cortar ni pegar lo tocan', async () => {
+		const off = fakeField('hola', 0, 4, { disabled: true });
+		await runTextAction('paste', off, 'hola', fakeClipboard({ content: 'chau' }));
+		expect(off.value).toBe('hola');
+
+		const gone = fakeField('hola', 0, 4, { isConnected: false } as Partial<HTMLInputElement>);
+		const clipboard = fakeClipboard({});
+		await runTextAction('cut', gone, 'hola', clipboard);
+		expect(gone.value).toBe('hola');
+		// Lo copiado sí llegó: copiar no toca el campo.
+		expect(clipboard.written).toEqual(['hola']);
 	});
 });
 

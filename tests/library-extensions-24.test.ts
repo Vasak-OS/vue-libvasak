@@ -550,3 +550,39 @@ describe('la lista del desplegable a 240 px', () => {
 		expect(panel.className).not.toContain('min-w-64');
 	});
 });
+
+describe('la lista del desplegable, contra el borde derecho', () => {
+	test('un botón pegado a la derecha de una ventana de 240 abre la lista hacia la izquierda', async () => {
+		const original = HTMLElement.prototype.getBoundingClientRect;
+		const width = window.innerWidth;
+		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 240 });
+		HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+			if (this.getAttribute('aria-haspopup') === 'listbox') return { left: 200, right: 232, width: 32, top: 0, bottom: 32, height: 32, x: 200, y: 0, toJSON() {} } as DOMRect;
+			return original.call(this);
+		};
+		try {
+			const view = mount(SearchSelect, { props: { modelValue: '', options: [{ valor: 'a', etiqueta: 'A' }], label: 'x' }, attachTo: document.body });
+			views.push(view);
+			await view.get('button').trigger('click');
+			const panel = view.get('[role="listbox"]').element.parentElement as HTMLElement;
+
+			expect(panel.className).toContain('right-0');
+			expect(panel.className).not.toContain('left-0');
+		} finally {
+			HTMLElement.prototype.getBoundingClientRect = original;
+			Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+		}
+	});
+
+	test('cambiar a sin búsqueda con la lista abierta lleva el foco a la lista y suelta lo buscado', async () => {
+		const view = mount(SearchSelect, { props: { modelValue: '', options: [{ valor: 'a', etiqueta: 'A' }], label: 'x' }, attachTo: document.body });
+		views.push(view);
+		await view.get('button').trigger('click');
+		await view.get('input').setValue('zz');
+		await view.setProps({ searchable: false });
+		await nextTick();
+
+		expect(document.activeElement).toBe(view.get('[role="listbox"]').element);
+		expect(view.findAll('[role="option"]')).toHaveLength(1);
+	});
+});

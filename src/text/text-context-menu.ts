@@ -120,8 +120,14 @@ export const insertText = (field: TextField, text: string, range?: TextRange) =>
 	const start = range?.start ?? field.selectionStart ?? field.value.length;
 	const end = range?.end ?? field.selectionEnd ?? field.value.length;
 
+	// `setRangeText` no mira `maxLength` —el tope es para lo que se escribe, no
+	// para lo que pone un programa—, así que se recorta acá: pegar en un campo
+	// de cuatro letras no puede dejar diez.
+	const limit = field.maxLength;
+	const fitted = limit > 0 ? text.slice(0, Math.max(0, limit - (field.value.length - (end - start)))) : text;
+
 	field.focus();
-	field.setRangeText(text, start, end, 'end');
+	field.setRangeText(fitted, start, end, 'end');
 	field.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
@@ -135,6 +141,16 @@ export const copyText = async (clipboard: TextClipboard, text: string): Promise<
 		return false;
 	}
 };
+
+/**
+ * Si el campo todavía se puede tocar.
+ *
+ * Cortar y pegar esperan al portapapeles, y mientras tanto el campo puede
+ * haberse apagado, vuelto de sólo lectura o salido de la página (se cerró el
+ * diálogo). Escribir ahí sería cambiar algo que la persona ya no puede editar.
+ */
+const stillEditable = (field: TextField): boolean =>
+	!field.readOnly && !field.disabled && (field as { isConnected?: boolean }).isConnected !== false;
 
 export const runTextAction = async (
 	action: TextAction,
@@ -153,7 +169,7 @@ export const runTextAction = async (
 		// Cortar es copiar y después borrar. Si la copia no llegó al portapapeles
 		// no hay «después»: borrar ahí sería perder el texto sin dejar copia en
 		// ningún lado. Se queda como estaba, que siempre se puede volver a probar.
-		if (await copyText(clipboard, selection)) insertText(field, '', range);
+		if ((await copyText(clipboard, selection)) && stillEditable(field)) insertText(field, '', range);
 		return;
 	}
 
@@ -163,7 +179,7 @@ export const runTextAction = async (
 
 			// Con el portapapeles vacío no hay nada que pegar. Insertar la cadena
 			// vacía sería reemplazar lo seleccionado por nada, o sea borrarlo.
-			if (text) insertText(field, text);
+			if (text && stillEditable(field)) insertText(field, text);
 		} catch (error) {
 			console.warn('No se pudo leer el portapapeles:', error);
 		}
