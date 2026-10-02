@@ -132,6 +132,10 @@ describe('lo que se usa existe', () => {
 		}
 		expect(tokens.text.has('label-m')).toBe(true);
 		expect(tokens.text.has('heading-l')).toBe(true);
+		// La 2.4.0: los números grandes del reloj y el halo del texto.
+		expect(tokens.text.has('display-m')).toBe(true);
+		expect(tokens.text.has('display-l')).toBe(true);
+		expect(tokens.text.has('shadow-legible')).toBe(true);
 		expect(tokens.ease.has('ui-out')).toBe(true);
 	});
 
@@ -152,7 +156,10 @@ describe('lo que se usa existe', () => {
 		const families: Array<[RegExp, Set<string>]> = [
 			[new RegExp(`(?<![\\w-])${VARIANTS}rounded(?:-[trblse]{1,2})?-(corner[a-z0-9-]*)${END}`, 'g'), tokens.radius],
 			[new RegExp(`(?<![\\w-])${VARIANTS}shadow-(surface[a-z0-9-]*)${END}`, 'g'), tokens.shadow],
-			[new RegExp(`(?<![\\w-])${VARIANTS}text-((?:label|body|heading)-[a-z0-9]+)${END}`, 'g'), tokens.text],
+			[new RegExp(`(?<![\\w-])${VARIANTS}text-((?:label|body|heading|display)-[a-z0-9]+)${END}`, 'g'), tokens.text],
+			// La sombra de texto del taller (2.4.0) vive en el mismo espacio de
+			// nombres que los tamaños: `--text-shadow-legible`.
+			[new RegExp(`(?<![\\w-])${VARIANTS}text-(shadow-[a-z0-9-]+)${END}`, 'g'), tokens.text],
 			[new RegExp(`(?<![\\w-])${VARIANTS}ease-(ui[a-z0-9-]*)${END}`, 'g'), tokens.ease],
 		];
 
@@ -188,6 +195,8 @@ describe('lo que la forma de Once UI deja afuera', () => {
 		['medios pasos y pasos fuera de la grilla en relleno, margen y separación', /(?<![\w-])(?:[a-z-]+:)*-?(?:p|px|py|pt|pb|pl|pr|ps|pe|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y|space-x|space-y)-(?:1\.5|2\.5|3\.5|7|9|11)(?![\w.])/g],
 		['tamaños de texto sueltos en vez de los roles', /(?<![\w-])(?:[a-z-]+:)*text-(?:xs|sm|base|lg|xl)(?![\w-])/g],
 		['transition-all', /(?<![\w-])transition-all(?![\w-])/g],
+		// Las de Tailwind tiñen con negro fijo; la del taller es `text-shadow-legible`.
+		['sombras de texto y de dibujo de Tailwind', /(?<![\w-])(?:[a-z-]+:)*(?:text-shadow-(?:2xs|xs|sm|md|lg)|drop-shadow(?:-(?:xs|sm|md|lg|xl|2xl))?)(?![\w-])/g],
 		['el fondo de la ventana sobre la ventana', /(?<![\w-])(?:[a-z-]+:)*bg-ui-bg(?![\w-])|(?<![\w-])background(?=["'\s])/g],
 	];
 
@@ -223,7 +232,7 @@ describe('lo que la forma de Once UI deja afuera', () => {
 
 	test('la lista de migrados es la librería entera', () => {
 		// Si el disco no se leyera, la lista vacía haría pasar todo lo de arriba.
-		expect(MIGRATED.length).toBeGreaterThanOrEqual(76);
+		expect(MIGRATED.length).toBeGreaterThanOrEqual(80);
 		expect(MIGRATED).toContain('dropdown/DropdownMenuItem.vue');
 		// Los de la 2.1.0 entran solos por leerse del disco; se nombran para que
 		// moverlos de carpeta no los saque de la guardia sin que nadie lo note.
@@ -256,13 +265,18 @@ describe('lo que la forma de Once UI deja afuera', () => {
 			'data/StatTile.vue',
 			'data/CodeBlock.vue',
 			'feedback/DropZone.vue',
+			// La 2.4.0.
+			'forms/PasswordField.vue',
+			'data/ClockDisplay.vue',
+			'controls/PowerActions.vue',
+			'text/TextContextMenu.vue',
 		]) {
 			expect(MIGRATED).toContain(file);
 		}
 	});
 
 	test('la guardia ve lo prohibido cuando lo hay', () => {
-		const muestra = 'shadow-lg rounded-md hover:scale-110 py-1.5 duration-500 backdrop-blur-md';
+		const muestra = 'shadow-lg rounded-md hover:scale-110 py-1.5 duration-500 backdrop-blur-md drop-shadow-md text-shadow-sm';
 		const halls = FORBIDDEN.filter(([, regex]) => [...muestra.matchAll(regex)].length > 0).map(([what]) => what);
 
 		expect(halls).toContain('sombras de Tailwind en vez de shadow-surface-*');
@@ -270,6 +284,9 @@ describe('lo que la forma de Once UI deja afuera', () => {
 		expect(halls).toContain('escalas, giros y desplazamientos al pasar o al apretar');
 		expect(halls).toContain('medios pasos y pasos fuera de la grilla en relleno, margen y separación');
 		expect(halls).toContain('desenfoque detrás');
+		expect(halls).toContain('sombras de texto y de dibujo de Tailwind');
+		// Y la del taller pasa.
+		expect([...'text-shadow-legible'.matchAll(FORBIDDEN.find(([what]) => what.startsWith('sombras de texto'))?.[1] as RegExp)]).toHaveLength(0);
 	});
 });
 
@@ -281,7 +298,7 @@ describe('en toda la librería', () => {
 		// está en un comentario no cuenta: es una medición explicada, no un
 		// color dibujado.
 		const literal =
-			/#[0-9a-fA-F]{3,8}(?![\w-])|(?<![a-zA-Z])(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(|(?<![\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|via|to|fill|stroke|shadow|divide|accent|caret|decoration)-(?:white|black|(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3})(?![\w-])/g;
+			/#[0-9a-fA-F]{3,8}(?![\w-])|(?<![a-zA-Z])(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\((?!\s*from\s+var\(--)|(?<![\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|via|to|fill|stroke|shadow|divide|accent|caret|decoration)-(?:white|black|(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3})(?![\w-])/g;
 
 		expect(await findAll(sources('**/*.{vue,ts,css}'), literal)).toEqual([]);
 	});
@@ -297,6 +314,17 @@ describe('en toda la librería', () => {
 		expect([...'color-mix(in srgb, var(--x) 10%, transparent)'.matchAll(literal)]).toHaveLength(0);
 		// Y un comentario no es un color.
 		expect(stripComments('/* #dd7878 */ <!-- rgb(1 2 3) -->')).not.toMatch(literal);
+	});
+
+	test('un color relativo sobre una variable del esquema no es un color escrito a mano', () => {
+		// `oklch(from var(--use-primary) l c h / 50%)` deriva del esquema, igual
+		// que un `color-mix`: lo pidió Configuración (settings#142). Lo que va
+		// `from` un literal sigue siendo un literal.
+		const literal = /#[0-9a-fA-F]{3,8}(?![\w-])|(?<![a-zA-Z])(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\((?!\s*from\s+var\(--)/g;
+		expect([...'oklch(from var(--use-primary) l c h / 50%)'.matchAll(literal)]).toHaveLength(0);
+		expect([...'rgb(from var(--use-ui-background) r g b / 0.4)'.matchAll(literal)]).toHaveLength(0);
+		expect([...'oklch(from #dd7878 l c h)'.matchAll(literal)]).toHaveLength(2);
+		expect([...'oklch(0.7 0.1 20)'.matchAll(literal)]).toHaveLength(1);
 	});
 
 	test('ningún icono propio: los iconos salen del tema del sistema', async () => {

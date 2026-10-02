@@ -74,6 +74,14 @@ const props = withDefaults(
 		 * `strictTemplates` lo que no está declarado no se puede pasar.
 		 */
 		autocomplete?: string;
+		/**
+		 * La revisión ortográfica del motor (2.4.0). Sin pasarla decide el
+		 * motor; en un nombre de usuario, una ruta o un servidor va `false`, o
+		 * el subrayado rojo marca como error lo que está bien escrito.
+		 */
+		spellcheck?: boolean;
+		/** Las mayúsculas automáticas de un teclado en pantalla (2.4.0). */
+		autocapitalize?: 'none' | 'off' | 'sentences' | 'words' | 'characters';
 		placeholder?: string;
 		disabled?: boolean;
 		readonly?: boolean;
@@ -100,6 +108,8 @@ const props = withDefaults(
 		mono: false,
 		required: false,
 		lazy: false,
+		spellcheck: undefined,
+		autocapitalize: undefined,
 	}
 );
 
@@ -200,6 +210,8 @@ const classes = computed(() => [
     :required="required"
     :aria-describedby="describedBy"
     :autocomplete="autocomplete"
+    :spellcheck="spellcheck"
+    :autocapitalize="autocapitalize"
     :aria-invalid="invalid || undefined"
     :class="classes"
     @input="onInput"

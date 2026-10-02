@@ -146,8 +146,11 @@ describe('la barra', () => {
 		expect(medio.exists()).toBe(true);
 		const envoltorio = medio.element.parentElement?.parentElement as HTMLElement;
 		expect(envoltorio.className).toContain('absolute');
-		expect(envoltorio.className).toContain('left-1/2');
-		expect(envoltorio.className).toContain('-translate-x-1/2');
+		// Desde la 2.4.0 el envoltorio cubre la barra entera y centra adentro:
+		// al 50 % con traslado quedaba topado a la mitad del ancho, y el centro
+		// no podía usar el lugar que el tope nuevo le da.
+		expect(envoltorio.className).toContain('inset-0');
+		expect(envoltorio.className).toContain('justify-center');
 	});
 
 	test('con la barra al costado, `centro` se centra en el otro sentido', async () => {

@@ -35,6 +35,17 @@
  * `rounded-corner-m`: la que se recorre lleva el velo `ui-hover` y la elegida
  * el de acento (decisión 4). La flecha es `pan-down-symbolic`, la misma de
  * `SelectField`.
+ *
+ * # Sin búsqueda (2.4.0)
+ *
+ * `searchable` en `false` saca el campo de arriba y deja la lista sola: es el
+ * desplegable dibujado por la página para una lista corta —la sesión y el
+ * idioma del inicio de sesión—, donde lo que importa no es buscar sino que la
+ * lista no la dibuje el sistema. El inicio de sesión corre antes de que haya
+ * un tema de GTK puesto, y la lista nativa de un `<select>` salía blanca sobre
+ * blanco encima de un fondo oscuro (vasak-session-manager se había hecho la
+ * suya por eso). Abierta, el foco va a la lista, que anuncia la opción
+ * recorrida con `aria-activedescendant`, y las teclas son las mismas.
  */
 import { computed, nextTick, ref, watch } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -71,6 +82,8 @@ const props = withDefaults(
 		 * menú se sale de la ventana y no hay forma de llegar al final de la lista.
 		 */
 		up?: boolean;
+		/** El campo de búsqueda arriba de la lista. En `false`, la lista sola. */
+		searchable?: boolean;
 	}>(),
 	{
 		label: '',
@@ -80,6 +93,7 @@ const props = withDefaults(
 		disabled: false,
 		limit: 60,
 		up: false,
+		searchable: true,
 	}
 );
 
@@ -121,7 +135,18 @@ function choose(value: string) {
 	close();
 }
 
+/**
+ * Si la lista se abre hacia la izquierda: un botón pegado al borde derecho
+ * de una ventana angosta la mandaría afuera.
+ */
+const alignEnd = ref(false);
+
 async function open() {
+	const rect = button.value?.getBoundingClientRect();
+	if (rect && window.innerWidth > 0) {
+		const width = Math.max(rect.width, Math.min(256, window.innerWidth - 16));
+		alignEnd.value = rect.left + width > window.innerWidth - 8;
+	}
 	isOpen.value = true;
 	// Arranca sobre la que está elegida, no sobre la primera: así bajar una vez
 	// lleva a la siguiente de la que se tiene, que es lo que se espera.
@@ -129,7 +154,8 @@ async function open() {
 	active.value = where >= 0 ? where : 0;
 
 	await nextTick();
-	field.value?.focus();
+	if (props.searchable) field.value?.focus();
+	else list.value?.focus();
 	scrollToActive();
 }
 
@@ -216,6 +242,19 @@ watch(
 
 // Escribir mueve la lista bajo el cursor, así que la marca vuelve arriba. Sin
 // esto, `Enter` después de escribir elegía una opción que ya no estaba a la vista.
+// Cambiar de forma con la lista abierta: lo buscado deja de filtrar y el foco
+// pasa a lo que quedó, en vez de perderse con el campo que se fue.
+watch(
+	() => props.searchable,
+	async (searchable) => {
+		if (!isOpen.value) return;
+		query.value = '';
+		await nextTick();
+		if (searchable) field.value?.focus();
+		else list.value?.focus();
+	}
+);
+
 watch(query, () => {
 	active.value = 0;
 	scrollToActive();
@@ -263,11 +302,13 @@ function onFocusout(event: FocusEvent) {
          `min-w-64` porque el botón puede vivir en un panel angosto y los nombres
          quedaban cortados: un desplegable donde no se lee qué dice cada opción no
          sirve de nada. Se pasa de ancho por encima de lo que tenga al lado, que
-         es lo que hace cualquier menú. -->
+         es lo que hace cualquier menú. El mínimo se topa a la ventana menos
+         16 px (2.4.0): a 240, los 256 de antes salían cortados por la derecha
+         (se vio en el banco con la ventana de verdad en 240). -->
     <div
       v-if="isOpen"
-      class="absolute z-20 w-full min-w-64 max-w-[calc(100vw-16px)] rounded-corner-l border border-ui-line bg-ui-float text-tx-main shadow-surface-m"
-      :class="up ? 'bottom-full mb-1' : 'mt-1'"
+      class="absolute z-20 w-full min-w-[min(16rem,calc(100vw-16px))] max-w-[calc(100vw-16px)] rounded-corner-l border border-ui-line bg-ui-float text-tx-main shadow-surface-m"
+      :class="[up ? 'bottom-full mb-1' : 'mt-1', alignEnd ? 'right-0' : 'left-0']"
       @keydown.escape.prevent="close()"
       @keydown.down.prevent="move(1)"
       @keydown.up.prevent="move(-1)"
@@ -277,7 +318,7 @@ function onFocusout(event: FocusEvent) {
       @keydown.tab="close(false)"
       @click="onClick"
       @mousemove="onPointerMove">
-      <div class="border-ui-line-weak border-b p-2">
+      <div v-if="searchable" class="border-ui-line-weak border-b p-2">
         <SearchField
           ref="field"
           v-model="query"
@@ -288,7 +329,14 @@ function onFocusout(event: FocusEvent) {
           :expanded="isOpen" />
       </div>
 
-      <ul :id="listId" ref="list" role="listbox" class="max-h-56 overflow-y-auto p-1">
+      <ul
+        :id="listId"
+        ref="list"
+        role="listbox"
+        class="max-h-56 overflow-y-auto p-1 focus:outline-none"
+        :tabindex="searchable ? undefined : -1"
+        :aria-label="searchable ? undefined : label || undefined"
+        :aria-activedescendant="searchable ? undefined : activeId">
         <li v-if="matches.length === 0" class="p-3 text-center text-body-xs text-tx-muted">
           {{ emptyText }}
         </li>
@@ -302,7 +350,7 @@ function onFocusout(event: FocusEvent) {
           class="flex min-h-8 cursor-pointer items-center gap-2 rounded-corner-m px-3 py-1 text-label-m text-tx-main transition-colors duration-200 ease-ui"
           :class="[
             option.valor === modelValue ? 'bg-ui-selected-accent font-semibold' : index === active ? 'bg-ui-hover' : '',
-            option.valor === modelValue && index === active ? 'outline-2 -outline-offset-2 outline-ui-focus' : '',
+            (option.valor === modelValue || !searchable) && index === active ? 'outline-2 -outline-offset-2 outline-ui-focus' : '',
           ]">
           <span class="min-w-0 flex-1 truncate">{{ option.etiqueta }}</span>
           <span v-if="option.detalle" class="shrink-0 text-body-xs text-tx-muted">

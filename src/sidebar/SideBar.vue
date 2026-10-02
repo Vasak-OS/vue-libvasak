@@ -58,6 +58,16 @@
  * contiene —en WebKitGTK ni `matchMedia` ni `resize` avisan, el observador sí—
  * y las clases salen de ese estado, sin puntos de corte.
  *
+ * # Sin plegado automático (2.4.0)
+ *
+ * `autoCollapse` en `false` apaga lo de arriba: la barra no se pliega sola por
+ * angosta que sea su lugar, y sólo se pliega a mano. Es para la ventana que en
+ * angosto pasa a «una columna por vez» (decisión del 01/10/2026): ahí la barra
+ * es la columna entera —la lista de un lista → ficha, o un cajón— y plegarla a
+ * un riel de 84 px es justo lo que no tiene que pasar (lo pidió resonance#85,
+ * que seguía con su barra propia por esto). Con `fill`, además, ocupa el ancho
+ * que le dan en vez de sus 288 px, que a 240 no entran.
+ *
  * # La forma (vue-libvasak#74)
  *
  * La barra es una tarjeta de Once UI: `rounded-corner-l`, canto `ui-line`,
@@ -91,6 +101,15 @@ const props = withDefaults(
 		/** Lo que oye un lector de pantalla en el botón de plegar. */
 		collapseLabel?: string;
 		expandLabel?: string;
+		/** Plegarse sola cuando su lugar es angosto. En `false`, sólo a mano. */
+		autoCollapse?: boolean;
+		/**
+		 * Ocupar el ancho del contenedor en vez de los 288 px de siempre: la
+		 * barra que **es** la columna en ventana angosta. Va como propiedad y no
+		 * como `class="w-full"` porque dos anchos en el mismo atributo los decide
+		 * el orden de la hoja, no el de la plantilla.
+		 */
+		fill?: boolean;
 	}>(),
 	{
 		title: '',
@@ -100,6 +119,8 @@ const props = withDefaults(
 		collapsed: undefined,
 		collapseLabel: undefined,
 		expandLabel: undefined,
+		autoCollapse: true,
+		fill: false,
 	}
 );
 
@@ -182,8 +203,10 @@ function containerWidth(): number {
 }
 
 function check() {
-	narrow.value = containerWidth() <= MINIMUM_WIDTH;
+	narrow.value = props.autoCollapse && containerWidth() <= MINIMUM_WIDTH;
 }
+
+watch(() => props.autoCollapse, check);
 
 function toggle() {
 	collapsedByHand.value = !collapsedByHand.value;
@@ -239,7 +262,7 @@ defineExpose({ collapsed: isCollapsed });
   <aside
     ref="root"
     class="relative z-30 flex h-full min-h-0 shrink-0 flex-col rounded-corner-l border border-ui-line bg-ui-surface/70 text-tx-main transition-[width] duration-300 ease-ui"
-    :class="isCollapsed ? 'w-[84px]' : 'w-72'">
+    :class="isCollapsed ? 'w-[84px]' : fill ? 'w-full min-w-0' : 'w-72'">
     <header
       v-if="hasTitle || $slots.header"
       class="flex flex-col gap-2 border-ui-line-weak border-b p-2">

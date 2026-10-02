@@ -17,6 +17,15 @@
  * 32; con `icon=""` no hay icono —antes se pedía un nombre vacío al tema y
  * quedaba un hueco de 48 px—. Las notificaciones del escritorio y los vacíos
  * del correo y los contactos son el mismo caso.
+ *
+ * # `muted` (2.4.0)
+ *
+ * La línea atenuada de la copia de Configuración: el título en `tx-muted`,
+ * `text-body-s` y sin el peso 600, porque ahí el vacío es una nota al pie de
+ * una sección («No hay impresoras») y no el contenido de la pantalla. Al pasar
+ * a la librería, sus 33 usos habían cambiado de peso y de color.
+ *
+ * Junto con `size="sm"`, `icon=""` y `bordered` es exactamente esa caja.
  */
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
@@ -39,8 +48,10 @@ withDefaults(
 		bordered?: boolean;
 		/** `md` llena un hueco grande; `sm` va en una caja del alto de unas filas. */
 		size?: 'sm' | 'md';
+		/** El título como una línea atenuada, sin peso: una nota y no el contenido. */
+		muted?: boolean;
 	}>(),
-	{ icon: 'dialog-information', iconType: 'icon', bordered: false, size: 'md' }
+	{ icon: 'dialog-information', iconType: 'icon', bordered: false, size: 'md', muted: false }
 );
 </script>
 
@@ -52,7 +63,11 @@ withDefaults(
       bordered ? 'rounded-corner-l border border-dashed border-ui-line' : '',
     ]">
     <ThemeIcon v-if="icon" :name="icon" :type="iconType" :size="size === 'sm' ? 32 : 48" class="opacity-60" />
-    <p class="break-words font-semibold text-label-m text-tx-main">{{ title }}</p>
+    <p
+      class="break-words"
+      :class="muted ? 'text-body-s text-tx-muted' : 'font-semibold text-label-m text-tx-main'">
+      {{ title }}
+    </p>
     <p v-if="note" class="max-w-prose text-body-s text-tx-muted">{{ note }}</p>
     <!-- Para el botón que saca del vacío: «Crear carpeta», «Limpiar filtros». -->
     <slot />

@@ -31,6 +31,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '../src';
+import Bench24 from './Bench24.vue';
 import BenchExtras from './BenchExtras.vue';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
@@ -68,6 +69,18 @@ const sections = [
 	'media-22',
 	'data',
 	'tray-22',
+	'badge-24',
+	'appbar-24',
+	'identity-24',
+	'fields-24',
+	'menu-24',
+	'accounts-24',
+	'session-24',
+	'menu-end',
+	'select-24',
+	'dialog-wide',
+	'dialog-lg',
+	'toast-top',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -77,6 +90,23 @@ const SELECTION = ['selection', 'fields'];
 const ROWS = ['rows', 'notices'];
 /** Lo de la 2.2.0. */
 const EXTRAS = ['popover', 'menu-22', 'identity', 'media-22', 'data', 'tray-22'];
+/** Lo de la 2.4.0 que se dibuja contra la ventana: se captura solo, a cada ancho. */
+const NEXT_WINDOW = ['menu-end', 'select-24', 'dialog-wide', 'dialog-lg', 'toast-top'];
+/** Lo de la 2.4.0. */
+const NEXT = [
+	'badge-24',
+	'appbar-24',
+	'identity-24',
+	'fields-24',
+	'menu-24',
+	'accounts-24',
+	'session-24',
+	'menu-end',
+	'select-24',
+	'dialog-wide',
+	'dialog-lg',
+	'toast-top',
+];
 const shown = computed(() =>
 	props.only ? sections.filter((section) => props.only.split(',').includes(section)) : sections
 );
@@ -166,6 +196,11 @@ onMounted(async () => {
   <!-- El marco de la ventana es la ventana: se dibuja solo, sin el banco
        alrededor, y se captura con la ventana de cada ancho. -->
   <BenchWindow v-if="only === 'frame'" section="frame" :width="0" first />
+  <!-- Lo de la 2.4.0 que se dibuja contra la ventana, también solo: dentro de
+       la caja del banco la página se pasaría del ancho que se quiere medir. -->
+  <main v-else-if="NEXT_WINDOW.includes(only)" class="min-h-screen p-4 text-tx-main">
+    <Bench24 :section="only" :width="widths[0] ?? 0" first />
+  </main>
   <main v-else class="flex flex-col gap-8 p-4 text-tx-main">
     <section v-for="section in shown" :key="section" class="flex flex-col gap-4">
       <h1 class="font-semibold text-lg">{{ section }}</h1>
@@ -270,6 +305,11 @@ onMounted(async () => {
           <BenchSelection v-else-if="SELECTION.includes(section)" :section="section" :width="width" />
           <BenchRows v-else-if="ROWS.includes(section)" :section="section" :width="width" />
           <BenchExtras v-else-if="EXTRAS.includes(section)" :section="section" :width="width" />
+          <Bench24
+            v-else-if="NEXT.includes(section)"
+            :section="section"
+            :width="width"
+            :first="width === widths[0]" />
           <BenchWindow
             v-else-if="WINDOW.includes(section)"
             :section="section"

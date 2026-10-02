@@ -44,6 +44,21 @@
  * desde el campo y no desde acá para no reinterpretar a mano lo que el
  * modificador `.enter` de Vue ya decide bien.
  *
+ * ── La cruz también busca (2.4.0) ───────────────────────────────────────────
+ *
+ * Vaciar con la cruz emite `update:modelValue('')`, `clear` **y**
+ * `search('')`, en ese orden. Hasta la 2.3 emitía sólo los dos primeros, y lo
+ * que escuchaba únicamente `search` —la tienda— seguía mostrando los
+ * resultados de lo que ya no estaba escrito (store#36 lo arregló en la
+ * aplicación). Quien escuche los dos y haga lo mismo con ambos recibe dos
+ * avisos seguidos: con `search` alcanza.
+ *
+ * ── `autocomplete` y `spellcheck` (2.4.0) ─────────────────────────────────────
+ *
+ * Van al `input`. El lanzador ponía `autocomplete="off"` sobre el componente y
+ * no llegaba a ningún lado (prism#59): el motor ofrecía lo escrito antes encima
+ * de los resultados.
+ *
  * (Esto vivía como comentario arriba de la raíz de la plantilla, y eso la
  * partía en un fragmento: los atributos de quien lo usa no caían en ningún
  * lado.)
@@ -116,6 +131,10 @@ const props = withDefaults(
 		 * enmarca: el lanzador, la búsqueda global del gestor de archivos.
 		 */
 		bare?: boolean;
+		/** El `autocomplete` del `input`: `off` para que el motor no ofrezca lo de antes. */
+		autocomplete?: string;
+		/** La revisión ortográfica del motor. */
+		spellcheck?: boolean;
 	}>(),
 	{
 		modelValue: '',
@@ -128,6 +147,8 @@ const props = withDefaults(
 		busy: false,
 		size: 'md',
 		bare: false,
+		autocomplete: undefined,
+		spellcheck: undefined,
 	}
 );
 
@@ -206,6 +227,7 @@ function clear() {
 	cancelDebounce();
 	emit('update:modelValue', '');
 	emit('clear');
+	emit('search', '');
 	focus();
 }
 
@@ -275,6 +297,8 @@ watch(
       :disabled="disabled"
       :size="size"
       :bare="bare"
+      :autocomplete="autocomplete"
+      :spellcheck="spellcheck"
       class="truncate [&::-webkit-search-cancel-button]:appearance-none"
       :class="[large ? 'pl-10' : 'pl-8', showsClear ? (large ? 'pr-10' : 'pr-8') : '']"
       @update:model-value="write"

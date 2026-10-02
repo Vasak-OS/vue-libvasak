@@ -31,7 +31,7 @@ import ThemeIcon from '../icons/ThemeIcon.vue';
 import { useLabels } from '../shared/labels';
 import { initialsOf } from './initials';
 
-export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+export type AvatarSize = 'sm' | 'md' | 'ml' | 'lg' | 'xl' | '2xl';
 
 const props = withDefaults(
 	defineProps<{
@@ -67,14 +67,23 @@ const initials = computed(() => initialsOf(props.name));
 const accessibleName = computed(() => props.alt ?? props.name);
 const editText = computed(() => props.editLabel ?? translate('avatar.edit', 'Change picture'));
 
-/** 24, 32, 48 y 64: las alturas de control de Once UI, y la de la tarjeta. */
+/**
+ * 24, 32, 48 y 64: las alturas de control de Once UI, y la de la tarjeta.
+ *
+ * En la 2.4.0, `ml` (40) y `2xl` (96). El 40 es la tarjeta de usuario del menú
+ * del escritorio (`UserMenuCard`), que seguía local por no tenerlo y mostraba
+ * la imagen rota cuando no había foto; el 96, la cara de la pantalla de
+ * bloqueo y del inicio de sesión.
+ */
 const BOX: Record<AvatarSize, string> = {
 	sm: 'size-6 text-label-xs',
 	md: 'size-8 text-label-s',
+	ml: 'size-10 text-label-m',
 	lg: 'size-12 text-heading-xs',
 	xl: 'size-16 text-heading-m',
+	'2xl': 'size-24 text-heading-l',
 };
-const ICON: Record<AvatarSize, number> = { sm: 14, md: 18, lg: 28, xl: 36 };
+const ICON: Record<AvatarSize, number> = { sm: 14, md: 18, ml: 24, lg: 28, xl: 36, '2xl': 56 };
 
 function onError(): void {
 	broken.value = true;

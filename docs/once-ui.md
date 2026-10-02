@@ -799,3 +799,106 @@ desenfoque. La decisión 3 del §10 queda corregida así:
   `--ui-focus` contra el esquema (`config-manager#31`); la prueba lo deja atado
   a 2,4 para que no empeore.
 
+
+## 14. La 2.4.0 (02/10/2026): lo que pidieron las aplicaciones, y la sesión
+
+Los pedidos que dejaron las aplicaciones al adoptar la 2.2 y la 2.3 (la lista,
+con quién pidió cada cosa, está en `.worktrees/libvasak-24-pending.md` del
+taller) y las piezas genéricas del inicio de sesión y del bloqueo de
+vasak-session-manager. Es una minor: lo que ya había dibuja lo mismo si no se
+pide lo nuevo, salvo los tres arreglos de abajo.
+
+### 14.1 Lo que se suma a la forma
+
+- **Los roles `display`** (`text-display-m`, 48 px, y `text-display-l`, 60 px),
+  en peso liviano: los números grandes de Once UI, para el reloj. `display-l`
+  mide lo mismo que el `text-6xl` suelto del inicio de sesión, así que la
+  pantalla no cambia de formato.
+- **El halo del texto** (`text-shadow-legible`): el fondo de la ventana del
+  esquema al 80 % y al 60 % alrededor de cada letra, para un texto puesto
+  directo sobre un fondo de pantalla. Reemplaza al `drop-shadow-md` (negro
+  fijo); la guardia prohíbe ahora las sombras de texto y de dibujo de
+  Tailwind.
+- **El velo de medios en degradado** (`overlay-fade-up`, `overlay-fade-down`):
+  `ui-overlay` pleno en la mitad de los controles y transparente en la otra.
+  El texto va en la mitad plena, que es el velo que ya llega a 4,5:1 sobre
+  negro y blanco.
+- **El desenfoque de las pantallas de sesión** (`shell-blur`, junto con
+  `bg-ui-shell`): decisión del usuario del 02/10/2026. El inicio de sesión y el
+  bloqueo no tienen a Wayfire detrás, así que el desenfoque lo dibuja el
+  WebView. Es la **segunda excepción** a «sin `backdrop-blur`», junto con los
+  widgets del escritorio; en todo lo demás sigue prohibido, y la guardia de
+  cada aplicación tiene que prohibir también `shell-blur` salvo en
+  vasak-session-manager. No pone color: el contraste es el de `ui-shell`.
+- **La guardia acepta el color relativo sobre una variable del esquema**
+  (`oklch(from var(--use-primary) l c h / 50%)`): deriva del esquema igual que
+  un `color-mix`. Lo que va `from` un literal sigue siendo un literal.
+
+### 14.2 Los componentes nuevos
+
+| componente | de dónde | forma |
+|---|---|---|
+| `PasswordField` | inicio de sesión y bloqueo (y lo piden polkit, keyring, el wifi de Configuración, el instalador) | el `TextInput` del sistema; el ojo es un botón sin borde de 32 con `aria-pressed` que no roba el foco; Bloq Mayús va debajo con el icono de advertencia y el texto principal, atado por `aria-describedby`; vaciada, vuelve a ocultarse |
+| `ClockDisplay` | `GreeterClock` | `display-l` liviano, cifras tabulares, la fecha con sólo la primera letra en mayúscula; se alinea al minuto; se achica por contenedor |
+| `PowerActions` | `PowerMenu` del inicio de sesión (glifos ☾ ↻ ⏻) y el diálogo de sesión del escritorio (círculos de 80) | `icons`: botones de icono de 40; `tiles`: `IconTile` `2xl` redondo con el nombre debajo. Iconos de freedesktop (`system-suspend`, `system-reboot`, `system-shutdown`…) |
+| `TextContextMenu` | las dos copias de Configuración y del gestor de archivos | no dibuja: abre el menú del sistema con `show` (del complemento, por propiedad, para no depender de él). Cortar borra el tramo que se copió |
+
+Lo que **no** sube, porque es de esa aplicación: el reparto del inicio de sesión
+entre monitores, el fondo en movimiento, los avisos del bloqueo (qué cuenta de
+la sesión se muestra), el teclado de greetd y el reproductor del bloqueo. El
+selector de usuario es `OptionGroup` con `avatar`; el de sesión y el de idioma,
+`SearchSelect` sin búsqueda: no hacía falta un componente propio.
+
+### 14.3 Lo que se suma a componentes que ya estaban
+
+- `Badge`: `counter` (no se parte ni se topa al contenedor, al menos tan ancho
+  como alto, cifras tabulares), `max` («99+») y `title`.
+- `AppBar`: el centro mide los costados con un `ResizeObserver`: centrado con
+  un tope de ancho mientras entra, en la zona libre cuando no, y en un renglón
+  propio debajo cuando ni ahí quedan 96 px (la barra en «una columna por
+  vez»).
+- `IdentityBlock`: la ranura `details`, `as="h1"`, `wrap` y `stack`
+  (`always`, o `narrow` por contenedor desde 20 rem).
+- `SideBar`: `autoCollapse` (en `false`, sólo se pliega a mano) y `fill` (el
+  ancho del contenedor).
+- `SearchField`: `autocomplete` y `spellcheck` al `input`. `TextInput`:
+  `spellcheck` y `autocapitalize`.
+- `ConfigSection`: `title` opcional; sin nada arriba, no hay cabecera.
+- `SelectField`: `id` y `disabled` declarados.
+- `EmptyState`: `muted`, la línea atenuada sin peso.
+- `DialogContent`: `size="wide"` (576 px).
+- `ToastArea`: `top-right` y `top-center`, entrando desde arriba y con el más
+  nuevo pegado al borde.
+- `Avatar`: `ml` (40) y `2xl` (96). `IconTile`: `xl` (64) y `2xl` (80), con
+  la esquina `xl` del anidado.
+- `DropdownMenuItem`: `checked="mixed"`, con `aria-checked="mixed"` y una
+  raya dibujada (no hay nombre del estándar para la casilla indeterminada).
+- `OptionGroup`: `avatar` en una opción, para elegir una cuenta.
+- `SearchSelect`: `searchable` en `false`, la lista sola.
+
+### 14.4 Lo que cambia sin pedirlo
+
+- **`SearchField`: la cruz también emite `search('')`**, después de `clear`.
+  Lo que escuchaba sólo `search` no se enteraba de que se vació (store#36).
+  Quien escuche los dos y haga lo mismo con ambos recibe dos avisos seguidos.
+- **`DialogContent size="lg"` dibuja el velo**, como `md` y `sm`. Sólo `full`
+  queda sin velo.
+- **`SettingRow` apila por debajo de 256 px (`@3xs`) y no de 320 (`@xs`)**: el
+  centro de control del escritorio mide 350 con su relleno y la fila quedaba
+  apilada. A 256, un interruptor de 40 deja 200 px de texto.
+
+### 14.5 Lo que se revisó y no era de la librería
+
+- **El menú alineado al final, cortado a 240 px** (file-manager#107): con la
+  ventana de verdad en 240 (CDP, `Emulation.setDeviceMetricsOverride`) el
+  panel queda adentro, a 8 px del borde. Lo cortado era la captura: Chrome sin
+  pantalla con `--window-size=240` maqueta a ~500 y recorta. Queda atado en
+  `tests/library-extensions-24.test.ts`.
+- **vue-tsc 3.3.12 y «Cannot find name 'id'»** en el `#default="{ id }"` de
+  `FormGroup` (store): es de vue-tsc, no de la librería. Lo dispara un `$`
+  seguido de letras dentro de un atributo del mismo elemento
+  (`placeholder="https://…/$arch/$repo"`), estático o como expresión entre
+  comillas: sin el `$` pasa limpio, y la librería misma pasa con la 3.3.12.
+  La salida en la aplicación es llevar el texto a una constante del
+  `<script setup>` (`:placeholder="serverPlaceholder"`), que pasa con la
+  3.3.12, y sacar el pin.

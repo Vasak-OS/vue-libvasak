@@ -37,6 +37,26 @@
  * `color` es para cuando el color **es un dato**: la etiqueta que eligió la
  * persona en el gestor de archivos, el color de un calendario. Va por estilo
  * en línea y tiñe el punto y el canto, nunca el texto.
+ *
+ * # El contador (2.4.0)
+ *
+ * `counter` es la forma de un número puesto sobre un icono: los avisos de la
+ * bandeja, los no leídos. La insignia de siempre tiene `max-w-full` y parte el
+ * texto para no perderlo, y eso está bien en una fila; pero puesta en absoluto
+ * sobre un icono de 28 px, su «ancho disponible» es el del icono y «99+» salía
+ * en tres renglones tapando al vecino (vasak-desktop#146, #147). Como contador
+ * no se parte nunca (`whitespace-nowrap`), no se topa al contenedor, es al
+ * menos tan ancha como alta —un «3» es un círculo— y lleva cifras tabulares.
+ *
+ * `max` corta el número: con `max: 99`, 120 se escribe «99+». El número entero
+ * no se pierde si se lo pasa en `title`.
+ *
+ * # `title` y `data-*` (2.4.0)
+ *
+ * `title` es una propiedad declarada: con `strictTemplates`, un atributo que
+ * el componente no declara es un error de tipos, y la galería tenía que
+ * envolver la insignia en un `span` sólo para ponerle el nombre entero del
+ * archivo. Los `data-*` ya caían solos en la raíz.
  */
 import { computed } from 'vue';
 
@@ -54,8 +74,14 @@ const props = withDefaults(
 		color?: string;
 		/** El texto, si no va en la ranura. */
 		label?: string | number;
+		/** La forma de contador: no se parte ni se topa al contenedor. */
+		counter?: boolean;
+		/** Con un `label` numérico mayor que esto, se escribe «max+». */
+		max?: number;
+		/** El texto entero, para el globo del sistema. */
+		title?: string;
 	}>(),
-	{ tone: 'neutral', variant: 'soft', size: 'sm', dot: false }
+	{ tone: 'neutral', variant: 'soft', size: 'sm', dot: false, counter: false, max: undefined, title: undefined }
 );
 
 /** El relleno de cada variante, por tono. */
@@ -127,7 +153,30 @@ const textClass = computed(() =>
  * Alto **mínimo**: una insignia con un texto que no entra se parte en dos
  * líneas en vez de cortarse, que es perder lo que dice.
  */
-const sizeClass = computed(() => (props.size === 'md' ? 'min-h-6 px-2 text-label-s' : 'min-h-5 px-2 text-label-xs'));
+const sizeClass = computed(() => {
+	if (props.counter) {
+		// Al menos tan ancha como alta, y con menos relleno: un «3» es un círculo.
+		return props.size === 'md' ? 'h-6 min-w-6 px-1 text-label-s' : 'h-5 min-w-5 px-1 text-label-xs';
+	}
+	return props.size === 'md' ? 'min-h-6 px-2 text-label-s' : 'min-h-5 px-2 text-label-xs';
+});
+
+/**
+ * Cómo se parte: la insignia de siempre se topa a su contenedor y parte el
+ * texto; el contador no hace ninguna de las dos cosas.
+ */
+const wrapClass = computed(() =>
+	props.counter ? 'justify-center whitespace-nowrap tabular-nums' : 'max-w-full break-words'
+);
+
+/** El texto, con el tope de `max` si el número lo pasa. */
+const shownLabel = computed(() => {
+	const value = typeof props.label === 'number' ? props.label : Number(props.label);
+	if (props.max !== undefined && props.label !== undefined && props.label !== '' && Number.isFinite(value) && value > props.max) {
+		return `${props.max}+`;
+	}
+	return props.label;
+});
 
 /** El color de dato, como variable: el punto y el canto lo leen. */
 const dataColor = computed(() => (props.color ? { '--badge-color': props.color } : undefined));
@@ -135,14 +184,16 @@ const dataColor = computed(() => (props.color ? { '--badge-color': props.color }
 
 <template>
   <span
-    class="inline-flex max-w-full min-w-0 shrink-0 items-center gap-1 rounded-corner-full border font-semibold break-words"
-    :class="[fillClass, borderClass, textClass, sizeClass]"
-    :style="dataColor">
+    class="inline-flex min-w-0 shrink-0 items-center gap-1 rounded-corner-full border font-semibold"
+    :class="[fillClass, borderClass, textClass, sizeClass, wrapClass]"
+    :title="title"
+    :style="dataColor"
+    :data-counter="counter || undefined">
     <span
       v-if="dot || color"
       aria-hidden="true"
       class="size-1.5 shrink-0 rounded-corner-full"
       :class="color ? 'bg-(--badge-color)' : DOT[tone]" />
-    <span class="min-w-0"><slot>{{ label }}</slot></span>
+    <span :class="counter ? '' : 'min-w-0'"><slot>{{ shownLabel }}</slot></span>
   </span>
 </template>

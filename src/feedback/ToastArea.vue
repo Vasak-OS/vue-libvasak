@@ -68,8 +68,12 @@ const props = withDefaults(
 		 * lo que ya hacía el gestor de archivos. Abajo al centro es lo que usa
 		 * la galería, y se conserva como opción: en una ventana de ver fotos, la
 		 * esquina compite con los controles.
+		 *
+		 * Arriba (2.4.0), a la derecha o al centro: el reproductor de resonance
+		 * tiene sus controles abajo, y un aviso ahí los tapa. Arriba, los avisos
+		 * entran desde arriba y el más nuevo queda primero, pegado al borde.
 		 */
-		position?: 'bottom-right' | 'bottom-center';
+		position?: 'bottom-right' | 'bottom-center' | 'top-right' | 'top-center';
 	}>(),
 	{ position: 'bottom-right' }
 );
@@ -95,11 +99,19 @@ function widthOf(toast: ToastNotice): string {
 	return toast.progress !== undefined ? 'w-80' : '';
 }
 
-const placement = computed(() =>
-	props.position === 'bottom-center'
-		? 'bottom-4 left-1/2 -translate-x-1/2'
-		: 'right-4 bottom-4'
-);
+const PLACEMENT = {
+	'bottom-right': 'right-4 bottom-4',
+	'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+	'top-right': 'top-4 right-4',
+	'top-center': 'top-4 left-1/2 -translate-x-1/2',
+} as const;
+
+const placement = computed(() => PLACEMENT[props.position]);
+const fromTop = computed(() => props.position.startsWith('top'));
+/** Desde el borde del que salen: abajo suben, arriba bajan. */
+const offscreen = computed(() => (fromTop.value ? '-translate-y-2 opacity-0' : 'translate-y-2 opacity-0'));
+/** Arriba, el más nuevo va primero —pegado al borde—, que es lo que se lee primero. */
+const ordered = computed(() => (fromTop.value ? [...props.toasts].reverse() : props.toasts));
 </script>
 
 <template>
@@ -107,15 +119,15 @@ const placement = computed(() =>
     <!-- `pointer-events-none` en la pila y `auto` en cada aviso: la columna
          ocupa una franja de la ventana, y sin esto se come los clics de lo que
          haya debajo aunque no se vea nada. -->
-    <div class="pointer-events-none fixed z-60 flex flex-col gap-2" :class="placement">
+    <div class="pointer-events-none fixed z-60 flex flex-col gap-2" :class="placement" :data-position="position">
       <TransitionGroup
         enter-active-class="transition-[opacity,translate] duration-200 ease-ui-out"
         leave-active-class="transition-[opacity,translate] duration-150 ease-ui"
-        enter-from-class="translate-y-2 opacity-0"
-        leave-to-class="translate-y-2 opacity-0"
+        :enter-from-class="offscreen"
+        :leave-to-class="offscreen"
         move-class="transition-[translate] duration-300 ease-ui">
         <div
-          v-for="toast in toasts"
+          v-for="toast in ordered"
           :key="toast.id"
           :role="toneRole(toast.tone ?? 'info')"
           aria-atomic="true"

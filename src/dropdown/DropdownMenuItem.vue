@@ -60,6 +60,16 @@
  *   velo, como en `FormGroup`.
  *
  * El teclado del menú recorre los tres roles (`MENU_ITEM_SELECTOR`).
+ *
+ * # El estado indeterminado (2.4.0)
+ *
+ * `checked="mixed"` es la casilla a medias: el `toggle-state` −1 de DBusMenu,
+ * que el menú de la bandeja del escritorio dibujaba local. Va con
+ * `aria-checked="mixed"` y una raya en la columna de la marca —dibujada, como
+ * el punto de la radio, porque no hay un nombre del estándar de freedesktop
+ * para la casilla indeterminada—. Sólo tiene sentido en una casilla: en una
+ * radio, `mixed` se anuncia como no marcada. Al elegirla, `update:checked`
+ * sale con `true`, que es lo que hace una casilla indeterminada al tocarla.
  */
 import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -69,8 +79,8 @@ import { useMenu } from './types';
 const props = withDefaults(
 	defineProps<{
 		disabled?: boolean;
-		/** Marcado o no. `null` es un ítem que no se marca. */
-		checked?: boolean | null;
+		/** Marcado, no, o a medias (`mixed`). `null` es un ítem que no se marca. */
+		checked?: boolean | 'mixed' | null;
 		/** Casilla o radio, cuando se marca. */
 		toggle?: 'checkbox' | 'radio';
 		/** Columnas de icono que se corre el texto. */
@@ -110,6 +120,13 @@ defineSlots<{
 const menu = useMenu();
 
 const checkable = computed(() => props.checked !== null);
+/** A medias: sólo una casilla puede estarlo. */
+const mixed = computed(() => props.checked === 'mixed' && props.toggle === 'checkbox');
+const ariaChecked = computed(() => {
+	if (!checkable.value) return undefined;
+	if (mixed.value) return 'mixed';
+	return props.checked === true ? 'true' : 'false';
+});
 const role = computed(() =>
 	!checkable.value ? 'menuitem' : props.toggle === 'radio' ? 'menuitemradio' : 'menuitemcheckbox'
 );
@@ -120,7 +137,7 @@ const insetStyle = computed(() =>
 
 function choose(event: Event) {
 	if (props.disabled) return;
-	if (checkable.value) emit('update:checked', props.toggle === 'radio' ? true : !props.checked);
+	if (checkable.value) emit('update:checked', props.toggle === 'radio' || mixed.value ? true : !props.checked);
 	emit('select');
 	emit('click', event);
 	menu.close({ returnFocus: true });
@@ -132,7 +149,7 @@ function choose(event: Event) {
     :role="role"
     tabindex="0"
     :aria-disabled="disabled || undefined"
-    :aria-checked="checkable ? (checked ? 'true' : 'false') : undefined"
+    :aria-checked="ariaChecked"
     :class="[
       'flex min-h-8 min-w-0 items-center gap-3 rounded-corner-m border border-transparent px-3 py-1 text-label-m',
       'transition-colors duration-200 ease-ui',
@@ -152,7 +169,8 @@ function choose(event: Event) {
     <!-- La columna de la marca: vacía si no está marcado, para que los ítems
          de un grupo queden alineados. -->
     <span v-if="checkable" aria-hidden="true" class="flex size-4 shrink-0 items-center justify-center" data-check>
-      <template v-if="checked">
+      <span v-if="mixed" class="h-0.5 w-2 rounded-corner-full bg-tx-main" data-mixed />
+      <template v-else-if="checked === true">
         <span v-if="toggle === 'radio'" class="size-2 rounded-corner-full bg-tx-main" />
         <ThemeIcon v-else name="object-select" type="symbol" :size="16" />
       </template>

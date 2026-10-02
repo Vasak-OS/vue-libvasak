@@ -360,3 +360,44 @@ describe('la cuenta', () => {
 		expect(contrast('#6c6f85', '#eff1f5')).toBeCloseTo(4.37, 2);
 	});
 });
+
+/**
+ * Lo que sumó la 2.4.0: el velo de medios en degradado, el desenfoque de las
+ * pantallas de sesión y el halo del texto sobre un fondo de pantalla.
+ *
+ * Los tres se apoyan en superficies que ya se miden arriba —`ui-overlay` y
+ * `ui-shell`, contra negro y blanco—, así que lo que se comprueba es que **no
+ * cambien el fondo** sobre el que va el texto: el degradado es `ui-overlay`
+ * pleno en la mitad donde van los controles, y el desenfoque no pone color.
+ */
+describe('la 2.4.0', () => {
+	const utility = async (name: string) => {
+		const css = await Bun.file(TOKENS_CSS).text();
+		const match = css.match(new RegExp(`@utility ${name} \\{([^}]*)\\}`));
+		return match?.[1] ?? '';
+	};
+
+	test('el degradado es ui-overlay pleno hasta la mitad y después se desvanece', async () => {
+		for (const name of ['overlay-fade-up', 'overlay-fade-down']) {
+			const body = (await utility(name)).replace(/\s+/g, ' ');
+			expect(body).toContain('var(--color-ui-overlay) 0%, var(--color-ui-overlay) 50%, transparent 100%');
+		}
+		expect(await utility('overlay-fade-up')).toContain('to top');
+		expect(await utility('overlay-fade-down')).toContain('to bottom');
+	});
+
+	test('el desenfoque de sesión no pone color: el contraste sigue siendo el de ui-shell', async () => {
+		const body = await utility('shell-blur');
+
+		expect(body).toContain('backdrop-filter: blur(1rem)');
+		expect(body).not.toMatch(/background|color/);
+	});
+
+	test('el halo del texto es del color de la ventana del esquema', async () => {
+		const css = await Bun.file(TOKENS_CSS).text();
+		const shadow = css.match(/--text-shadow-legible:([^;]+);/)?.[1] ?? '';
+
+		expect(shadow).not.toBe('');
+		expect([...shadow.matchAll(/var\(--use-([a-z-]+)\)/g)].map((m) => m[1])).toEqual(['ui-background', 'ui-background']);
+	});
+});

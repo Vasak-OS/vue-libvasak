@@ -1,5 +1,76 @@
 # Cambios de vue-libvasak
 
+## 2.4.0 — sin publicar
+
+Lo que pidieron las aplicaciones al adoptar la 2.2 y la 2.3, y las piezas
+genéricas del inicio de sesión y del bloqueo (`vue-libvasak#74`; la
+especificación, `docs/once-ui.md` §14). Es una minor: nada de lo que exporta
+la 2.3.0 cambia de nombre, y lo que ya había dibuja lo mismo si no se pide lo
+nuevo, salvo los tres cambios de «Cambia».
+
+### Nuevo
+
+- **`PasswordField`**: el campo de contraseña con el botón de mostrar
+  (`aria-pressed`, no roba el foco, vuelve a ocultarse cuando la contraseña
+  se vacía) y el aviso de Bloq Mayús debajo, atado al campo por
+  `aria-describedby` y como evento `caps-lock`. Sin corrector ni mayúsculas
+  automáticas.
+- **`ClockDisplay`**: la hora grande con la fecha debajo; se alinea al minuto
+  (o al segundo con `seconds`), cifras tabulares, la fecha con sólo la primera
+  letra en mayúscula, `legible` para ponerla sobre un fondo de pantalla, `now`
+  para una hora fija.
+- **`PowerActions`**: suspender, hibernar, reiniciar, apagar, cerrar la sesión
+  y bloquear, con los iconos de freedesktop, como fila de botones de icono
+  (`icons`) o círculos de 80 con el nombre (`tiles`). Emite `action`.
+- **`TextContextMenu`**: copiar, cortar, pegar y seleccionar todo con el clic
+  derecho sobre cualquier campo de texto de la ventana, con el menú del
+  sistema. Junta las copias de Configuración y del gestor de archivos (cortar
+  borra el tramo que se copió); `show` y `clipboard` entran por propiedad, así
+  que la librería no depende del complemento del menú. Las funciones que
+  deciden qué ofrece y qué hace salen también (`textMenuEntries`,
+  `runTextAction`, `getTextField`…).
+- Tokens: los roles `text-display-m` y `text-display-l`, el halo
+  `text-shadow-legible`, el velo en degradado `overlay-fade-up` /
+  `overlay-fade-down`, y `shell-blur`, el desenfoque **sólo** del inicio de
+  sesión y del bloqueo (decisión del usuario del 02/10/2026).
+- Textos con respaldo en el catálogo: `password.show`, `password.hide`,
+  `password.capsLock`, `power.*`, `textMenu.*`.
+
+### Extensiones
+
+- `Badge`: `counter`, `max` («99+») y `title`.
+- `AppBar`: el centro ya no pisa los botones en una ventana angosta: centrado
+  con un tope de ancho, en la zona libre o en un renglón propio debajo.
+- `IdentityBlock`: ranura `details`, `as="h1"`, `wrap` y `stack`.
+- `SideBar`: `autoCollapse` y `fill`.
+- `SearchField`: `autocomplete` y `spellcheck`. `TextInput`: `spellcheck` y
+  `autocapitalize`.
+- `ConfigSection`: `title` opcional. `SelectField`: `id` y `disabled`
+  declarados. `EmptyState`: `muted`.
+- `DialogContent`: `size="wide"` (576 px). `ToastArea`: `top-right` y
+  `top-center`.
+- `Avatar`: `ml` (40) y `2xl` (96). `IconTile`: `xl` (64) y `2xl` (80).
+- `DropdownMenuItem`: `checked="mixed"`. `OptionGroup`: `avatar` en una
+  opción. `SearchSelect`: `searchable`.
+
+### Cambia
+
+- `SearchField`: la cruz emite también `search('')`, después de `clear`.
+- `DialogContent size="lg"` dibuja el velo detrás.
+- `SettingRow` apila por debajo de 256 px y no de 320.
+- `SearchSelect`: el mínimo de la lista (256 px) se topa a la ventana menos
+  16 px; a 240 salía cortada por la derecha.
+- La guardia acepta el color relativo sobre una variable del esquema
+  (`oklch(from var(--…) …)`) y prohíbe las sombras de texto y de dibujo de
+  Tailwind.
+
+### Revisado, sin cambio en la librería
+
+- El menú alineado al final no sale cortado a 240 px: era la captura de
+  Chrome sin pantalla. Queda atado con una prueba.
+- vue-tsc 3.3.12 con `#default="{ id }"` de `FormGroup`: es de vue-tsc (un
+  `$` en un atributo del mismo elemento); ver `docs/once-ui.md` §14.5.
+
 ## 2.3.0 — sin publicar
 
 La superficie translúcida del escritorio (`vue-libvasak#74`, corrección del

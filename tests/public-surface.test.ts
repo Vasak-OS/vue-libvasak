@@ -4,6 +4,10 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.4.0 se sumaron el campo de contraseña, el reloj, los botones de
+ * energía y el menú de texto del clic derecho (`TextContextMenu`, con las
+ * funciones que deciden qué ofrece y qué hace).
+ *
  * En la 2.2.0 se sumaron el globo con contenido (`Popover` y sus piezas), la
  * tecla, la identidad, los recuadros de icono, el esqueleto, la carátula, los
  * datos, el plegable y la zona de soltar; y los nombres en inglés del icono del
@@ -40,6 +44,7 @@ const PUBLIC_SURFACE = [
 	'CLAVE_DEL_DIALOGO',
 	'CLAVE_DEL_MENU',
 	'CLAVE_DEL_TOOLTIP',
+	'ClockDisplay',
 	'CodeBlock',
 	'ConfigSection',
 	'CoverArt',
@@ -66,8 +71,10 @@ const PUBLIC_SURFACE = [
 	'forgetThemeIcons',
 	'formatPlaybackTime',
 	'FormGroup',
+	'getTextField',
 	'IconTile',
 	'IdentityBlock',
+	'isTextAction',
 	'Kbd',
 	'ListCard',
 	'ListGroup',
@@ -82,6 +89,7 @@ const PUBLIC_SURFACE = [
 	'orientacionDe',
 	'PageHeader',
 	'Panel',
+	'PasswordField',
 	'Popover',
 	'POPOVER_KEY',
 	'PopoverAnchor',
@@ -89,9 +97,12 @@ const PUBLIC_SURFACE = [
 	'PopoverTrigger',
 	'posicionDe',
 	'POSICIONES',
+	'PowerActions',
 	'ProgressBar',
 	'PropertyList',
+	'readTextMenuState',
 	'rolDelTono',
+	'runTextAction',
 	'SearchField',
 	'SearchSelect',
 	'SectionHeading',
@@ -113,8 +124,11 @@ const PUBLIC_SURFACE = [
 	'SwitchTrack',
 	'TabBar',
 	'TabItem',
+	'TEXT_INPUT_TYPES',
 	'TextArea',
+	'TextContextMenu',
 	'TextInput',
+	'textMenuEntries',
 	'ThemeIcon',
 	'TOAST_TONE_CLASSES',
 	'ToastArea',

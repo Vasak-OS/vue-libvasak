@@ -30,9 +30,15 @@
  *
  * # Adaptable
  *
- * Por el ancho que le dan (`@container`), no por la pantalla: desde 320 px el
- * control va a la derecha, como hoy; más angosto, debajo del texto, para que
- * la descripción no quede en una columna de dos palabras.
+ * Por el ancho que le dan (`@container`), no por la pantalla: desde 256 px
+ * (`@3xs`) el control va a la derecha, como hoy; más angosto, debajo del
+ * texto, para que la descripción no quede en una columna de dos palabras.
+ *
+ * Hasta la 2.3 el umbral era 320 px (`@xs`), y el centro de control del
+ * escritorio mide 350 con su relleno: la fila de la cámara quedaba en unos
+ * 300 y se apilaba, así que no la usaba (desktop#147). A 256 un interruptor
+ * de 40 deja 200 px de texto, que es lo que tiene una fila de un applet; un
+ * applet de 240 sigue apilando.
  */
 import { computed, useId } from 'vue';
 
@@ -63,7 +69,7 @@ const descriptionId = computed(() => (props.description ? `${id}-description` : 
 
 <template>
   <div class="@container min-w-0" :class="disabled ? 'opacity-50' : ''" :aria-disabled="disabled || undefined">
-    <div class="flex min-w-0 flex-col gap-2 @xs:flex-row @xs:items-start @xs:justify-between @xs:gap-4">
+    <div class="flex min-w-0 flex-col gap-2 @3xs:flex-row @3xs:items-start @3xs:justify-between @3xs:gap-4">
       <div class="flex min-w-0 items-start gap-3">
         <span v-if="$slots.leading" class="mt-0.5 flex shrink-0 items-center"><slot name="leading" /></span>
         <div class="flex min-w-0 flex-col">
