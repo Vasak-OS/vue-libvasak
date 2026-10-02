@@ -35,11 +35,23 @@ const ANIMATED = [
 const registered = (name: string) =>
 	new RegExp(`@property ${name} \\{[^}]*syntax: "<color>";[^}]*inherits: true;`).test(TOKENS);
 
+/**
+ * El bloque entero de `@media (prefers-reduced-motion: no-preference)`, con
+ * las llaves contadas: la regla se busca sólo adentro, así que si se mudara
+ * afuera de la consulta —y el fundido corriera con movimiento reducido— las
+ * pruebas fallan.
+ */
 const transitionBlock = () => {
 	const start = TOKENS.indexOf('@media (prefers-reduced-motion: no-preference)');
 	expect(start).toBeGreaterThan(-1);
-	const rule = TOKENS.slice(start, TOKENS.indexOf('}', TOKENS.indexOf(':root.scheme-transition', start)));
-	return rule;
+	const open = TOKENS.indexOf('{', start);
+	let depth = 0;
+	let end = open;
+	for (; end < TOKENS.length; end++) {
+		if (TOKENS[end] === '{') depth++;
+		else if (TOKENS[end] === '}' && --depth === 0) break;
+	}
+	return TOKENS.slice(start, end + 1);
 };
 
 describe('el fundido del esquema', () => {
