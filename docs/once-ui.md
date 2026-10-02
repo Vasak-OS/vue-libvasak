@@ -497,7 +497,7 @@ pantalla de 768 con el panel puesto.
 
 ```
 ┌──────────────────────────────────────┐  rounded-corner-xl, borde ui-line,
-│ ⌕  Buscar aplicaciones               │  bg-ui-float, shadow-surface-l
+│ ⌕  Buscar aplicaciones               │  bg-ui-shell, shadow-surface-l
 ├──────────────────────────────────────┤  ← ui-line-weak
 │ [Todas] Internet  Oficina  Sistema › │  chips h-7, se desplazan con la rueda
 │                                      │
