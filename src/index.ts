@@ -58,6 +58,8 @@ import ListRow from "./list/ListRow.vue";
 import ListGroup from "./list/ListGroup.vue";
 import Badge from "./indicators/Badge.vue";
 import StatusDot from "./indicators/StatusDot.vue";
+import Chip from "./indicators/Chip.vue";
+import PageDots from "./controls/PageDots.vue";
 import SectionHeading from "./layout/SectionHeading.vue";
 import PageHeader from "./layout/PageHeader.vue";
 import Panel from "./layout/Panel.vue";
@@ -145,6 +147,8 @@ const components = [
   ListGroup,
   Badge,
   StatusDot,
+  Chip,
+  PageDots,
   SectionHeading,
   PageHeader,
   Panel,
@@ -238,6 +242,8 @@ export {
   ListGroup,
   Badge,
   StatusDot,
+  Chip,
+  PageDots,
   SectionHeading,
   PageHeader,
   Panel,

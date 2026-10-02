@@ -126,6 +126,7 @@ aplicación, y si la clave no está, del respaldo de la librería:
 | `password.capsLock` | el aviso de Bloq Mayús de `PasswordField` | «Caps Lock is on» |
 | `power.title` | el nombre del grupo de `PowerActions` | «Power» |
 | `power.suspend` / `power.hibernate` / `power.reboot` / `power.poweroff` / `power.logout` / `power.lock` | los botones de `PowerActions` | «Suspend» / «Hibernate» / «Restart» / «Power off» / «Log out» / «Lock» |
+| `pager.label` / `pager.item` | el grupo y cada punto de `PageDots` sin `label` / `labels` (`{0}` es el número y `{1}` el total) | «Pages» / «{0} of {1}» |
 | `textMenu.copy` / `textMenu.cut` / `textMenu.paste` / `textMenu.selectAll` | el menú de `TextContextMenu` | «Copy» / «Cut» / «Paste» / «Select all» |
 
 ## Qué componente para qué (2.1.0)
@@ -159,6 +160,14 @@ salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
   `StatTile`; texto de máquina o un registro: `CodeBlock`;
 - algo que se despliega: `Disclosure`; dónde soltar lo que se arrastra:
   `DropZone`.
+
+## Qué componente para qué (2.5.0)
+
+- un dato chico con icono debajo de un título —la salida de audio, «vía
+  Firefox»—, que se toca o sólo informa: `Chip` (`interactive` para que sea
+  botón, `caption` para la etiqueta atenuada);
+- pasar de una página a otra con puntos —varios reproductores, un carrusel—:
+  `PageDots`, que con una sola página no dibuja nada.
 
 ## Qué componente para qué (2.4.0)
 
