@@ -128,6 +128,7 @@ aplicación, y si la clave no está, del respaldo de la librería:
 | `power.suspend` / `power.hibernate` / `power.reboot` / `power.poweroff` / `power.logout` / `power.lock` | los botones de `PowerActions` | «Suspend» / «Hibernate» / «Restart» / «Power off» / «Log out» / «Lock» |
 | `pager.label` / `pager.item` | el grupo y cada punto de `PageDots` sin `label` / `labels` (`{0}` es el número y `{1}` el total) | «Pages» / «{0} of {1}» |
 | `workspaces.label` / `workspaces.item` | el grupo y cada botón de `WorkspaceSwitcher` sin `label` / `labels` (`{0}` es el número) | «Workspaces» / «Workspace {0}» |
+| `equalizer.title` / `equalizer.saved` / `equalizer.unsaved` / `equalizer.unavailable` / `equalizer.presets` / `equalizer.custom` | los textos de `Equalizer` sin sus propiedades | «Equalizer» / «Saved» / «Not saved» / «The equalizer is not available» / «Presets» / «Custom» |
 | `textMenu.copy` / `textMenu.cut` / `textMenu.paste` / `textMenu.selectAll` | el menú de `TextContextMenu` | «Copy» / «Cut» / «Paste» / «Select all» |
 
 ## Qué componente para qué (2.1.0)
@@ -162,13 +163,18 @@ salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
 - algo que se despliega: `Disclosure`; dónde soltar lo que se arrastra:
   `DropZone`.
 
-## Qué componente para qué (2.11.0)
+## Qué componente para qué (2.12.0)
 
 - una píldora del panel sobre el escritorio —un botón redondo, un dato con
   icono y renglón chico debajo, o un grupo de botones—: `PanelPill`
   (`active` la rellena en el primario, `interactive` para que sea botón,
   `flush` para un grupo);
 - los espacios de trabajo, con el actual en el primario: `WorkspaceSwitcher`.
+
+## Qué componente para qué (2.11.0)
+
+- un ecualizador de bandas con perfiles: `Equalizer` (la aplicación le da las
+  ganancias y limita cuántas veces por segundo manda lo que emite).
 
 ## Qué componente para qué (2.5.0)
 

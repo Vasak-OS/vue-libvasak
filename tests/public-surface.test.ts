@@ -4,7 +4,7 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
- * En la 2.11.0 se sumaron las píldoras del panel flotante del escritorio:
+ * En la 2.12.0 se sumaron las píldoras del panel flotante del escritorio:
  * `PanelPill` y `WorkspaceSwitcher`.
  *
  * En la 2.9.0 se sumaron las piezas del tablero de fecha del escritorio: el
@@ -97,6 +97,7 @@ const PUBLIC_SURFACE = [
 	'entryDays',
 	'EventList',
 	'EmptyState',
+	'Equalizer',
 	'esPosicion',
 	'forgetThemeIcons',
 	'formatPlaybackTime',

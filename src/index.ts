@@ -46,6 +46,7 @@ import TrayIconButton from "./tray/TrayIconButton.vue";
 import NowPlayingCard from "./media/NowPlayingCard.vue";
 import SeekBar from "./media/SeekBar.vue";
 import SpinningCover from "./media/SpinningCover.vue";
+import Equalizer from "./media/Equalizer.vue";
 /* 2.1.0: formularios, selección, listas, cabeceras y el cuerpo del diálogo. */
 import OptionGroup from "./forms/OptionGroup.vue";
 import SegmentedControl from "./forms/SegmentedControl.vue";
@@ -150,6 +151,7 @@ const components = [
   NowPlayingCard,
   SeekBar,
   SpinningCover,
+  Equalizer,
   OptionGroup,
   SegmentedControl,
   Checkbox,
@@ -256,6 +258,7 @@ export {
   NowPlayingCard,
   SeekBar,
   SpinningCover,
+  Equalizer,
   OptionGroup,
   SegmentedControl,
   Checkbox,
@@ -328,6 +331,7 @@ export { POPOVER_KEY, usePopover } from "./popover/types";
 export type { AvatarSize } from "./identity/Avatar.vue";
 export type { IconTileStatus, IconTileTone } from "./indicators/IconTile.vue";
 export type { CoverArtSize } from "./media/CoverArt.vue";
+export type { EqualizerPreset } from "./media/Equalizer.vue";
 export type { CardPlacement, WallpaperItem } from "./media/carousel";
 export {
   clampIndex,
