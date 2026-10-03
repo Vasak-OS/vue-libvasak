@@ -1070,7 +1070,7 @@ minor: no cambia nada de lo que ya había.
   Wayfire (§13). Canto `ui-line`, `rounded-corner-full`, 32 px de alto. Con
   `active`, `bg-primary` y `tx-on-primary` (el estado «conectado» o «ahora»).
   El velo de pasar (`ui-hover`), de apretar (`ui-pressed`) y de abierto
-  (`ui-selected`, con `expanded`) va en un `::before` sobre la superficie, así
+  (`ui-selected-accent`, con `expanded`: lo elegido va con el velo del acento) va en un `::before` sobre la superficie, así
   que la píldora no se vuelve opaca al pasar. El `label` en `text-label-s` y el
   `caption` en `text-label-xs` atenuado entran en dos renglones dentro de los
   32 px; se cortan con puntos suspensivos y llevan cifras tabulares. Botón con

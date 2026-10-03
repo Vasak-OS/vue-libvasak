@@ -14,7 +14,7 @@ ya se exportaba.
   puntos suspensivos y con cifras tabulares. `active` la rellena en el
   primario; `interactive` la hace botón con anillo de foco y, sin él, es un
   `div` quieto que no se pinta al pasar; `expanded` suma `aria-expanded` y el
-  velo `ui-selected` sin tapar la superficie; `orientation="vertical"` la
+  velo `ui-selected-accent` sin tapar la superficie; `orientation="vertical"` la
   apila para un panel a un costado; `flush` le saca el relleno a un grupo.
 - **`WorkspaceSwitcher`**: los espacios de trabajo en una `PanelPill`, un botón
   de 32 de ancho por espacio con el número, el actual en el primario y con

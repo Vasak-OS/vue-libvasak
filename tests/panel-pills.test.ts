@@ -85,7 +85,7 @@ describe('la píldora del panel', () => {
 	test('expanded dice que lo que abre está abierto, con el velo de seleccionado', () => {
 		const open = render(PanelPill, { props: { label: '10:41', expanded: true } }).find('[data-panel-pill]');
 		expect(open.attributes('aria-expanded')).toBe('true');
-		expect(open.classes()).toContain('before:bg-ui-selected');
+		expect(open.classes()).toContain('before:bg-ui-selected-accent');
 
 		const closed = render(PanelPill, { props: { label: '10:41', expanded: false } }).find('[data-panel-pill]');
 		expect(closed.attributes('aria-expanded')).toBe('false');

@@ -29,7 +29,8 @@
  * (la bandeja, los espacios de trabajo). Igual que `TrayIconButton` y `Chip`.
  *
  * `expanded` dice que el applet que abre está abierto: lleva `aria-expanded`
- * y el velo `ui-selected`, que se suma sobre la superficie sin taparla.
+ * y el velo del acento `ui-selected-accent` (lo elegido, decisión 4 de
+ * vue-libvasak#74), que se suma sobre la superficie sin taparla.
  *
  * # El texto no la rompe
  *
@@ -153,7 +154,7 @@ function onClick(event: MouseEvent): void {
     data-panel-pill
     :data-active="active ? 'true' : undefined"
     class="relative isolate inline-flex min-w-0 max-w-full items-center gap-2 rounded-corner-full border tabular-nums transition-colors duration-200 ease-ui before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-corner-full before:transition-colors before:duration-200 before:ease-ui"
-    :class="[surface, states, shape, expanded && !active ? 'before:bg-ui-selected' : '']"
+    :class="[surface, states, shape, expanded && !active ? 'before:bg-ui-selected-accent' : '']"
     :title="tooltip"
     @click="onClick">
     <slot name="leading">
