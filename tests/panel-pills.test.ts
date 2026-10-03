@@ -14,6 +14,7 @@ import { mount, type VueWrapper } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import PanelPill from '../src/panel/PanelPill.vue';
 import WorkspaceSwitcher from '../src/panel/WorkspaceSwitcher.vue';
+import { arrowTarget, clampIndex, countOf } from '../src/shared/roving-index';
 import { olvidarTodo, traducir, vaciarElCatalogo } from './dobles';
 
 const views: VueWrapper[] = [];
@@ -228,6 +229,36 @@ describe('los espacios de trabajo', () => {
 		expect(view.emitted('change')).toBeUndefined();
 	});
 
+	test('dos flechas seguidas avanzan dos: pasar de un botón a otro no olvida dónde estaba', async () => {
+		// Lo marcó CodeRabbit en #88: el `focusout` del botón que pierde el
+		// foco borraba la posición y la segunda flecha arrancaba del actual.
+		const view = render(WorkspaceSwitcher, { props: { count: 4, modelValue: 0 } });
+		const buttons = () => view.findAll('[data-workspace]');
+		(buttons()[0]?.element as HTMLButtonElement).focus();
+
+		for (const expected of [1, 2]) {
+			const from = document.activeElement as HTMLElement;
+			from.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+			await nextTick();
+			await nextTick();
+			expect(document.activeElement).toBe(buttons()[expected]?.element as Element);
+		}
+		expect(view.emitted('change')).toBeUndefined();
+	});
+
+	test('al salir del grupo, la próxima entrada es por el actual', async () => {
+		const view = render(WorkspaceSwitcher, { props: { count: 3, modelValue: 0 } });
+		const buttons = () => view.findAll('[data-workspace]');
+		buttons()[0]?.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+		await nextTick();
+		await nextTick();
+		expect(buttons().map((b) => b.attributes('tabindex'))).toEqual(['-1', '-1', '0']);
+
+		buttons()[2]?.element.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+		await nextTick();
+		expect(buttons().map((b) => b.attributes('tabindex'))).toEqual(['0', '-1', '-1']);
+	});
+
 	test('el actual fuera de rango se acota, y sin espacios no se dibuja nada', () => {
 		const view = render(WorkspaceSwitcher, { props: { count: 2, modelValue: 9 } });
 		expect(view.findAll('[data-workspace]')[1]?.attributes('aria-current')).toBe('true');
@@ -248,3 +279,24 @@ describe('los espacios de trabajo', () => {
 		expect(view.emitted('change')).toBeUndefined();
 	});
 });
+
+describe('las cuentas del recorrido con flechas', () => {
+	test('las flechas van de a uno sin dar la vuelta; Inicio y Fin a los extremos', () => {
+		expect(arrowTarget('ArrowRight', 1, 4)).toBe(2);
+		expect(arrowTarget('ArrowDown', 3, 4)).toBe(3);
+		expect(arrowTarget('ArrowLeft', 0, 4)).toBe(0);
+		expect(arrowTarget('ArrowUp', 2, 4)).toBe(1);
+		expect(arrowTarget('Home', 3, 4)).toBe(0);
+		expect(arrowTarget('End', 0, 4)).toBe(3);
+		expect(arrowTarget('a', 0, 4)).toBeUndefined();
+	});
+
+	test('la cantidad y el índice se acotan', () => {
+		expect(countOf(3.7)).toBe(3);
+		expect(countOf(-2)).toBe(0);
+		expect(clampIndex(9, 3)).toBe(2);
+		expect(clampIndex(-1, 3)).toBe(0);
+		expect(clampIndex(4, 0)).toBe(0);
+	});
+});
+

@@ -29,6 +29,7 @@
  */
 import { computed, nextTick, ref } from 'vue';
 import { useLabels } from '../shared/labels';
+import { arrowTarget, clampIndex, countOf } from '../shared/roving-index';
 import PanelPill from './PanelPill.vue';
 
 const props = withDefaults(
@@ -48,16 +49,15 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
+	/** Se eligió otro espacio (con `v-model`). */
 	'update:modelValue': [index: number];
-	/** Se eligió otro espacio. */
 	change: [index: number];
 }>();
 
-const translate = useLabels();
 const root = ref<HTMLElement | null>(null);
-
-const total = computed(() => Math.max(0, Math.floor(props.count)));
-const active = computed(() => Math.min(Math.max(props.modelValue, 0), Math.max(total.value - 1, 0)));
+const translate = useLabels();
+const total = computed(() => countOf(props.count));
+const active = computed(() => clampIndex(props.modelValue, total.value));
 const groupName = computed(() => props.label ?? translate('workspaces.label', 'Workspaces'));
 /** Dónde está el foco del teclado dentro del grupo; arranca en el actual. */
 const focused = ref<number | null>(null);
@@ -77,22 +77,23 @@ function select(index: number): void {
 }
 
 async function onKeydown(event: KeyboardEvent): Promise<void> {
-	const last = total.value - 1;
-	const current = tabStop.value;
-	const targets: Record<string, number> = {
-		ArrowRight: Math.min(current + 1, last),
-		ArrowDown: Math.min(current + 1, last),
-		ArrowLeft: Math.max(current - 1, 0),
-		ArrowUp: Math.max(current - 1, 0),
-		Home: 0,
-		End: last,
-	};
-	const target = targets[event.key];
+	const target = arrowTarget(event.key, tabStop.value, total.value);
 	if (target === undefined) return;
 	event.preventDefault();
 	focused.value = target;
 	await nextTick();
 	root.value?.querySelector<HTMLButtonElement>(`[data-workspace="${target}"]`)?.focus();
+}
+
+/**
+ * El foco salió del grupo: la próxima vez entra por el actual. Pasar de un
+ * botón a otro con las flechas también dispara `focusout`, y ahí no se olvida
+ * dónde estaba —si no, la flecha siguiente arrancaría desde el actual—.
+ */
+function onFocusout(event: FocusEvent): void {
+	const next = event.relatedTarget;
+	if (next instanceof Node && root.value?.contains(next)) return;
+	focused.value = null;
 }
 </script>
 
@@ -104,7 +105,7 @@ async function onKeydown(event: KeyboardEvent): Promise<void> {
     class="contents"
     data-workspace-switcher
     @keydown="onKeydown"
-    @focusout="focused = null">
+    @focusout="onFocusout">
   <PanelPill
     :interactive="false"
     :orientation="orientation"
