@@ -23,7 +23,9 @@
  * Adentro, un botón de 32 de ancho por espacio —para que se pueda apuntar—
  * con un círculo de 24 y el número en cifras tabulares: el actual en
  * `bg-primary`, los demás en `tx-muted` con el velo `ui-hover` al pasar. De
- * costado (`orientation="vertical"`) se apilan.
+ * costado (`orientation="vertical"`) se apilan. La píldora no se encoge
+ * (`shrink-0`): en un panel angosto se cortan los textos de las demás, no los
+ * números.
  */
 import { computed, nextTick, ref } from 'vue';
 import { useLabels } from '../shared/labels';
@@ -109,7 +111,7 @@ async function onKeydown(event: KeyboardEvent): Promise<void> {
     role="group"
     :accessible-label="groupName"
     flush
-    class="gap-0">
+    class="shrink-0 gap-0">
     <button
       v-for="index in total"
       :key="index"

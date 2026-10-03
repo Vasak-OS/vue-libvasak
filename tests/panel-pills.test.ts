@@ -169,6 +169,8 @@ describe('los espacios de trabajo', () => {
 		expect(root.attributes('aria-label')).toBe('Workspaces');
 		expect(root.classes()).toContain('bg-ui-shell');
 		expect(root.classes().join(' ')).not.toMatch(/backdrop-blur/);
+		// En un panel angosto se cortan los textos de las demás, no los números.
+		expect(root.classes()).toContain('shrink-0');
 	});
 
 	test('se apunta en 32 de ancho aunque el círculo sea de 24', () => {
