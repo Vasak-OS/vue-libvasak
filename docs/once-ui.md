@@ -1058,3 +1058,26 @@ válido la barra va en `secondary`.
 día completo a medianoche UTC con `all_day`. Leído en la hora local, al oeste
 de Greenwich caía el día anterior; `entryDays` toma la fecha civil de UTC, y un
 `AAAA-MM-DD` suelto tal cual.
+
+## 20. La 2.11.0 (03/10/2026): el panel en píldoras
+
+El panel del escritorio deja de ser una franja continua y pasa a píldoras
+sueltas sobre el fondo, como el video de referencia (vasak-desktop#151). Es una
+minor: no cambia nada de lo que ya había.
+
+- **`PanelPill`**: `bg-ui-shell` (la ventana al 85 %) y **nunca**
+  `backdrop-blur`, porque va sobre el escritorio y el desenfoque lo pone
+  Wayfire (§13). Canto `ui-line`, `rounded-corner-full`, 32 px de alto. Con
+  `active`, `bg-primary` y `tx-on-primary` (el estado «conectado» o «ahora»).
+  El velo de pasar (`ui-hover`), de apretar (`ui-pressed`) y de abierto
+  (`ui-selected`, con `expanded`) va en un `::before` sobre la superficie, así
+  que la píldora no se vuelve opaca al pasar. El `label` en `text-label-s` y el
+  `caption` en `text-label-xs` atenuado entran en dos renglones dentro de los
+  32 px; se cortan con puntos suspensivos y llevan cifras tabulares. Botón con
+  `interactive` (anillo `ui-focus` afuera), `div` quieto sin él.
+- **`WorkspaceSwitcher`**: una `PanelPill` quieta y `flush` con un botón de
+  32 de ancho por espacio y un círculo de 24 adentro: el actual en
+  `bg-primary`, los demás en `tx-muted` con el velo al pasar. `aria-current` en
+  el actual, nombre por botón (`labels`, o «Workspace N» del catálogo), un solo
+  Tab y las flechas para mover el foco; cambiar de espacio pide Enter, Espacio o
+  el clic, porque mueve todas las ventanas.

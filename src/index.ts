@@ -60,6 +60,8 @@ import Badge from "./indicators/Badge.vue";
 import StatusDot from "./indicators/StatusDot.vue";
 import Chip from "./indicators/Chip.vue";
 import PageDots from "./controls/PageDots.vue";
+import PanelPill from "./panel/PanelPill.vue";
+import WorkspaceSwitcher from "./panel/WorkspaceSwitcher.vue";
 import SectionHeading from "./layout/SectionHeading.vue";
 import PageHeader from "./layout/PageHeader.vue";
 import Panel from "./layout/Panel.vue";
@@ -161,6 +163,8 @@ const components = [
   StatusDot,
   Chip,
   PageDots,
+  PanelPill,
+  WorkspaceSwitcher,
   SectionHeading,
   PageHeader,
   Panel,
@@ -265,6 +269,8 @@ export {
   StatusDot,
   Chip,
   PageDots,
+  PanelPill,
+  WorkspaceSwitcher,
   SectionHeading,
   PageHeader,
   Panel,

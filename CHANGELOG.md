@@ -1,5 +1,26 @@
 # Cambios de vue-libvasak
 
+## 2.11.0 — sin publicar
+
+Las píldoras del panel flotante del escritorio (`vasak-desktop#151`; la
+especificación, `docs/once-ui.md` §20). Es una minor: no cambia nada de lo que
+ya se exportaba.
+
+### Nuevo
+
+- **`PanelPill`**: una píldora del panel en `ui-shell`, sin `backdrop-blur`
+  (el desenfoque lo pone Wayfire), con canto fino y `rounded-corner-full`.
+  Icono del tema, `label` y `caption` (el renglón chico de abajo) cortados con
+  puntos suspensivos y con cifras tabulares. `active` la rellena en el
+  primario; `interactive` la hace botón con anillo de foco y, sin él, es un
+  `div` quieto que no se pinta al pasar; `expanded` suma `aria-expanded` y el
+  velo `ui-selected` sin tapar la superficie; `orientation="vertical"` la
+  apila para un panel a un costado; `flush` le saca el relleno a un grupo.
+- **`WorkspaceSwitcher`**: los espacios de trabajo en una `PanelPill`, un botón
+  de 32 de ancho por espacio con el número, el actual en el primario y con
+  `aria-current`. Un solo Tab entra al grupo y las flechas mueven el foco sin
+  cambiar de espacio; se elige con Enter, Espacio o el clic.
+
 ## 2.10.1 — sin publicar
 
 ### Arreglado

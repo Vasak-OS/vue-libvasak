@@ -4,6 +4,9 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.11.0 se sumaron las píldoras del panel flotante del escritorio:
+ * `PanelPill` y `WorkspaceSwitcher`.
+ *
  * En la 2.9.0 se sumaron las piezas del tablero de fecha del escritorio: el
  * calendario del mes, la lista de eventos, el pronóstico por hora, el anillo y
  * las cuentas de fechas que comparten (`dates.ts`).
@@ -123,6 +126,7 @@ const PUBLIC_SURFACE = [
 	'orientacionDe',
 	'PageDots',
 	'PageHeader',
+	'PanelPill',
 	'parseIsoDate',
 	'Panel',
 	'PasswordField',
@@ -200,6 +204,7 @@ const PUBLIC_SURFACE = [
 	'wheelSteps',
 	'WindowControls',
 	'WindowFrame',
+	'WorkspaceSwitcher',
 ];
 
 describe('la superficie pública', () => {
