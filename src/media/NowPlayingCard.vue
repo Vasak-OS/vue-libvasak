@@ -34,6 +34,17 @@
  * lleva `{0}` donde va el artista; si la aplicación no la tiene, se muestra el
  * artista solo en lugar de la clave cruda.
  *
+ * # Angosta, una columna (2.10.1)
+ *
+ * La tarjeta mira su propio ancho (`@container`). Desde 20 rem (`@xs`) es la
+ * de siempre: el disco a la izquierda y los datos al lado. Por debajo, el
+ * disco va arriba y más chico, y los datos debajo, centrados y cortados con
+ * puntos suspensivos si no entran (la columna se estira al ancho, no al
+ * texto: un renglón centrado más ancho que la tarjeta se cortaba de los dos
+ * lados sin aviso). A 240 px con el
+ * disco al costado al título le quedaban seis letras y los chips de `details`
+ * se aplastaban hasta no decir nada.
+ *
  * La forma (vue-libvasak#74): título en `text-heading-xs` peso 600 —nada en
  * 700—, los botones laterales sin borde con el velo `ui-hover` y el de
  * reproducir con el relleno del primario, que es lo que actúa. Nada escala al
@@ -151,17 +162,17 @@ const SIDE_BUTTON =
 </script>
 
 <template>
-  <div class="flex w-full flex-col gap-3" data-now-playing>
-    <div class="flex min-w-0 items-center gap-4">
+  <div class="@container flex w-full flex-col gap-3" data-now-playing>
+    <div class="flex min-w-0 flex-col items-center gap-3 @xs:flex-row @xs:gap-4" data-now-playing-head>
       <SpinningCover
-        class="w-24"
+        class="w-20 @xs:w-24"
         :src="coverSrc"
         :alt="title"
         :state="state"
         :fallback-icon="fallbackIcon"
         @error="emit('coverError')" />
 
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
+      <div class="flex w-full min-w-0 flex-1 flex-col gap-1 text-center @xs:w-auto @xs:text-left" data-now-playing-text>
         <p class="line-clamp-2 font-semibold text-heading-xs text-tx-main" :title="shownTitle" data-title>
           {{ shownTitle }}
         </p>
@@ -171,7 +182,7 @@ const SIDE_BUTTON =
         <p v-if="album" class="truncate text-body-xs text-tx-muted" :title="album" data-album>
           {{ album }}
         </p>
-        <div v-if="$slots.details" class="mt-1 flex min-w-0 flex-wrap gap-1">
+        <div v-if="$slots.details" class="mt-1 flex w-full min-w-0 flex-wrap justify-center gap-1 @xs:justify-start">
           <slot name="details" />
         </div>
       </div>
