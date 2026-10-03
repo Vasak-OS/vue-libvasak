@@ -19,7 +19,9 @@
  *
  * `active` la rellena en el primario con el texto `tx-on-primary`: lo
  * conectado o lo de ahora (la Wi-Fi conectada, el Bluetooth con un
- * dispositivo). Es el único lugar donde va el acento.
+ * dispositivo). Es el único lugar donde va el acento. El icono va teñido con
+ * ese mismo color de texto (`ThemeIcon` con `tint`): el simbólico del tema es
+ * claro en oscuro y sobre el primario no llegaba al 3:1.
  *
  * # Botón o no
  *
@@ -164,6 +166,7 @@ function onClick(event: MouseEvent): void {
         :type="iconType"
         :fallbacks="iconFallbacks"
         :size="18"
+        :tint="active"
         alt=""
         class="shrink-0" />
     </slot>

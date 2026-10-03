@@ -50,6 +50,17 @@
  * hueco no, así que fuera de un contenedor flex no reservaba nada y la fila
  * saltaba igual al aparecer el icono.
  *
+ * # Teñido
+ *
+ * `tint` lo dibuja con el color del texto (`currentColor`): el archivo del tema
+ * va de máscara y el relleno es `bg-current`. Es para los simbólicos, que la
+ * especificación de freedesktop pide recolorear, cuando el fondo no es el de
+ * la ventana: un icono `#dedede` del tema oscuro sobre el primario del esquema
+ * por omisión mide 1,5:1, y con el color del texto encima del primario
+ * (`tx-on-primary`) pasa el 3:1 (vasak-desktop#151). Lo dibuja como `span`
+ * con `role="img"` y el `alt` de nombre, para que un lector de pantalla lo
+ * siga leyendo igual que la imagen.
+ *
  * Estas explicaciones vivían en comentarios de la plantilla, **antes** de la
  * raíz: eso la parte en un fragmento en desarrollo y las clases de quien lo
  * usa (`class="m-auto"`) no caían en ningún lado. Pasaron acá en la 2.2.0.
@@ -67,8 +78,10 @@ const props = withDefaults(
 		fallbacks?: readonly string[];
 		/** El dibujo de otra aplicación, si ningún nombre resolvió. */
 		fallbackSrc?: string;
+		/** Teñirlo con el color del texto (`currentColor`): ver «Teñido». */
+		tint?: boolean;
 	}>(),
-	{ type: 'icon', size: 18, alt: '', fallbacks: () => [], fallbackSrc: '' }
+	{ type: 'icon', size: 18, alt: '', fallbacks: () => [], fallbackSrc: '', tint: false }
 );
 
 const names = computed<readonly string[]>(() => [props.name, ...props.fallbacks]);
@@ -90,11 +103,35 @@ watch(drawing, (element) => watchElement(element), { immediate: true });
 const dimensions = computed(() =>
 	props.size === 'auto' ? undefined : { width: `${props.size}px`, height: `${props.size}px` }
 );
+/** La máscara del teñido: el dibujo del tema recorta el color del texto. */
+const mask = computed(() => {
+	const url = `url("${drawn.value}")`;
+	return {
+		...dimensions.value,
+		maskImage: url,
+		WebkitMaskImage: url,
+		maskSize: 'contain',
+		WebkitMaskSize: 'contain',
+		maskRepeat: 'no-repeat',
+		WebkitMaskRepeat: 'no-repeat',
+		maskPosition: 'center',
+		WebkitMaskPosition: 'center',
+	};
+});
 </script>
 
 <template>
+  <span
+    v-if="drawn && tint"
+    ref="drawing"
+    :role="alt ? 'img' : undefined"
+    :aria-label="alt || undefined"
+    :aria-hidden="alt ? undefined : 'true'"
+    :style="mask"
+    class="inline-block shrink-0 bg-current"
+    data-tinted />
   <img
-    v-if="drawn"
+    v-else-if="drawn"
     ref="drawing"
     :src="drawn"
     :alt="alt"

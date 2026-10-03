@@ -1091,3 +1091,9 @@ minor: no cambia nada de lo que ya había.
   el actual, nombre por botón (`labels`, o «Workspace N» del catálogo), un solo
   Tab y las flechas para mover el foco; cambiar de espacio pide Enter, Espacio o
   el clic, porque mueve todas las ventanas.
+- **`ThemeIcon` con `tint`**: el icono se dibuja con `currentColor` (el
+  archivo del tema va de `mask-image` sobre `bg-current`), para los simbólicos
+  sobre un fondo que no es el de la ventana. Medido con el esquema por
+  omisión: `#dedede` del tema oscuro sobre `primary` `#eba0ac` da 1,5:1;
+  `tx-on-primary` sobre `primary` pasa el 3:1 (lo mide `surface-contrast` en
+  cada esquema). `PanelPill` lo activa con `active`.

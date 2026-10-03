@@ -20,6 +20,15 @@ ya se exportaba.
   se encoge, un botón de 32 de ancho por espacio con el número, el actual en
   el primario y con `aria-current`. Un solo Tab entra al grupo y las flechas
   mueven el foco sin cambiar de espacio; se elige con Enter, Espacio o el clic.
+- **`ThemeIcon` con `tint`**: dibuja el icono con el color del texto
+  (`currentColor`, el archivo del tema de máscara). `PanelPill` lo usa en lo
+  activo: el simbólico del tema oscuro (`#dedede`) sobre el primario del
+  esquema por omisión medía 1,5:1; con `tx-on-primary` pasa el 3:1.
+
+### Cambiado
+
+- `PageDots` y `WorkspaceSwitcher` comparten las cuentas del recorrido con
+  flechas (`shared/roving-index.ts`); `PageDots` se comporta igual.
 
 ## 2.11.0 — sin publicar
 

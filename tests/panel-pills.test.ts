@@ -15,7 +15,8 @@ import { nextTick } from 'vue';
 import PanelPill from '../src/panel/PanelPill.vue';
 import WorkspaceSwitcher from '../src/panel/WorkspaceSwitcher.vue';
 import { arrowTarget, clampIndex, countOf } from '../src/shared/roving-index';
-import { olvidarTodo, traducir, vaciarElCatalogo } from './dobles';
+import ThemeIcon from '../src/icons/ThemeIcon.vue';
+import { olvidarTodo, ponerEnElTema, traducir, vaciarElCatalogo } from './dobles';
 
 const views: VueWrapper[] = [];
 function render<T>(component: T, options: Record<string, unknown> = {}) {
@@ -119,6 +120,18 @@ describe('la píldora del panel', () => {
 		expect(icon.exists()).toBe(true);
 		expect(icon.props('name')).toBe('audio-volume-medium');
 		expect(icon.props('alt')).toBe('');
+	});
+
+	test('activa, el icono va teñido con el texto sobre el primario; translúcida, con el del tema', () => {
+		// El simbólico del tema oscuro es #dedede: sobre el primario del esquema
+		// por omisión (#eba0ac) mide 1,5:1. Teñido de `tx-on-primary` pasa el
+		// 3:1, que `surface-contrast` mide para cada esquema.
+		const active = render(PanelPill, { props: { icon: 'network-wireless-signal-good-symbolic', active: true } });
+		expect(active.findComponent(ThemeIcon).props('tint')).toBe(true);
+		expect(active.find('[data-panel-pill]').classes()).toContain('text-tx-on-primary');
+
+		const idle = render(PanelPill, { props: { icon: 'network-wireless-offline-symbolic' } });
+		expect(idle.findComponent(ThemeIcon).props('tint')).toBe(false);
 	});
 
 	test('sin icono ni texto no dibuja huecos, y la ranura va adentro', () => {
@@ -297,6 +310,44 @@ describe('las cuentas del recorrido con flechas', () => {
 		expect(clampIndex(9, 3)).toBe(2);
 		expect(clampIndex(-1, 3)).toBe(0);
 		expect(clampIndex(4, 0)).toBe(0);
+	});
+});
+
+describe('el icono teñido', () => {
+	const settle = async () => {
+		for (let i = 0; i < 6; i++) await nextTick();
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		await nextTick();
+	};
+
+	test('con tint, el dibujo del tema es la máscara y el color es el del texto', async () => {
+		ponerEnElTema('wifi-tinted-symbolic', 'data:image/svg+xml;base64,PHN2Zy8+');
+		const view = render(ThemeIcon, { props: { name: 'wifi-tinted-symbolic', type: 'symbol', size: 18, tint: true } });
+		await settle();
+		const tinted = view.find('[data-tinted]');
+
+		expect(tinted.exists()).toBe(true);
+		expect(view.find('img').exists()).toBe(false);
+		expect(tinted.classes()).toContain('bg-current');
+		expect(tinted.attributes('style')).toContain('mask-image: url("data:image/svg+xml;base64,PHN2Zy8+")');
+		expect(tinted.attributes('aria-hidden')).toBe('true');
+	});
+
+	test('con nombre, sigue leyéndose como imagen', async () => {
+		ponerEnElTema('wifi-named-symbolic', 'data:image/svg+xml;base64,PHN2Zy8+');
+		const view = render(ThemeIcon, { props: { name: 'wifi-named-symbolic', type: 'symbol', tint: true, alt: 'Wi-Fi' } });
+		await settle();
+		const tinted = view.find('[data-tinted]');
+		expect(tinted.attributes('role')).toBe('img');
+		expect(tinted.attributes('aria-label')).toBe('Wi-Fi');
+	});
+
+	test('sin tint, la imagen de siempre', async () => {
+		ponerEnElTema('wifi-plain-symbolic', 'data:image/svg+xml;base64,PHN2Zy8+');
+		const view = render(ThemeIcon, { props: { name: 'wifi-plain-symbolic', type: 'symbol' } });
+		await settle();
+		expect(view.find('img').exists()).toBe(true);
+		expect(view.find('[data-tinted]').exists()).toBe(false);
 	});
 });
 

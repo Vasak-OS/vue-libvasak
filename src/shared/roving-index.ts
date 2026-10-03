@@ -1,3 +1,6 @@
+import { computed } from 'vue';
+import { useLabels } from './labels';
+
 /**
  * Las cuentas de un grupo de botones que se recorre con las flechas: cuántos
  * hay, cuál es el actual dentro del rango y a cuál lleva cada tecla.
@@ -36,4 +39,25 @@ export function arrowTarget(key: string, current: number, total: number): number
 		default:
 			return undefined;
 	}
+}
+
+/** Lo que un grupo de índices lee de sus propiedades. */
+export interface IndexGroupProps {
+	count: number;
+	modelValue?: number;
+	label?: string;
+}
+
+/**
+ * Cuántos hay, cuál es el actual y cómo se llama el grupo: lo mismo en
+ * `PageDots` y en `WorkspaceSwitcher`, que lo calculaban cada uno a mano.
+ * `labelKey` y `fallback` son la clave del catálogo y el texto de respaldo
+ * para cuando no viene `label`.
+ */
+export function useIndexGroup(props: IndexGroupProps, labelKey: string, fallback: string) {
+	const translate = useLabels();
+	const total = computed(() => countOf(props.count));
+	const active = computed(() => clampIndex(props.modelValue ?? 0, total.value));
+	const groupName = computed(() => props.label ?? translate(labelKey, fallback));
+	return { total, active, groupName, translate };
 }

@@ -28,8 +28,7 @@
  * números.
  */
 import { computed, nextTick, ref } from 'vue';
-import { useLabels } from '../shared/labels';
-import { arrowTarget, clampIndex, countOf } from '../shared/roving-index';
+import { arrowTarget, useIndexGroup } from '../shared/roving-index';
 import PanelPill from './PanelPill.vue';
 
 const props = withDefaults(
@@ -55,10 +54,7 @@ const emit = defineEmits<{
 }>();
 
 const root = ref<HTMLElement | null>(null);
-const translate = useLabels();
-const total = computed(() => countOf(props.count));
-const active = computed(() => clampIndex(props.modelValue, total.value));
-const groupName = computed(() => props.label ?? translate('workspaces.label', 'Workspaces'));
+const { total, active, groupName, translate } = useIndexGroup(props, 'workspaces.label', 'Workspaces');
 /** Dónde está el foco del teclado dentro del grupo; arranca en el actual. */
 const focused = ref<number | null>(null);
 const tabStop = computed(() => focused.value ?? active.value);
