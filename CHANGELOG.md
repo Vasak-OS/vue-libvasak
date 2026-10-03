@@ -1,20 +1,55 @@
 # Cambios de vue-libvasak
 
-## 2.11.0 — sin publicar
+## 2.12.0 — sin publicar
 
-El ecualizador del reproductor desplegable del escritorio (`vasak-desktop#131`)
-y de la sección Sonido de Configuración, sobre el ecualizador de sistema de
-vasak-wireplumber-modules (`docs/once-ui.md` §15). Es una minor: sólo suma.
+Las píldoras del panel flotante del escritorio (`vasak-desktop#151`; la
+especificación, `docs/once-ui.md` §20). Es una minor: no cambia nada de lo que
+ya se exportaba.
 
 ### Nuevo
 
-- **`Equalizer`**: diez bandas verticales (`role="slider"`, flechas, Re Pág /
-  Av Pág, Inicio / Fin, arrastrar en toda la columna) unidas por una curva
-  suave con un velo debajo —sin SVG: cajas recortadas con `clip-path`, que se
-  animan hacia las ganancias nuevas—, el encabezado «Guardado · Rock» y la
-  grilla de perfiles de 4 × 2 (2 × 4 en angosto) con el elegido en el primario.
-  Sin el servicio dice que no está disponible; apagado atenúa las bandas. No
-  sabe de D-Bus: emite `gain` y `preset`.
+- **`PanelPill`**: una píldora del panel en `ui-shell`, sin `backdrop-blur`
+  (el desenfoque lo pone Wayfire), con canto fino y `rounded-corner-full`.
+  Icono del tema, `label` y `caption` (el renglón chico de abajo) cortados con
+  puntos suspensivos y con cifras tabulares. `active` la rellena en el
+  primario; `interactive` la hace botón con anillo de foco y, sin él, es un
+  `div` quieto que no se pinta al pasar; `expanded` suma `aria-expanded` y el
+  velo `ui-selected-accent` sin tapar la superficie; `orientation="vertical"`
+  la apila para un panel a un costado; `flush` le saca el relleno a un grupo.
+- **`WorkspaceSwitcher`**: los espacios de trabajo en una `PanelPill` que no
+  se encoge, un botón de 32 de ancho por espacio con el número, el actual en
+  el primario y con `aria-current`. Un solo Tab entra al grupo y las flechas
+  mueven el foco sin cambiar de espacio; se elige con Enter, Espacio o el clic.
+- **`ThemeIcon` con `tint`**: dibuja el icono con el color del texto
+  (`currentColor`, el archivo del tema de máscara). `PanelPill` lo usa en lo
+  activo: el simbólico del tema oscuro (`#dedede`) sobre el primario del
+  esquema por omisión medía 1,5:1; con `tx-on-primary` pasa el 3:1.
+
+### Cambiado
+
+- `PageDots` y `WorkspaceSwitcher` comparten las cuentas del recorrido con
+  flechas (`shared/roving-index.ts`); `PageDots` se comporta igual.
+
+## 2.11.0 — sin publicar
+
+Las píldoras del panel flotante del escritorio (`vasak-desktop#151`; la
+especificación, `docs/once-ui.md` §20). Es una minor: no cambia nada de lo que
+ya se exportaba.
+
+### Nuevo
+
+- **`PanelPill`**: una píldora del panel en `ui-shell`, sin `backdrop-blur`
+  (el desenfoque lo pone Wayfire), con canto fino y `rounded-corner-full`.
+  Icono del tema, `label` y `caption` (el renglón chico de abajo) cortados con
+  puntos suspensivos y con cifras tabulares. `active` la rellena en el
+  primario; `interactive` la hace botón con anillo de foco y, sin él, es un
+  `div` quieto que no se pinta al pasar; `expanded` suma `aria-expanded` y el
+  velo `ui-selected-accent` sin tapar la superficie; `orientation="vertical"` la
+  apila para un panel a un costado; `flush` le saca el relleno a un grupo.
+- **`WorkspaceSwitcher`**: los espacios de trabajo en una `PanelPill`, un botón
+  de 32 de ancho por espacio con el número, el actual en el primario y con
+  `aria-current`. Un solo Tab entra al grupo y las flechas mueven el foco sin
+  cambiar de espacio; se elige con Enter, Espacio o el clic.
 
 ## 2.10.1 — sin publicar
 

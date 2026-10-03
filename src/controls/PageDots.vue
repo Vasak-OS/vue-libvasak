@@ -28,7 +28,7 @@
  * transición corta, y con `prefers-reduced-motion` no se anima.
  */
 import { computed, nextTick, ref } from 'vue';
-import { useLabels } from '../shared/labels';
+import { arrowTarget, useIndexGroup } from '../shared/roving-index';
 
 const props = withDefaults(
 	defineProps<{
@@ -51,12 +51,9 @@ const emit = defineEmits<{
 	change: [index: number];
 }>();
 
-const translate = useLabels();
 const root = ref<HTMLElement | null>(null);
-
-const total = computed(() => Math.max(0, Math.floor(props.count)));
-const active = computed(() => Math.min(Math.max(props.modelValue, 0), Math.max(total.value - 1, 0)));
-const groupName = computed(() => props.label ?? translate('pager.label', 'Pages'));
+// Las mismas cuentas que `WorkspaceSwitcher` (`shared/roving-index.ts`).
+const { total, active, groupName, translate } = useIndexGroup(props, 'pager.label', 'Pages');
 
 function nameOf(index: number): string {
 	const given = props.labels[index];
@@ -72,16 +69,7 @@ function select(index: number): void {
 }
 
 async function onKeydown(event: KeyboardEvent): Promise<void> {
-	const last = total.value - 1;
-	const targets: Record<string, number> = {
-		ArrowRight: Math.min(active.value + 1, last),
-		ArrowDown: Math.min(active.value + 1, last),
-		ArrowLeft: Math.max(active.value - 1, 0),
-		ArrowUp: Math.max(active.value - 1, 0),
-		Home: 0,
-		End: last,
-	};
-	const target = targets[event.key];
+	const target = arrowTarget(event.key, active.value, total.value);
 	if (target === undefined) return;
 	event.preventDefault();
 	select(target);
