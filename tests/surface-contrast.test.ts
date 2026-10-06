@@ -517,3 +517,60 @@ for (const scheme of schemes) {
 		});
 	}
 }
+
+/**
+ * Lo que sumó la 2.13.2: el icono chico de `QuickSettingsTile`, el que va
+ * delante del título cuando el mosaico es angosto y el círculo no entra.
+ *
+ * Encendido va en `ui-data` sobre el velo del encendido (`ui-selected-accent`);
+ * apagado, en `tx-muted` sobre la tarjeta (`ui-surface/70`). Es el icono que
+ * dice qué ajuste es y, en encendido, también el estado: WCAG 1.4.11 le pide
+ * 3:1. El mosaico vive en el centro de control (sobre `ui-shell`, con
+ * cualquier fondo de pantalla detrás) y en las ventanas, así que se mide sobre
+ * las mismas superficies que la tinta de los datos.
+ */
+for (const scheme of schemes) {
+	for (const mode of ['light', 'dark'] as const) {
+		const palette = resolvePalette(scheme.colors[mode]);
+		const background = palette['ui-background'];
+		const label = `${scheme.id}, ${mode === 'light' ? 'claro' : 'oscuro'}`;
+		const data = clampOklchLightness(
+			palette.primary,
+			mode === 'light' ? { max: dataBounds.light ?? 1 } : { min: dataBounds.dark ?? 0 }
+		);
+		const unders: Array<[string, Rgb | string]> = [['el fondo', background]];
+		for (const [photo, name] of [
+			[BLACK, 'negro'],
+			[WHITE, 'blanco'],
+		] as const) {
+			unders.push([`ui-shell sobre ${name}`, mix(background, 85, photo)]);
+		}
+		const accent = mixes['ui-selected-accent'] as Mix;
+
+		describe(`${label}: la 2.13.2`, () => {
+			test('el icono chico encendido (ui-data) llega a 3:1 sobre el velo del encendido', () => {
+				const short = unders
+					.map(([name, under]) => [name, contrast(data, compose(palette, accent, under))] as const)
+					.filter(([, ratio]) => ratio < NON_TEXT_MINIMUM)
+					.map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}`);
+				expect(short).toEqual([]);
+			});
+
+			test('el primario a secas no llegaba en claro: por eso va ui-data', () => {
+				if (mode === 'dark') return;
+				const worst = Math.min(
+					...unders.map(([, under]) => contrast(palette.primary, compose(palette, accent, under)))
+				);
+				expect(worst).toBeLessThan(NON_TEXT_MINIMUM);
+			});
+
+			test('el icono chico apagado (tx-muted) llega a 3:1 sobre la tarjeta', () => {
+				const short = unders
+					.map(([name, under]) => [name, contrast(palette['text-muted'], mix(palette['ui-surface'], 70, under))] as const)
+					.filter(([, ratio]) => ratio < NON_TEXT_MINIMUM)
+					.map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}`);
+				expect(short).toEqual([]);
+			});
+		});
+	}
+}

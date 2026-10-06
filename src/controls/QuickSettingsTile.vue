@@ -42,7 +42,22 @@
  * icono se va y el relleno se achica, para que el nombre entre entero
  * (vue-libvasak#91): en el centro de control, a 350 px de ventana, la grilla de
  * dos columnas deja unos 150 px por mosaico, y con el círculo y la flecha al
- * texto le quedaban 40 —«Bluet…», «Encen…»—. El umbral es del mosaico y no del
+ * texto le quedaban 40 —«Bluet…», «Encen…»—.
+ *
+ * En su lugar va el icono chico (16 px, el mismo del tema, sin círculo)
+ * delante del título, para que el mosaico no quede sin icono (2.13.2): en
+ * encendido en el color del primario —el estado se sigue leyendo también en el
+ * icono, no sólo en el canto— y apagado en el del texto atenuado. El título
+ * pide 4,5 rem (`basis-18`, la palabra más ancha de los mosaicos del centro) y
+ * la fila se parte si no entran los dos: más angosto que eso —a 137 px con
+ * detalle, en una caja—, el icono queda arriba y el título debajo con todo el
+ * ancho, en vez de partir «Bluetooth» o cortar «Tiempo de pantalla». El primario
+ * es `ui-data`: el mismo tono del esquema con la luminosidad topada, porque el
+ * primario a secas sobre el velo del encendido no llega a 3:1 en claro (2,28:1
+ * el de fábrica, 1,35:1 un acento claro); `ui-data` sí, y lo mide
+ * `tests/surface-contrast.test.ts`. Va en la fila
+ * del título y no en la del cuerpo: el estado, debajo, sigue teniendo todo el
+ * ancho. El umbral es del mosaico y no del
  * cuerpo, para que en una misma columna todos se vean igual, tengan detalle o
  * no. El texto entero sigue en el globo. El alto mínimo es de 56 px y la zona
  * del detalle de 32 de ancho: los dos se tocan con el dedo. Por eso tampoco se achica debajo de un
@@ -161,7 +176,20 @@ const touchable = computed(() =>
           :class="{ 'animate-pulse': loading }" />
       </span>
       <span class="flex min-w-0 flex-1 flex-col">
-        <span class="line-clamp-2 font-medium text-balance break-words text-label-m" data-tile-title>{{ title }}</span>
+        <span class="flex min-w-0 flex-wrap items-start gap-x-1">
+          <span
+            class="flex h-5 shrink-0 items-center transition-colors duration-200 ease-ui @[11.5rem]:hidden"
+            :class="isOn ? 'text-ui-data' : 'text-tx-muted'"
+            :data-tile-small-icon="isOn ? 'on' : 'off'">
+            <ThemeIcon
+              :name="icon"
+              :type="iconType"
+              :size="16"
+              tint
+              :class="{ 'animate-pulse': loading }" />
+          </span>
+          <span class="line-clamp-2 min-w-0 grow basis-18 font-medium text-balance break-words text-label-m" data-tile-title>{{ title }}</span>
+        </span>
         <span
           v-if="statusText"
           class="line-clamp-2 text-balance break-words text-body-xs font-normal text-tx-muted"
