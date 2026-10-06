@@ -1,5 +1,41 @@
 # Cambios de vue-libvasak
 
+## 2.13.2
+
+`QuickSettingsTile` no se queda sin icono en lo angosto (vue-libvasak#93). No
+cambia la API.
+
+### Cambiado
+
+- Debajo de 11,5 rem, donde el círculo no entra (#91), va el icono chico: el
+  mismo del tema, a 16 px y sin círculo, delante del título. Encima del umbral,
+  el círculo como antes; el chico se esconde en el mismo umbral en que el
+  círculo aparece, así que nunca están los dos. En el centro de control a 350
+  px de ventana (~146 px por mosaico) los mosaicos tenían sólo texto.
+- Encendido, el icono chico va en `ui-data` —el primario del esquema con la
+  luminosidad topada—, apagado en `tx-muted`. El primario a secas sobre el velo
+  del encendido no llega a 3:1 en claro (2,28:1 el esquema de fábrica, 1,35:1
+  un acento claro); `ui-data` sí, en el fondo y sobre `ui-shell` con un fondo
+  de pantalla negro o blanco. `tx-muted` sobre la tarjeta, también.
+- El icono va en la fila del título (separación de 4 px) y el estado queda
+  debajo con todo el ancho. El título pide 4,5 rem (`basis-18`, la palabra más
+  ancha de los mosaicos del centro) y la fila se parte si no entran los dos: a
+  137 px con detalle el icono queda arriba y el título debajo, en vez de partir
+  «Bluetooth» o cortar «Tiempo de pantalla» en cuatro líneas.
+
+### Medido
+
+- En el banco (`tiles-frames.html`, Chrome sin pantalla), 0 textos cortados de
+  84 en claro y en oscuro a 240, 350 y 360 px de ventana y en los mosaicos de
+  150 px clavados. Al título, con detalle, le quedan 76 px a 350 px de ventana
+  (146 por mosaico), 80 a 150 y 81 a 360; al estado, 96, 100 y 101. La flecha
+  sigue en 32 px.
+
+### Dependencias
+
+- Nada para subir: todo al día salvo `typescript` 7, que sigue anotada en
+  `vasak.bibliotecasAtrasadas`.
+
 ## 2.13.1
 
 `QuickSettingsTile` no corta el texto en lo angosto (vue-libvasak#91). Es un

@@ -169,7 +169,7 @@ describe('la forma', () => {
 		expect(TEMPLATE).not.toMatch(/#[0-9a-f]{3,6}\b|rgb\(|rounded-(?:md|lg|xl|\[)|<svg|backdrop-blur/);
 	});
 
-	test('se acomoda por contenedor: el círculo se va en lo angosto, y se toca con el dedo', () => {
+	test('se acomoda por contenedor: en lo angosto el círculo deja lugar al icono chico, y se toca con el dedo', () => {
 		const view = render({ ...BASE, detail: true });
 		expect((view.element as HTMLElement).className).toContain('@container');
 		expect((view.element as HTMLElement).className).toContain('min-h-14');
@@ -204,13 +204,21 @@ describe('la forma', () => {
 			const view = render({ ...BASE, detail: true });
 			const main = view.get('[data-tile-main]').classes();
 			const icon = view.get('[data-tile-icon]').classes();
+			const small = view.get('[data-tile-small-icon]');
 			const threshold = Number(/^@\[([\d.]+)rem\]:flex$/.exec(icon.find((name) => name.endsWith(']:flex')) ?? '')?.[1]) * 16;
+			const row = (small.element.parentElement as HTMLElement).className.split(/\s+/);
+			const title = view.get('[data-tile-title]').classes();
 			return {
 				threshold,
 				narrowPad: scale(main, 'px-'),
 				wide: `@[${threshold / 16}rem]:`,
 				main,
 				icon,
+				small: small.classes(),
+				smallSize: Number(small.findComponent({ name: 'ThemeIcon' }).props('size')),
+				rowGap: scale(row, 'gap-x-'),
+				row,
+				titleBasis: scale(title, 'basis-'),
 			};
 		}
 
@@ -223,10 +231,26 @@ describe('la forma', () => {
 			}
 		});
 
-		test('a 150 px, con detalle, el círculo no está y al texto le alcanza', () => {
-			const { threshold, narrowPad } = geometry();
+		test('a 150 px, con detalle, el círculo no está, va el icono chico y al título le alcanza', () => {
+			const { threshold, narrowPad, small, smallSize, rowGap, wide, titleBasis } = geometry();
 			expect(threshold).toBeGreaterThan(150);
-			expect(150 - BORDERS - ARROW - 2 * narrowPad).toBeGreaterThanOrEqual(WIDEST_WORD);
+			// El icono chico se va justo donde vuelve el círculo: nunca los dos.
+			expect(small).toContain(`${wide}hidden`);
+			expect(small).not.toContain('hidden');
+			// A 150 px —y a 146, lo que mide el mosaico en el centro de control a
+			// 350 px de ventana— el título entra al lado del icono con su ancho
+			// pedido: la fila no se parte en el caso de todos los días.
+			for (const tile of [150, 146]) {
+				expect(tile - BORDERS - ARROW - 2 * narrowPad - smallSize - rowGap).toBeGreaterThanOrEqual(titleBasis);
+			}
+		});
+
+		test('más angosto, la fila del título se parte antes que partir una palabra', () => {
+			const { row, titleBasis } = geometry();
+			// El título pide al menos la palabra más ancha; si no entra al lado
+			// del icono, baja a su propia línea con todo el ancho.
+			expect(titleBasis).toBeGreaterThanOrEqual(WIDEST_WORD);
+			expect(row).toContain('flex-wrap');
 		});
 
 		test('apenas vuelve el círculo, con detalle, al texto también le alcanza', () => {
@@ -236,5 +260,89 @@ describe('la forma', () => {
 			const circle = scale(icon, 'size-');
 			expect(threshold - BORDERS - ARROW - 2 * pad - circle - gap).toBeGreaterThanOrEqual(WIDEST_WORD);
 		});
+	});
+});
+
+/*
+ * La 2.13.2: en lo angosto el mosaico no queda sin icono. Debajo del umbral
+ * del círculo va el icono chico del tema (16 px, sin círculo) delante del
+ * título; encima, el círculo como antes. happy-dom no evalúa las consultas de
+ * contenedor, así que se fija con las clases: el chico se esconde en el mismo
+ * umbral en que el círculo aparece. La medida real está en el banco.
+ */
+describe('el icono chico en lo angosto (2.13.2)', () => {
+	const SOURCE = readFileSync(new URL('../src/controls/QuickSettingsTile.vue', import.meta.url), 'utf8');
+
+	/** El umbral (`@[N rem]:`) de una clase con ese sufijo. */
+	function threshold(classes: string[], suffix: string): string | undefined {
+		return classes.find((name) => name.startsWith('@[') && name.endsWith(`]:${suffix}`))?.slice(0, -suffix.length);
+	}
+
+	test('debajo del umbral, el icono de 16 px del tema; encima, el círculo; en el mismo umbral', () => {
+		const view = render({ ...BASE, active: false, detail: true });
+		const small = view.get('[data-tile-small-icon]');
+		const circle = view.get('[data-tile-icon]');
+		// Se ve por omisión (lo angosto) y se va encima del umbral.
+		expect(small.classes()).not.toContain('hidden');
+		expect(circle.classes()).toContain('hidden');
+		const smallUntil = threshold(small.classes(), 'hidden');
+		const circleFrom = threshold(circle.classes(), 'flex');
+		expect(smallUntil).toBeDefined();
+		expect(smallUntil).toBe(circleFrom);
+
+		const icon = small.findComponent({ name: 'ThemeIcon' });
+		expect(icon.props('size')).toBe(16);
+		expect(icon.props('name')).toBe('notifications-disabled');
+		expect(icon.props('type')).toBe('symbol');
+		expect(icon.props('tint')).toBe(true);
+		// Sin círculo: ni relleno ni radio.
+		expect(small.classes().some((name) => name.startsWith('bg-') || name.startsWith('rounded'))).toBe(false);
+		// Y el del círculo sigue en 20.
+		expect(circle.findComponent({ name: 'ThemeIcon' }).props('size')).toBe(20);
+	});
+
+	test('va delante del título, en su fila, y el estado queda debajo con todo el ancho', () => {
+		const view = render({ ...BASE, active: false });
+		const small = view.get('[data-tile-small-icon]').element;
+		const title = view.get('[data-tile-title]').element;
+		const status = view.get('[data-tile-status]').element;
+		expect(small.parentElement).toBe(title.parentElement);
+		expect(small.nextElementSibling).toBe(title);
+		expect((small.parentElement as HTMLElement).contains(status)).toBe(false);
+	});
+
+	test('encendido, en el primario del esquema (ui-data); apagado, en el texto atenuado', () => {
+		const on = render({ ...BASE, active: true }).get('[data-tile-small-icon]');
+		expect(on.attributes('data-tile-small-icon')).toBe('on');
+		expect(on.classes()).toContain('text-ui-data');
+		expect(on.classes()).not.toContain('text-tx-muted');
+
+		const off = render({ ...BASE, active: false }).get('[data-tile-small-icon]');
+		expect(off.attributes('data-tile-small-icon')).toBe('off');
+		expect(off.classes()).toContain('text-tx-muted');
+
+		// No disponible se ve apagado aunque venga encendido.
+		const gone = render({ ...BASE, active: true, unavailable: true }).get('[data-tile-small-icon]');
+		expect(gone.classes()).toContain('text-tx-muted');
+	});
+
+	test('el título conserva su ancho: no se encoge por el icono y no se corta en una línea', () => {
+		const view = render({ ...BASE, active: false, detail: true });
+		const small = view.get('[data-tile-small-icon]').classes();
+		const title = view.get('[data-tile-title]').classes();
+		expect(small).toContain('shrink-0');
+		expect(title).toEqual(expect.arrayContaining(['min-w-0', 'grow', 'line-clamp-2', 'break-words']));
+		expect(title.some((name) => name.startsWith('basis-'))).toBe(true);
+		expect(title).not.toContain('truncate');
+	});
+
+	test('mientras carga, el icono chico también late', () => {
+		const view = render({ ...BASE, active: false, loading: true });
+		expect(view.get('[data-tile-small-icon]').findComponent({ name: 'ThemeIcon' }).classes()).toContain('animate-pulse');
+	});
+
+	test('sin colores ni tamaños escritos a mano en el icono chico', () => {
+		const block = SOURCE.slice(SOURCE.indexOf('data-tile-small-icon') - 300, SOURCE.indexOf('data-tile-title'));
+		expect(block).not.toMatch(/#[0-9a-f]{3,6}\b|rgb\(|\[[\d.]+px\]|text-primary\b/);
 	});
 });
