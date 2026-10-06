@@ -63,7 +63,7 @@ describe('el encendido se ve y se dice', () => {
 		const view = render({ ...BASE, active: false });
 		expect(view.get('[data-tile-title]').text()).toBe('No molestar');
 		expect(view.get('[data-tile-status]').text()).toBe('Apagado');
-		expect(view.get('[data-tile-title]').classes()).toContain('truncate');
+		expect(view.get('[data-tile-title]').classes()).toContain('line-clamp-2');
 		expect(view.get('[data-tile-main]').attributes('title')).toBe('No molestar — Apagado');
 	});
 });
@@ -173,8 +173,68 @@ describe('la forma', () => {
 		const view = render({ ...BASE, detail: true });
 		expect((view.element as HTMLElement).className).toContain('@container');
 		expect((view.element as HTMLElement).className).toContain('min-h-14');
-		expect(view.get('[data-tile-icon]').classes()).toEqual(expect.arrayContaining(['hidden', '@[9rem]:flex']));
+		expect(view.get('[data-tile-icon]').classes()).toEqual(expect.arrayContaining(['hidden', '@[11.5rem]:flex']));
 		expect(view.get('[data-tile-detail]').classes()).toContain('w-8');
 		expect(TEMPLATE).not.toMatch(/\b(?:sm|md|lg|xl):/);
+	});
+
+	/*
+	 * vue-libvasak#91: en el centro de control, a 350 px de ventana, el mosaico
+	 * mide unos 150 px y la 2.13.0 cortaba «Bluet…», «Encen…» y «Tiempo de …».
+	 * happy-dom no maqueta, así que esto hace la cuenta con las clases del
+	 * componente: el ancho que le queda al texto según el umbral del círculo,
+	 * el relleno y la flecha. La medida real está en el banco
+	 * (`playground/tiles-frames.html`, que comprueba `scrollWidth`).
+	 */
+	describe('en lo angosto el texto entra entero (vue-libvasak#91)', () => {
+		/** La palabra más ancha de los mosaicos del centro, medida en el banco
+		 *  con `text-label-m` («despierto», «Bluetooth»: 66–70 px), con margen. */
+		const WIDEST_WORD = 72;
+		const BORDERS = 2;
+		const ARROW = 32 + 1;
+
+		/** El número de una clase de la escala con ese prefijo (`px-2` → 8 px). */
+		function scale(classes: string[], prefix: string): number {
+			const found = classes.find((name) => name.startsWith(prefix) && /^[\d.]+$/.test(name.slice(prefix.length)));
+			if (!found) throw new Error(`falta una clase ${prefix}N`);
+			return Number(found.slice(prefix.length)) * 4;
+		}
+
+		function geometry() {
+			const view = render({ ...BASE, detail: true });
+			const main = view.get('[data-tile-main]').classes();
+			const icon = view.get('[data-tile-icon]').classes();
+			const threshold = Number(/^@\[([\d.]+)rem\]:flex$/.exec(icon.find((name) => name.endsWith(']:flex')) ?? '')?.[1]) * 16;
+			return {
+				threshold,
+				narrowPad: scale(main, 'px-'),
+				wide: `@[${threshold / 16}rem]:`,
+				main,
+				icon,
+			};
+		}
+
+		test('el título y el estado ocupan hasta dos líneas y no se cortan con elipsis de una', () => {
+			const view = render({ ...BASE, active: false });
+			for (const selector of ['[data-tile-title]', '[data-tile-status]']) {
+				const classes = view.get(selector).classes();
+				expect(classes).toEqual(expect.arrayContaining(['line-clamp-2', 'text-balance', 'break-words']));
+				expect(classes).not.toContain('truncate');
+			}
+		});
+
+		test('a 150 px, con detalle, el círculo no está y al texto le alcanza', () => {
+			const { threshold, narrowPad } = geometry();
+			expect(threshold).toBeGreaterThan(150);
+			expect(150 - BORDERS - ARROW - 2 * narrowPad).toBeGreaterThanOrEqual(WIDEST_WORD);
+		});
+
+		test('apenas vuelve el círculo, con detalle, al texto también le alcanza', () => {
+			const { threshold, wide, main, icon } = geometry();
+			const pad = scale(main, `${wide}px-`);
+			const gap = scale(main, `${wide}gap-`);
+			const circle = scale(icon, 'size-');
+			expect(threshold - BORDERS - ARROW - 2 * pad - circle - gap).toBeGreaterThanOrEqual(WIDEST_WORD);
+		});
 	});
 });

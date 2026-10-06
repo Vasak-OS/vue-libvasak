@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mosaicos en ventana angosta</title>
+    <style>
+      body { margin: 0; padding: 16px; font: 12px sans-serif; display: flex; gap: 16px; align-items: flex-start; }
+      figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+      iframe { border: 0; height: 660px; }
+      pre { order: 99; white-space: pre-wrap; max-width: 420px; }
+    </style>
+  </head>
+  <body>
+    <!--
+      La grilla del centro de control dentro de un iframe de cada ancho de
+      ventana: Chrome sin pantalla no maqueta por debajo de ~500 px, así que la
+      ventana angosta se mide acá y no con --window-size (vue-libvasak#91).
+      `?theme=dark` pasa el tema; `?widths=240,350` cambia los anchos. Cuando
+      todo cargó, #result dice qué texto se corta (scrollWidth > clientWidth, o
+      scrollHeight > clientHeight cuando lo recorta el límite de dos líneas).
+    -->
+    <pre id="result">midiendo…</pre>
+    <script type="module">
+      const query = new URLSearchParams(location.search);
+      const theme = query.get('theme') ?? 'light';
+      const widths = (query.get('widths') ?? '240,350,360').split(',').map(Number);
+      const frames = widths.map((width) => {
+        const figure = document.createElement('figure');
+        const caption = document.createElement('figcaption');
+        caption.textContent = `${width} px`;
+        const frame = document.createElement('iframe');
+        frame.width = String(width);
+        frame.src = `./?only=tiles-window&theme=${theme}`;
+        figure.append(caption, frame);
+        document.body.append(figure);
+        return { width, frame };
+      });
+      // Mosaicos de 150 px clavados, en el banco de cajas.
+      const fixed = document.createElement('iframe');
+      fixed.width = '700';
+      fixed.src = `./?only=tiles-2131&width=240,350&theme=${theme}`;
+      document.body.append(fixed);
+
+      const measure = (doc, label) =>
+        [...doc.querySelectorAll('[data-tile-title], [data-tile-status]')].map((node) => {
+          const tile = node.closest('[data-active]');
+          return {
+            where: label,
+            text: node.textContent,
+            tile: Math.round(tile.getBoundingClientRect().width),
+            scroll: node.scrollWidth,
+            client: node.clientWidth,
+            scrollHeight: node.scrollHeight,
+            clientHeight: node.clientHeight,
+            lines: Math.round(node.getBoundingClientRect().height / parseFloat(getComputedStyle(node).lineHeight)),
+          };
+        });
+
+      const ready = (frame) =>
+        new Promise((resolve) => {
+          const check = () => {
+            const doc = frame.contentDocument;
+            if (doc?.querySelector('[data-tile-title]')) setTimeout(resolve, 300);
+            else setTimeout(check, 100);
+          };
+          check();
+        });
+
+      await Promise.all([...frames.map(({ frame }) => ready(frame)), ready(fixed)]);
+      const rows = [
+        ...frames.flatMap(({ width, frame }) => measure(frame.contentDocument, `ventana ${width}`)),
+        ...measure(fixed.contentDocument, 'cajas'),
+      ];
+      // Cortado a lo ancho (la elipsis de una línea) o a lo alto (la de dos).
+      const cut = rows.filter((row) => row.scroll > row.client || row.scrollHeight > row.clientHeight + 1);
+      document.getElementById('result').textContent = JSON.stringify({ cut: cut.length, rows }, null, 1);
+    </script>
+  </body>
+</html>

@@ -35,6 +35,7 @@ import Bench24 from './Bench24.vue';
 import BenchOrbit from './BenchOrbit.vue';
 import Bench28 from './Bench28.vue';
 import Bench213 from './Bench213.vue';
+import BenchTilesNarrow from './BenchTilesNarrow.vue';
 import BenchExtras from './BenchExtras.vue';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
@@ -87,6 +88,7 @@ const sections = [
 	'orbit',
 	'charts-28',
 	'tiles-213',
+	'tiles-2131',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -204,6 +206,9 @@ onMounted(async () => {
   <BenchWindow v-if="only === 'frame'" section="frame" :width="0" first />
   <!-- Lo de la 2.4.0 que se dibuja contra la ventana, también solo: dentro de
        la caja del banco la página se pasaría del ancho que se quiere medir. -->
+  <!-- La grilla del centro de control contra la ventana, para medirla en un
+       iframe del ancho pedido (Chrome sin pantalla no maqueta debajo de 500). -->
+  <BenchTilesNarrow v-else-if="only === 'tiles-window'" section="tiles-window" :width="0" first />
   <main v-else-if="NEXT_WINDOW.includes(only)" class="min-h-screen p-4 text-tx-main">
     <Bench24 :section="only" :width="widths[0] ?? 0" first />
   </main>
@@ -319,6 +324,11 @@ onMounted(async () => {
             :first="width === widths[0]" />
           <Bench213
             v-else-if="section === 'tiles-213'"
+            :section="section"
+            :width="width"
+            :first="width === widths[0]" />
+          <BenchTilesNarrow
+            v-else-if="section === 'tiles-2131'"
             :section="section"
             :width="width"
             :first="width === widths[0]" />
