@@ -36,10 +36,16 @@
  *
  * # Se acomoda al lugar
  *
- * Es un contenedor: el título y el estado se cortan con el texto entero en el
- * globo, y por debajo de 9 rem el círculo del icono se va para que el nombre
- * no desaparezca. El alto mínimo es de 56 px y la zona del detalle de 32 de
- * ancho: los dos se tocan con el dedo. Por eso tampoco se achica debajo de un
+ * Es un contenedor, y el texto no se corta: el título y el estado ocupan hasta
+ * dos líneas cada uno, repartidas parejas (`text-balance`), y una palabra que
+ * no entra se parte en vez de salirse. Por debajo de 11,5 rem el círculo del
+ * icono se va y el relleno se achica, para que el nombre entre entero
+ * (vue-libvasak#91): en el centro de control, a 350 px de ventana, la grilla de
+ * dos columnas deja unos 150 px por mosaico, y con el círculo y la flecha al
+ * texto le quedaban 40 —«Bluet…», «Encen…»—. El umbral es del mosaico y no del
+ * cuerpo, para que en una misma columna todos se vean igual, tengan detalle o
+ * no. El texto entero sigue en el globo. El alto mínimo es de 56 px y la zona
+ * del detalle de 32 de ancho: los dos se tocan con el dedo. Por eso tampoco se achica debajo de un
  * piso: el cuerpo nunca baja de 32 px (`min-w-8`), y el mosaico de 36 sin
  * detalle (32 + los cantos) ni de 68 con detalle (32 + 32 + el divisor y los
  * cantos). Sin ese piso, en una columna de 64 px el cuerpo quedaba en 30.
@@ -135,7 +141,7 @@ const touchable = computed(() =>
     :data-unavailable="unavailable ? 'true' : undefined">
     <button
       type="button"
-      class="min-w-8 flex-1 gap-3 px-3 py-2 text-left"
+      class="min-w-8 flex-1 gap-2 px-2 py-2 text-left @[11.5rem]:gap-3 @[11.5rem]:px-3"
       :class="[zone, touchable]"
       :disabled="blocked"
       :title="tooltip"
@@ -144,7 +150,7 @@ const touchable = computed(() =>
       data-tile-main
       @click="activate">
       <span
-        class="hidden size-9 shrink-0 items-center justify-center rounded-corner-full transition-colors duration-200 ease-ui @[9rem]:flex"
+        class="hidden size-9 shrink-0 items-center justify-center rounded-corner-full transition-colors duration-200 ease-ui @[11.5rem]:flex"
         :class="isOn ? 'bg-primary text-tx-on-primary' : 'bg-ui-line-weak text-tx-main'"
         :data-tile-icon="isOn ? 'on' : 'off'">
         <ThemeIcon
@@ -155,10 +161,10 @@ const touchable = computed(() =>
           :class="{ 'animate-pulse': loading }" />
       </span>
       <span class="flex min-w-0 flex-1 flex-col">
-        <span class="truncate font-medium text-label-m" data-tile-title>{{ title }}</span>
+        <span class="line-clamp-2 font-medium text-balance break-words text-label-m" data-tile-title>{{ title }}</span>
         <span
           v-if="statusText"
-          class="truncate text-body-xs font-normal text-tx-muted"
+          class="line-clamp-2 text-balance break-words text-body-xs font-normal text-tx-muted"
           data-tile-status>{{ statusText }}</span>
       </span>
     </button>

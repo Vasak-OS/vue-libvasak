@@ -1,5 +1,36 @@
 # Cambios de vue-libvasak
 
+## 2.13.1
+
+`QuickSettingsTile` no corta el texto en lo angosto (vue-libvasak#91). Es un
+arreglo: no cambia la API.
+
+### Arreglado
+
+- En el centro de control de vasak-desktop, a 350 px de ventana, la grilla de
+  dos columnas deja unos 150 px por mosaico, y con el círculo del icono, el
+  relleno y la flecha al texto le quedaban 40: «Bluet…», «Encen…», «Tiempo de
+  …». El título y el estado pasan a ocupar hasta dos líneas cada uno
+  (`line-clamp-2`, `text-balance`, `break-words`) en vez de cortarse en una; el
+  umbral del círculo sube de 9 rem a 11,5 rem del mosaico, y por debajo el
+  relleno y la separación bajan de 12 a 8 px. Medido en el banco con Chrome
+  sin pantalla: a 150 px con detalle al texto le quedan 100 px (antes 44), y
+  ningún texto de los mosaicos del centro tiene `scrollWidth > clientWidth` a
+  240, 350 y 360 px de ventana (antes, 48 cortados). La zona del detalle sigue
+  en 32 px y el cuerpo nunca baja de 32.
+
+### Banco
+
+- Sección `tiles-2131` (los textos reales del centro de control, en la grilla y
+  en mosaicos de 150 px clavados) y `tiles-frames.html`: la grilla dentro de un
+  `<iframe>` de cada ancho de ventana —Chrome sin pantalla no maqueta debajo de
+  ~500 px— que escribe en `#result` qué texto se corta.
+
+### Dependencias
+
+- Nada para subir: todo al día salvo `typescript` 7, que sigue anotada en
+  `vasak.bibliotecasAtrasadas`.
+
 ## 2.13.0
 
 El mosaico de ajuste rápido del centro de control del escritorio
