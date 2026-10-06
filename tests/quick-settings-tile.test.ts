@@ -143,6 +143,28 @@ describe('la forma', () => {
 		}
 	});
 
+	/** El ancho en px de una clase `min-w-N` / `w-N` de la escala (N × 4). */
+	function widthOf(classes: string[], prefix: 'min-w-' | 'w-'): number {
+		const found = classes.find((name) => name.startsWith(prefix) && /^\d+$/.test(name.slice(prefix.length)));
+		return found ? Number(found.slice(prefix.length)) * 4 : 0;
+	}
+
+	test('nunca deja un objetivo de menos de 32 px, tenga detalle o no', () => {
+		for (const detail of [false, true]) {
+			const view = render({ ...BASE, detail });
+			const root = (view.element as HTMLElement).className.split(/\s+/);
+			const main = view.get('[data-tile-main]').classes();
+			const mainMin = widthOf(main, 'min-w-');
+			expect(mainMin).toBeGreaterThanOrEqual(32);
+			// El piso del mosaico alcanza para el cuerpo, la flecha, el divisor
+			// (1 px) y los dos cantos (1 px cada uno): si el mosaico se encoge
+			// hasta su mínimo, ningún botón queda debajo de 32.
+			const arrow = detail ? widthOf(view.get('[data-tile-detail]').classes(), 'w-') + 1 : 0;
+			if (detail) expect(arrow - 1).toBeGreaterThanOrEqual(32);
+			expect(widthOf(root, 'min-w-')).toBeGreaterThanOrEqual(mainMin + arrow + 2);
+		}
+	});
+
 	test('ni colores, ni radios fijos, ni iconos dibujados', () => {
 		expect(TEMPLATE).not.toMatch(/#[0-9a-f]{3,6}\b|rgb\(|rounded-(?:md|lg|xl|\[)|<svg|backdrop-blur/);
 	});

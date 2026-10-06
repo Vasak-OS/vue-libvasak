@@ -39,7 +39,10 @@
  * Es un contenedor: el título y el estado se cortan con el texto entero en el
  * globo, y por debajo de 9 rem el círculo del icono se va para que el nombre
  * no desaparezca. El alto mínimo es de 56 px y la zona del detalle de 32 de
- * ancho: los dos se tocan con el dedo.
+ * ancho: los dos se tocan con el dedo. Por eso tampoco se achica debajo de un
+ * piso: el cuerpo nunca baja de 32 px (`min-w-8`), y el mosaico de 36 sin
+ * detalle (32 + los cantos) ni de 68 con detalle (32 + 32 + el divisor y los
+ * cantos). Sin ese piso, en una columna de 64 px el cuerpo quedaba en 30.
  */
 import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -114,7 +117,7 @@ function openDetail() {
 }
 
 const zone =
-	'flex min-w-0 items-center text-tx-main transition-colors duration-200 ease-ui focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed';
+	'flex items-center text-tx-main transition-colors duration-200 ease-ui focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed';
 const touchable = computed(() =>
 	blocked.value ? '' : 'cursor-pointer hover:bg-ui-hover active:bg-ui-pressed active:duration-100'
 );
@@ -122,8 +125,9 @@ const touchable = computed(() =>
 
 <template>
   <div
-    class="@container flex min-h-14 min-w-0 overflow-hidden rounded-corner-l border transition-colors duration-200 ease-ui"
+    class="@container flex min-h-14 overflow-hidden rounded-corner-l border transition-colors duration-200 ease-ui"
     :class="[
+      detail ? 'min-w-17' : 'min-w-9',
       isOn ? 'border-primary bg-ui-selected-accent' : 'border-ui-line bg-ui-surface/70',
       blocked ? 'opacity-50' : '',
     ]"
@@ -131,7 +135,7 @@ const touchable = computed(() =>
     :data-unavailable="unavailable ? 'true' : undefined">
     <button
       type="button"
-      class="flex-1 gap-3 px-3 py-2 text-left"
+      class="min-w-8 flex-1 gap-3 px-3 py-2 text-left"
       :class="[zone, touchable]"
       :disabled="blocked"
       :title="tooltip"
