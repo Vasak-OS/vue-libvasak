@@ -4,6 +4,9 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.13.0 se sumó el mosaico de ajuste rápido del centro de control
+ * del escritorio (`QuickSettingsTile`, vasak-desktop#174).
+ *
  * En la 2.12.0 se sumaron las píldoras del panel flotante del escritorio:
  * `PanelPill` y `WorkspaceSwitcher`.
  *
@@ -144,6 +147,7 @@ const PUBLIC_SURFACE = [
 	'ProgressBar',
 	'ProgressRing',
 	'PropertyList',
+	'QuickSettingsTile',
 	'readTextMenuState',
 	'rolDelTono',
 	'safeCalendarColor',

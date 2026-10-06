@@ -34,6 +34,7 @@ import {
 import Bench24 from './Bench24.vue';
 import BenchOrbit from './BenchOrbit.vue';
 import Bench28 from './Bench28.vue';
+import Bench213 from './Bench213.vue';
 import BenchExtras from './BenchExtras.vue';
 import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
@@ -85,6 +86,7 @@ const sections = [
 	'toast-top',
 	'orbit',
 	'charts-28',
+	'tiles-213',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -312,6 +314,11 @@ onMounted(async () => {
           <BenchOrbit v-else-if="section === 'orbit'" :section="section" :width="width" />
           <Bench28
             v-else-if="section === 'charts-28'"
+            :section="section"
+            :width="width"
+            :first="width === widths[0]" />
+          <Bench213
+            v-else-if="section === 'tiles-213'"
             :section="section"
             :width="width"
             :first="width === widths[0]" />

@@ -38,6 +38,7 @@ import SliderControl from "./forms/SliderControl.vue";
 import SwitchRow from "./forms/SwitchRow.vue";
 import SwitchToggle from "./forms/SwitchToggle.vue";
 import SwitchTrack from "./forms/SwitchTrack.vue";
+import QuickSettingsTile from "./controls/QuickSettingsTile.vue";
 import ToggleControl from "./controls/ToggleControl.vue";
 import Tooltip from "./tooltip/Tooltip.vue";
 import TooltipContent from "./tooltip/TooltipContent.vue";
@@ -143,6 +144,7 @@ const components = [
   SwitchRow,
   SwitchToggle,
   SwitchTrack,
+  QuickSettingsTile,
   ToggleControl,
   Tooltip,
   TooltipContent,
@@ -250,6 +252,7 @@ export {
   SwitchRow,
   SwitchToggle,
   SwitchTrack,
+  QuickSettingsTile,
   ToggleControl,
   Tooltip,
   TooltipContent,
