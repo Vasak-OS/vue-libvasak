@@ -193,11 +193,11 @@ describe('la forma', () => {
 		const BORDERS = 2;
 		const ARROW = 32 + 1;
 
-		/** El número de una clase de la escala (`px-2` → 8 px). */
-		function scale(classes: string[], pattern: RegExp): number {
-			const found = classes.map((name) => pattern.exec(name)).find(Boolean);
-			if (!found) throw new Error(`falta una clase que cumpla ${pattern}`);
-			return Number(found[1]) * 4;
+		/** El número de una clase de la escala con ese prefijo (`px-2` → 8 px). */
+		function scale(classes: string[], prefix: string): number {
+			const found = classes.find((name) => name.startsWith(prefix) && /^[\d.]+$/.test(name.slice(prefix.length)));
+			if (!found) throw new Error(`falta una clase ${prefix}N`);
+			return Number(found.slice(prefix.length)) * 4;
 		}
 
 		function geometry() {
@@ -207,7 +207,7 @@ describe('la forma', () => {
 			const threshold = Number(/^@\[([\d.]+)rem\]:flex$/.exec(icon.find((name) => name.endsWith(']:flex')) ?? '')?.[1]) * 16;
 			return {
 				threshold,
-				narrowPad: scale(main, /^px-([\d.]+)$/),
+				narrowPad: scale(main, 'px-'),
 				wide: `@[${threshold / 16}rem]:`,
 				main,
 				icon,
@@ -231,10 +231,9 @@ describe('la forma', () => {
 
 		test('apenas vuelve el círculo, con detalle, al texto también le alcanza', () => {
 			const { threshold, wide, main, icon } = geometry();
-			const prefix = wide.replace(/[[\].]/g, '\\$&');
-			const pad = scale(main, new RegExp(`^${prefix}px-([\\d.]+)$`));
-			const gap = scale(main, new RegExp(`^${prefix}gap-([\\d.]+)$`));
-			const circle = scale(icon, /^size-([\d.]+)$/);
+			const pad = scale(main, `${wide}px-`);
+			const gap = scale(main, `${wide}gap-`);
+			const circle = scale(icon, 'size-');
 			expect(threshold - BORDERS - ARROW - 2 * pad - circle - gap).toBeGreaterThanOrEqual(WIDEST_WORD);
 		});
 	});
