@@ -1,5 +1,31 @@
 # Cambios de vue-libvasak
 
+## 2.13.0
+
+El mosaico de ajuste rápido del centro de control del escritorio
+(`vasak-desktop#174`/`#175`). Es una minor: no cambia nada de lo que ya se
+exportaba.
+
+### Nuevo
+
+- **`QuickSettingsTile`**: icono del tema, título y línea de estado en una
+  tarjeta de Once UI (`rounded-corner-l`, canto `ui-line`, `ui-surface/70`).
+  `active` en `true`/`false` lo vuelve interruptor con `aria-pressed`, y el
+  encendido se pinta: velo `ui-selected-accent`, canto del primario y el icono
+  en un círculo del primario teñido con `tx-on-primary`. Con `active` en `null`
+  abre algo, sin `aria-pressed`. `detail` suma a la derecha una zona aparte con
+  la flecha › (`go-next`), otro botón con su nombre que emite `detail`; el
+  cuerpo emite `activate`. `unavailable` lo muestra apagado, dice «No
+  disponible» (catálogo `quickSettings.unavailable`) y no se puede tocar;
+  `disabled` es «ahora no» y conserva el estado; `loading` marca `aria-busy` y
+  no vuelve a alternar. Es un contenedor: por debajo de 9 rem el círculo del
+  icono se va, el título y el estado se cortan con el texto entero en el
+  globo, y se toca con el dedo (56 px de alto, 32 de ancho la flecha).
+
+### Dependencias
+
+- `@vasakgroup/plugin-config-manager` 2.10.0 (desarrollo) y `vite` 8.3.3.
+
 ## 2.12.0 — sin publicar
 
 Las píldoras del panel flotante del escritorio (`vasak-desktop#151`; la
