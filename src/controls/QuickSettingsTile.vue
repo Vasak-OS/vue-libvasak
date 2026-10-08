@@ -36,36 +36,30 @@
  *
  * # Se acomoda al lugar
  *
- * Es un contenedor, y el texto no se corta: el título y el estado ocupan hasta
- * dos líneas cada uno, repartidas parejas (`text-balance`), y una palabra que
- * no entra se parte en vez de salirse. Por debajo de 11,5 rem el círculo del
- * icono se va y el relleno se achica, para que el nombre entre entero
- * (vue-libvasak#91): en el centro de control, a 350 px de ventana, la grilla de
- * dos columnas deja unos 150 px por mosaico, y con el círculo y la flecha al
- * texto le quedaban 40 —«Bluet…», «Encen…»—.
+ * El título y el estado van en **una sola línea** cada uno (`MarqueeText`,
+ * vue-libvasak#95): si el nombre no entra —«Tiempo de pantalla» a 350 px— se
+ * desliza para leerse entero en vez de cortarse con «…». Así todas las
+ * pastillas de una fila miden lo mismo, que es lo que antes rompían los nombres
+ * largos al bajar a dos líneas. Reemplaza al ajuste de dos líneas que traía la
+ * 2.13.0 (`line-clamp-2`, `text-balance`): la marquesina resuelve lo mismo que
+ * aquello —que el texto quepa a 150 px— sin dejar las pastillas disparejas.
  *
- * En su lugar va el icono chico (16 px, el mismo del tema, sin círculo)
- * delante del título, para que el mosaico no quede sin icono (2.13.2): en
- * encendido en el color del primario —el estado se sigue leyendo también en el
- * icono, no sólo en el canto— y apagado en el del texto atenuado. El título
- * pide 4,5 rem (`basis-18`, la palabra más ancha de los mosaicos del centro) y
- * la fila se parte si no entran los dos: más angosto que eso —a 137 px con
- * detalle, en una caja—, el icono queda arriba y el título debajo con todo el
- * ancho, en vez de partir «Bluetooth» o cortar «Tiempo de pantalla». El primario
- * es `ui-data`: el mismo tono del esquema con la luminosidad topada, porque el
- * primario a secas sobre el velo del encendido no llega a 3:1 en claro (2,28:1
- * el de fábrica, 1,35:1 un acento claro); `ui-data` sí, y lo mide
- * `tests/surface-contrast.test.ts`. Va en la fila
- * del título y no en la del cuerpo: el estado, debajo, sigue teniendo todo el
- * ancho. El umbral es del mosaico y no del
- * cuerpo, para que en una misma columna todos se vean igual, tengan detalle o
- * no. El texto entero sigue en el globo. El alto mínimo es de 56 px y la zona
- * del detalle de 32 de ancho: los dos se tocan con el dedo. Por eso tampoco se achica debajo de un
- * piso: el cuerpo nunca baja de 32 px (`min-w-8`), y el mosaico de 36 sin
- * detalle (32 + los cantos) ni de 68 con detalle (32 + 32 + el divisor y los
- * cantos). Sin ese piso, en una columna de 64 px el cuerpo quedaba en 30.
+ * Por debajo de 11,5 rem el círculo del icono se va y en su lugar va el icono
+ * chico (16 px, el mismo del tema, sin círculo) delante del título, para que el
+ * mosaico no quede sin icono (2.13.2): en encendido en el color del primario
+ * —el estado se sigue leyendo también en el icono, no sólo en el canto— y
+ * apagado en el del texto atenuado. El primario es `ui-data`: el mismo tono del
+ * esquema con la luminosidad topada, porque el primario a secas sobre el velo
+ * del encendido no llega a 3:1 en claro (2,28:1 el de fábrica, 1,35:1 un acento
+ * claro); `ui-data` sí, y lo mide `tests/surface-contrast.test.ts`. El alto
+ * mínimo es de 56 px y la zona del detalle de 32 de ancho: los dos se tocan con
+ * el dedo. Por eso tampoco se achica debajo de un piso: el cuerpo nunca baja de
+ * 32 px (`min-w-8`), y el mosaico de 36 sin detalle (32 + los cantos) ni de 68
+ * con detalle (32 + 32 + el divisor y los cantos). Sin ese piso, en una columna
+ * de 64 px el cuerpo quedaba en 30.
  */
 import { computed } from 'vue';
+import MarqueeText from '../forms/MarqueeText.vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import { useLabels } from '../shared/labels';
 
@@ -176,7 +170,7 @@ const touchable = computed(() =>
           :class="{ 'animate-pulse': loading }" />
       </span>
       <span class="flex min-w-0 flex-1 flex-col">
-        <span class="flex min-w-0 flex-wrap items-start gap-x-1">
+        <span class="flex min-w-0 flex-nowrap items-center gap-x-1">
           <span
             class="flex h-5 shrink-0 items-center transition-colors duration-200 ease-ui @[11.5rem]:hidden"
             :class="isOn ? 'text-ui-data' : 'text-tx-muted'"
@@ -188,12 +182,20 @@ const touchable = computed(() =>
               tint
               :class="{ 'animate-pulse': loading }" />
           </span>
-          <span class="line-clamp-2 min-w-0 grow basis-18 font-medium text-balance break-words text-label-m" data-tile-title>{{ title }}</span>
+          <!-- Una línea: si el nombre no entra, se desliza en vez de cortarse
+               (vue-libvasak#95). Así todas las pastillas miden lo mismo. El
+               `data-*` va por objeto: cae al root del MarqueeText como atributo
+               y no lo lee vue-tsc como una prop que no existe. -->
+          <MarqueeText
+            :text="title"
+            class="min-w-0 flex-1 font-medium text-label-m"
+            v-bind="{ 'data-tile-title': '' }" />
         </span>
-        <span
+        <MarqueeText
           v-if="statusText"
-          class="line-clamp-2 text-balance break-words text-body-xs font-normal text-tx-muted"
-          data-tile-status>{{ statusText }}</span>
+          :text="statusText"
+          class="text-body-xs font-normal text-tx-muted"
+          v-bind="{ 'data-tile-status': '' }" />
       </span>
     </button>
     <button

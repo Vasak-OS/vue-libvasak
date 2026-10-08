@@ -174,6 +174,18 @@ describe('el deslizador', () => {
 		await input.trigger('input');
 		expect(vista.emitted('update:modelValue')?.[0]).toEqual([60]);
 	});
+
+	test('SliderControl es compacto: el centro de control apila varios (vue-libvasak#95)', () => {
+		// El relleno chico y el icono de 28 px bajan la fila de ~64 a ~40 px.
+		const tarjeta = montar(SliderControl, {
+			props: { label: 'Volumen', modelValue: 47, name: 'audio-volume-high', showButton: true },
+		});
+		expect(tarjeta.classes()).toEqual(expect.arrayContaining(['px-3', 'py-1']));
+		expect(tarjeta.classes()).not.toContain('p-4');
+		// El botón de silenciar: 28 px, por encima del mínimo táctil del AA (24).
+		const boton = tarjeta.get('button');
+		expect(boton.classes()).toEqual(expect.arrayContaining(['h-7', 'w-7']));
+	});
 });
 
 describe('el campo de varias líneas', () => {
