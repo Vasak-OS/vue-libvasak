@@ -119,6 +119,7 @@ const PUBLIC_SURFACE = [
 	'LoadingState',
 	'LOS_TRES_CONTROLES',
 	'markedDates',
+	'MarqueeText',
 	'MENU_KEY',
 	'monthGrid',
 	'MonthCalendar',

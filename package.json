@@ -1,6 +1,6 @@
 {
 	"name": "@vasakgroup/vue-libvasak",
-	"version": "2.13.2",
+	"version": "2.14.0",
 	"description": "Vue componenets for VSK Applications",
 	"main": "./dist/vue-libvasak.umd.js",
 	"module": "./dist/vue-libvasak.es.js",
@@ -66,9 +66,9 @@
 		"happy-dom": "^20.14.5",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3",
-		"vite": "^8.3.3",
+		"vite": "^8.3.4",
 		"vue": "^3.5.43",
-		"vue-router": "^5.3.1",
+		"vue-router": "^5.4.0",
 		"vue-tsc": "^3.3.12"
 	},
 	"scripts": {

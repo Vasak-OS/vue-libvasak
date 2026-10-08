@@ -59,11 +59,13 @@ describe('el encendido se ve y se dice', () => {
 		expect(view.find('[data-tile-status]').exists()).toBe(false);
 	});
 
-	test('el título y el estado, con el texto entero en el globo', () => {
+	test('el título y el estado, en una línea con el texto entero en el globo', () => {
 		const view = render({ ...BASE, active: false });
 		expect(view.get('[data-tile-title]').text()).toBe('No molestar');
 		expect(view.get('[data-tile-status]').text()).toBe('Apagado');
-		expect(view.get('[data-tile-title]').classes()).toContain('line-clamp-2');
+		// Una sola línea (`MarqueeText`): la caja recorta y, si sobra, se desliza.
+		expect(view.get('[data-tile-title]').classes()).toContain('overflow-hidden');
+		expect(view.get('[data-tile-title]').classes()).not.toContain('line-clamp-2');
 		expect(view.get('[data-tile-main]').attributes('title')).toBe('No molestar — Apagado');
 	});
 });
@@ -179,86 +181,39 @@ describe('la forma', () => {
 	});
 
 	/*
-	 * vue-libvasak#91: en el centro de control, a 350 px de ventana, el mosaico
-	 * mide unos 150 px y la 2.13.0 cortaba «Bluet…», «Encen…» y «Tiempo de …».
-	 * happy-dom no maqueta, así que esto hace la cuenta con las clases del
-	 * componente: el ancho que le queda al texto según el umbral del círculo,
-	 * el relleno y la flecha. La medida real está en el banco
-	 * (`playground/tiles-frames.html`, que comprueba `scrollWidth`).
+	 * vue-libvasak#95: el título y el estado van en una sola línea para que todas
+	 * las pastillas midan lo mismo, y si un nombre no entra —«Tiempo de pantalla»
+	 * a 350 px— se desliza (`MarqueeText`) en vez de cortarse. Reemplaza al
+	 * ajuste de dos líneas de la 2.13.0 (vue-libvasak#91), que las dejaba
+	 * disparejas. happy-dom no maqueta, así que acá se fija la forma por las
+	 * clases; que el deslizamiento arranque al sobrar texto se mide en el banco
+	 * (`playground/tiles-frames.html`, que compara `scrollWidth`).
 	 */
-	describe('en lo angosto el texto entra entero (vue-libvasak#91)', () => {
-		/** La palabra más ancha de los mosaicos del centro, medida en el banco
-		 *  con `text-label-m` («despierto», «Bluetooth»: 66–70 px), con margen. */
-		const WIDEST_WORD = 72;
-		const BORDERS = 2;
-		const ARROW = 32 + 1;
-
-		/** El número de una clase de la escala con ese prefijo (`px-2` → 8 px). */
-		function scale(classes: string[], prefix: string): number {
-			const found = classes.find((name) => name.startsWith(prefix) && /^[\d.]+$/.test(name.slice(prefix.length)));
-			if (!found) throw new Error(`falta una clase ${prefix}N`);
-			return Number(found.slice(prefix.length)) * 4;
-		}
-
-		function geometry() {
-			const view = render({ ...BASE, detail: true });
-			const main = view.get('[data-tile-main]').classes();
-			const icon = view.get('[data-tile-icon]').classes();
-			const small = view.get('[data-tile-small-icon]');
-			const threshold = Number(/^@\[([\d.]+)rem\]:flex$/.exec(icon.find((name) => name.endsWith(']:flex')) ?? '')?.[1]) * 16;
-			const row = (small.element.parentElement as HTMLElement).className.split(/\s+/);
-			const title = view.get('[data-tile-title]').classes();
-			return {
-				threshold,
-				narrowPad: scale(main, 'px-'),
-				wide: `@[${threshold / 16}rem]:`,
-				main,
-				icon,
-				small: small.classes(),
-				smallSize: Number(small.findComponent({ name: 'ThemeIcon' }).props('size')),
-				rowGap: scale(row, 'gap-x-'),
-				row,
-				titleBasis: scale(title, 'basis-'),
-			};
-		}
-
-		test('el título y el estado ocupan hasta dos líneas y no se cortan con elipsis de una', () => {
+	describe('una línea que se desliza si no entra (vue-libvasak#95)', () => {
+		test('el título y el estado son MarqueeText de una línea, no dos ni elipsis dura', () => {
 			const view = render({ ...BASE, active: false });
 			for (const selector of ['[data-tile-title]', '[data-tile-status]']) {
-				const classes = view.get(selector).classes();
-				expect(classes).toEqual(expect.arrayContaining(['line-clamp-2', 'text-balance', 'break-words']));
-				expect(classes).not.toContain('truncate');
+				const cell = view.get(selector);
+				// La raíz del MarqueeText recorta a una línea; el texto entero
+				// sigue en el DOM (lo lee un lector de pantalla) y en el globo.
+				expect(cell.classes()).toContain('overflow-hidden');
+				expect(cell.classes()).not.toContain('line-clamp-2');
+				expect(cell.attributes('title')).toBe(cell.text());
+				expect(cell.findComponent({ name: 'MarqueeText' }).exists()).toBe(true);
 			}
 		});
 
-		test('a 150 px, con detalle, el círculo no está, va el icono chico y al título le alcanza', () => {
-			const { threshold, narrowPad, small, smallSize, rowGap, wide, titleBasis } = geometry();
-			expect(threshold).toBeGreaterThan(150);
-			// El icono chico se va justo donde vuelve el círculo: nunca los dos.
-			expect(small).toContain(`${wide}hidden`);
-			expect(small).not.toContain('hidden');
-			// A 150 px —y a 146, lo que mide el mosaico en el centro de control a
-			// 350 px de ventana— el título entra al lado del icono con su ancho
-			// pedido: la fila no se parte en el caso de todos los días.
-			for (const tile of [150, 146]) {
-				expect(tile - BORDERS - ARROW - 2 * narrowPad - smallSize - rowGap).toBeGreaterThanOrEqual(titleBasis);
-			}
-		});
-
-		test('más angosto, la fila del título se parte antes que partir una palabra', () => {
-			const { row, titleBasis } = geometry();
-			// El título pide al menos la palabra más ancha; si no entra al lado
-			// del icono, baja a su propia línea con todo el ancho.
-			expect(titleBasis).toBeGreaterThanOrEqual(WIDEST_WORD);
-			expect(row).toContain('flex-wrap');
-		});
-
-		test('apenas vuelve el círculo, con detalle, al texto también le alcanza', () => {
-			const { threshold, wide, main, icon } = geometry();
-			const pad = scale(main, `${wide}px-`);
-			const gap = scale(main, `${wide}gap-`);
-			const circle = scale(icon, 'size-');
-			expect(threshold - BORDERS - ARROW - 2 * pad - circle - gap).toBeGreaterThanOrEqual(WIDEST_WORD);
+		test('la fila del icono y el título no se parte: el título crece y recorta', () => {
+			const view = render({ ...BASE, active: false, detail: true });
+			const small = view.get('[data-tile-small-icon]');
+			const row = (small.element.parentElement as HTMLElement).className.split(/\s+/);
+			// Antes se partía (`flex-wrap`) para bajar el título a su línea; ahora
+			// se queda al lado del icono y lo que sobra lo resuelve la marquesina.
+			expect(row).toContain('flex-nowrap');
+			expect(row).not.toContain('flex-wrap');
+			const title = view.get('[data-tile-title]').classes();
+			expect(title).toEqual(expect.arrayContaining(['min-w-0', 'flex-1']));
+			expect(title.some((name) => name.startsWith('basis-'))).toBe(false);
 		});
 	});
 });
@@ -326,13 +281,15 @@ describe('el icono chico en lo angosto (2.13.2)', () => {
 		expect(gone.classes()).toContain('text-tx-muted');
 	});
 
-	test('el título conserva su ancho: no se encoge por el icono y no se corta en una línea', () => {
+	test('el icono no empuja al título: es él quien se encoge y recorta', () => {
 		const view = render({ ...BASE, active: false, detail: true });
 		const small = view.get('[data-tile-small-icon]').classes();
 		const title = view.get('[data-tile-title]').classes();
+		// El icono chico no se encoge; el título toma el resto en una línea y, si
+		// no entra, lo resuelve la marquesina (no la elipsis dura de `truncate`).
 		expect(small).toContain('shrink-0');
-		expect(title).toEqual(expect.arrayContaining(['min-w-0', 'grow', 'line-clamp-2', 'break-words']));
-		expect(title.some((name) => name.startsWith('basis-'))).toBe(true);
+		expect(title).toEqual(expect.arrayContaining(['min-w-0', 'flex-1', 'overflow-hidden']));
+		expect(title).not.toContain('line-clamp-2');
 		expect(title).not.toContain('truncate');
 	});
 

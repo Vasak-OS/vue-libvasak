@@ -53,6 +53,7 @@ import OptionGroup from "./forms/OptionGroup.vue";
 import SegmentedControl from "./forms/SegmentedControl.vue";
 import Checkbox from "./forms/Checkbox.vue";
 import Slider from "./forms/Slider.vue";
+import MarqueeText from "./forms/MarqueeText.vue";
 import TextArea from "./forms/TextArea.vue";
 import NumberField from "./forms/NumberField.vue";
 import SettingRow from "./layout/SettingRow.vue";
@@ -158,6 +159,7 @@ const components = [
   SegmentedControl,
   Checkbox,
   Slider,
+  MarqueeText,
   TextArea,
   NumberField,
   SettingRow,
@@ -266,6 +268,7 @@ export {
   SegmentedControl,
   Checkbox,
   Slider,
+  MarqueeText,
   TextArea,
   NumberField,
   SettingRow,

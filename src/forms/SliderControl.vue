@@ -40,6 +40,15 @@
  * y el pulgar de Once UI en vez de los del tema de GTK. La API no cambió: las
  * mismas propiedades, los mismos eventos y el mismo `aria-valuetext` con el
  * porcentaje.
+ *
+ * ── Compacto (vue-libvasak#95) ─────────────────────────────────────────────
+ *
+ * El centro de control apila varios —volumen, micrófono, un brillo por
+ * monitor, y antes el relleno `p-4` y el icono de 32 px hacían de cada fila una
+ * tarjeta alta que se comía el alto de la ventana. Ahora el relleno es
+ * `px-3 py-1` y el icono/botón 28 px (el objetivo táctil sigue por encima de
+ * los 24 px del AA): la fila mide ~36 px en vez de ~64. La vía y el porcentaje
+ * no cambian.
  */
 import { computed } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
@@ -105,7 +114,7 @@ const handleButtonClick = () => {
 
 <template>
   <div
-    class="flex h-auto w-full min-w-0 flex-row items-center justify-between gap-2 rounded-corner-l border border-ui-line bg-ui-surface/70 p-4 text-tx-main"
+    class="flex h-auto w-full min-w-0 flex-row items-center justify-between gap-2 rounded-corner-l border border-ui-line bg-ui-surface/70 px-3 py-1 text-tx-main"
   >
     <button
       v-if="showButton"
@@ -113,16 +122,16 @@ const handleButtonClick = () => {
       type="button"
       :title="buttonLabel ?? label"
       :aria-label="buttonLabel ?? label"
-      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-corner-m transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
+      class="flex h-7 w-7 shrink-0 items-center justify-center rounded-corner-m transition-colors duration-200 ease-ui hover:bg-ui-hover active:bg-ui-pressed active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus"
     >
-      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" :class="iconClass" />
+      <ThemeIcon v-if="name" :name="name" :type="type" :size="20" :class="iconClass" />
     </button>
 
     <div
       v-else
-      class="flex h-8 w-8 shrink-0 items-center justify-center"
+      class="flex h-7 w-7 shrink-0 items-center justify-center"
     >
-      <ThemeIcon v-if="name" :name="name" :type="type" :size="24" />
+      <ThemeIcon v-if="name" :name="name" :type="type" :size="20" />
     </div>
 
     <Slider

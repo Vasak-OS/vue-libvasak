@@ -1,5 +1,38 @@
 # Cambios de vue-libvasak
 
+## 2.14.0
+
+Una línea que se desliza, el mosaico parejo y los deslizadores compactos, para
+el centro de control del escritorio (vue-libvasak#95).
+
+### Agregado
+
+- `MarqueeText`: un texto de **una sola línea** que, si no entra en su caja, se
+  desliza —va y vuelve— para leerse entero en lugar de cortarse con «…». Sólo se
+  mueve cuando sobra texto, medido con `ResizeObserver` (el WebView no entrega
+  `resize`). Con `prefers-reduced-motion` no se mueve y cae a la elipsis; el
+  texto entero sigue en el DOM —lo lee un lector de pantalla— y en el globo.
+
+### Cambiado
+
+- `QuickSettingsTile`: el título y el estado pasan a **una línea** con
+  `MarqueeText`, así todas las pastillas de una fila miden lo mismo. Reemplaza al
+  ajuste de dos líneas de la 2.13.0 (#91), que las dejaba disparejas cuando un
+  nombre largo —«Tiempo de pantalla», «Mantener despierto»— bajaba a dos
+  renglones; ahora ese nombre se desliza. La fila del icono y el título ya no se
+  parte. Se mantiene el icono chico en lo angosto (2.13.2). No cambia la API.
+- `SliderControl`: más compacto para que el centro de control pueda apilar
+  varios —volumen, micrófono, un brillo por monitor— sin comerse el alto de la
+  ventana. El relleno pasa de `p-4` a `px-3 py-1` y el icono/botón de 32 a 28 px
+  (sigue por encima del mínimo táctil del AA, 24 px): la fila mide ~36 px en vez
+  de ~64. La vía, el porcentaje y la API no cambian.
+
+### Dependencias
+
+- `vite` 8.3.3 → 8.3.4 y `vue-router` 5.3.1 → 5.4.0 (desarrollo). `typescript`
+  queda en la 5 por `vue.bibliotecasAtrasadas`: la 7 reescrita no trae
+  `typescript/lib/tsc` y vue-tsc 3.3 lo busca ahí.
+
 ## 2.13.2
 
 `QuickSettingsTile` no se queda sin icono en lo angosto (vue-libvasak#93). No
