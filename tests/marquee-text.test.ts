@@ -38,10 +38,35 @@ async function settle(view: VueWrapper): Promise<void> {
 }
 
 const original = globalThis.matchMedia;
-beforeEach(() => {
-	// Por omisión, con movimiento (lo que da happy-dom): matches en falso.
+
+/** Los oyentes del `change` de la consulta de movimiento, para dispararlos. */
+let motionListeners: Array<(event: { matches: boolean }) => void> = [];
+let motionMatches = false;
+
+/** Pone `matchMedia` controlable: la consulta de movimiento se puede cambiar. */
+function stubMatchMedia(): void {
 	globalThis.matchMedia = ((query: string) =>
-		({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }) as unknown as MediaQueryList) as typeof matchMedia;
+		({
+			matches: query.includes('reduced-motion') ? motionMatches : false,
+			media: query,
+			addEventListener: (_type: string, cb: (event: { matches: boolean }) => void) =>
+				motionListeners.push(cb),
+			removeEventListener: (_type: string, cb: (event: { matches: boolean }) => void) => {
+				motionListeners = motionListeners.filter((fn) => fn !== cb);
+			},
+		}) as unknown as MediaQueryList) as typeof matchMedia;
+}
+
+/** Simula que el usuario cambia la preferencia de movimiento después del montaje. */
+function emitMotion(matches: boolean): void {
+	motionMatches = matches;
+	for (const cb of [...motionListeners]) cb({ matches });
+}
+
+beforeEach(() => {
+	motionListeners = [];
+	motionMatches = false; // por omisión, con movimiento
+	stubMatchMedia();
 });
 afterEach(() => {
 	for (const view of views.splice(0)) view.unmount();
@@ -82,8 +107,7 @@ describe('se desliza si sobra texto', () => {
 	});
 
 	test('con prefers-reduced-motion no se mueve aunque sobre: cae a la elipsis', async () => {
-		globalThis.matchMedia = ((query: string) =>
-			({ matches: true, media: query, addEventListener() {}, removeEventListener() {} }) as unknown as MediaQueryList) as typeof matchMedia;
+		motionMatches = true;
 		const view = render({ text: 'corto' });
 		sizes(view, 120, 200);
 		await view.setProps({ text: 'un nombre bastante más largo que la caja' });
@@ -92,5 +116,25 @@ describe('se desliza si sobra texto', () => {
 		const inner = (view.element as HTMLElement).firstElementChild as HTMLElement;
 		expect(inner.className).not.toContain('marquee');
 		expect(inner.className).toContain('truncate');
+	});
+
+	test('si cambia la preferencia después del montaje, se sincroniza al instante', async () => {
+		const view = render({ text: 'corto' });
+		sizes(view, 120, 200);
+		await view.setProps({ text: 'un nombre bastante más largo que la caja' });
+		await settle(view);
+		const inner = () => (view.element as HTMLElement).firstElementChild as HTMLElement;
+		expect(inner().className).toContain('marquee');
+
+		// El usuario pide menos movimiento: deja de deslizarse y cae a la elipsis.
+		emitMotion(true);
+		await settle(view);
+		expect(inner().className).not.toContain('marquee');
+		expect(inner().className).toContain('truncate');
+
+		// Lo desactiva: vuelve a deslizarse.
+		emitMotion(false);
+		await settle(view);
+		expect(inner().className).toContain('marquee');
 	});
 });

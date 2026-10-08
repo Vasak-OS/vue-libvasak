@@ -47,6 +47,11 @@ const overflow = ref(0);
 const reduceMotion = ref(false);
 
 let observer: ResizeObserver | null = null;
+let motionQuery: MediaQueryList | null = null;
+
+function onMotionChange(event: MediaQueryListEvent): void {
+	reduceMotion.value = event.matches;
+}
 
 function measure(): void {
 	const box = root.value;
@@ -75,8 +80,13 @@ const style = computed(() => {
 });
 
 onMounted(() => {
-	reduceMotion.value =
-		typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+	// Se sigue en vivo: si cambia la preferencia después del montaje, la
+	// marquesina se enciende o se apaga —y con ella la elipsis— en el acto.
+	if (typeof matchMedia === 'function') {
+		motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+		reduceMotion.value = motionQuery.matches;
+		motionQuery.addEventListener('change', onMotionChange);
+	}
 	measure();
 	observer = new ResizeObserver(() => measure());
 	if (root.value) observer.observe(root.value);
@@ -91,6 +101,8 @@ watch(
 onBeforeUnmount(() => {
 	observer?.disconnect();
 	observer = null;
+	motionQuery?.removeEventListener('change', onMotionChange);
+	motionQuery = null;
 });
 </script>
 
