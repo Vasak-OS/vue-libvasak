@@ -15,6 +15,11 @@
  * superficie translúcida (spec §13). Canto fino `ui-line` y radio
  * `rounded-corner-full`, derivado del radio del usuario.
  *
+ * `flat` le saca ese fondo y ese canto en reposo, para cuando el panel ya tiene
+ * su propia superficie detrás (los estilos flotante/barra/dock): sin él la
+ * píldora pintaría un doble fondo encima. Sólo apaga el reposo inactivo —el
+ * activo sigue resaltando en el primario y el hover/pressed sigue respondiendo.
+ *
  * # Activo
  *
  * `active` la rellena en el primario con el texto `tx-on-primary`: lo
@@ -79,6 +84,13 @@ const props = withDefaults(
 		/** Sin relleno: para un grupo cuyos botones ya miden lo suyo. */
 		flush?: boolean;
 		/**
+		 * Sin fondo ni canto propios en reposo: para cuando el panel ya tiene una
+		 * superficie detrás (los estilos flotante/barra/dock del escritorio) y la
+		 * píldora pintaría un doble fondo encima. Sólo apaga el reposo inactivo: el
+		 * estado activo sigue resaltando y el hover/pressed sigue respondiendo.
+		 */
+		flat?: boolean;
+		/**
 		 * El rol de una píldora quieta que agrupa otros botones (`group`). Con
 		 * él, `accessibleLabel` nombra al grupo.
 		 */
@@ -97,6 +109,7 @@ const props = withDefaults(
 		accessibleLabel: undefined,
 		orientation: 'horizontal',
 		flush: false,
+		flat: false,
 		role: undefined,
 	}
 );
@@ -124,11 +137,15 @@ const rootBindings = computed(() =>
 		: { role: props.role, 'aria-label': props.role ? props.accessibleLabel : undefined }
 );
 
-const surface = computed(() =>
-	props.active
-		? 'border-transparent bg-primary text-tx-on-primary'
-		: 'border-ui-line bg-ui-shell text-tx-main'
-);
+const surface = computed(() => {
+	if (props.active) return 'border-transparent bg-primary text-tx-on-primary';
+	// Con `flat` el panel ya puso una superficie detrás: el reposo no dibuja la
+	// suya para no hacer un doble fondo. El hover/pressed vive en el `::before`,
+	// así que una píldora-botón plana sigue respondiendo al puntero.
+	return props.flat
+		? 'border-transparent bg-transparent text-tx-main'
+		: 'border-ui-line bg-ui-shell text-tx-main';
+});
 
 const states = computed(() => {
 	if (!props.interactive) return '';

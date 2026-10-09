@@ -1,6 +1,6 @@
 {
 	"name": "@vasakgroup/vue-libvasak",
-	"version": "2.14.0",
+	"version": "2.15.0",
 	"description": "Vue componenets for VSK Applications",
 	"main": "./dist/vue-libvasak.umd.js",
 	"module": "./dist/vue-libvasak.es.js",
@@ -54,16 +54,16 @@
 		"vue": "^3.0.0"
 	},
 	"devDependencies": {
-		"@happy-dom/global-registrator": "^20.14.5",
+		"@happy-dom/global-registrator": "^20.14.6",
 		"@tailwindcss/vite": "^4.3.3",
-		"@tauri-apps/api": "^2.12.1",
+		"@tauri-apps/api": "^2.12.2",
 		"@types/bun": "^1.4.2",
 		"@vasakgroup/plugin-config-manager": "^2.10.0",
 		"@vasakgroup/plugin-vicons": "^2.2.1",
 		"@vasakgroup/tauri-plugin-i18n": "^2.3.0",
 		"@vitejs/plugin-vue": "^6.0.9",
 		"@vue/test-utils": "^2.5.1",
-		"happy-dom": "^20.14.5",
+		"happy-dom": "^20.14.6",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3",
 		"vite": "^8.3.4",
