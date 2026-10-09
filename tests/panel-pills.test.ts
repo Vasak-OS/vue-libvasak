@@ -152,6 +152,34 @@ describe('la píldora del panel', () => {
 		expect(classes.join(' ')).not.toMatch(/(^|\s)p[xy]-/);
 	});
 
+	test('flat no dibuja fondo ni canto en reposo: el panel ya puso la superficie detrás', () => {
+		const classes = render(PanelPill, { props: { label: 'A', flat: true } }).find('[data-panel-pill]').classes();
+
+		expect(classes).not.toContain('bg-ui-shell');
+		expect(classes).not.toContain('border-ui-line');
+		expect(classes).toEqual(expect.arrayContaining(['bg-transparent', 'border-transparent', 'text-tx-main']));
+		// Sigue respondiendo al puntero: el velo vive en el ::before.
+		expect(classes).toContain('hover:before:bg-ui-hover');
+		expect(classes).toContain('active:before:bg-ui-pressed');
+	});
+
+	test('flat con activa conserva el resalte del primario', () => {
+		const classes = render(PanelPill, { props: { label: 'Fibernet', flat: true, active: true } })
+			.find('[data-panel-pill]')
+			.classes();
+
+		expect(classes).toEqual(expect.arrayContaining(['bg-primary', 'text-tx-on-primary']));
+		expect(classes).not.toContain('bg-transparent');
+		expect(classes).not.toContain('bg-ui-shell');
+	});
+
+	test('sin flat (por omisión) sigue con su superficie translúcida: no hay regresión', () => {
+		const classes = render(PanelPill, { props: { label: 'A' } }).find('[data-panel-pill]').classes();
+
+		expect(classes).toEqual(expect.arrayContaining(['bg-ui-shell', 'border-ui-line']));
+		expect(classes).not.toContain('bg-transparent');
+	});
+
 	test('los atributos que recibe llegan a la raíz', () => {
 		const root = render(PanelPill, { props: { label: 'A' }, attrs: { 'data-x': '1', class: 'extra' } }).find(
 			'[data-panel-pill]'
