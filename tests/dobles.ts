@@ -132,6 +132,7 @@ export function olvidarTodo() {
 	esperaDelRegistro = null;
 	laVentanaRecibio.length = 0;
 	pedidosDeIcono.length = 0;
+	configuracionDelEscritorio = null;
 	// Y lo que el módulo de iconos guarda de su lado. Su memoria y su cuenta de
 	// suscriptores viven en el módulo, y el módulo se comparte entre archivos de
 	// prueba: sin esto, una prueba arranca con los suscriptores que dejó otra y
@@ -181,4 +182,23 @@ export function vaciarElCatalogo() {
 
 export function useI18n() {
 	return { t: (clave: string) => catalogo.get(clave) ?? clave };
+}
+
+/**
+ * La configuración del escritorio (`vasak.conf`) que devuelve `readConfig`.
+ *
+ * Fuera de Tauri el complemento de verdad no tiene a quién pedírsela y la
+ * ventana se queda con lo de por omisión. Las preferencias de ventana —dónde va
+ * la barra, el estilo y el orden de los botones— salen de acá, así que la
+ * prueba tiene que poder decir qué hay escrito. `null` es «no hay nada», lo
+ * mismo que contesta el complemento sin archivo.
+ */
+let configuracionDelEscritorio: unknown = null;
+
+export function escribirLaConfiguracion(configuracion: unknown) {
+	configuracionDelEscritorio = configuracion;
+}
+
+export async function readConfig() {
+	return configuracionDelEscritorio;
 }

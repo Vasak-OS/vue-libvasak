@@ -39,9 +39,16 @@
  * La forma (vue-libvasak#74): conserva `rounded-corner-window` y el fondo de
  * la ventana —es el único lugar donde `bg-ui-bg` corresponde—, y el canto pasa
  * a `ui-line`, que en oscuro aclara en vez de verse como un hueco.
+ *
+ * # El borde de afuera y los botones (2.16.0)
+ *
+ * El canto es `window-border`: `ui-line` de 1 px salvo que la persona elija en
+ * Configuración el grueso o el color de acento. Y el marco lee una vez las
+ * preferencias de ventana —dónde va la barra, el estilo y el orden de los
+ * botones— y se las provee a la barra. Ver `window-preferences.ts`.
  */
 import { computed, provide } from 'vue';
-import { usarLaPosicionDeLaBarra } from './preferencia';
+import { useWindowPreferences, WINDOW_CONTROLS_KEY } from './window-preferences';
 import { reenviarSiEscuchan } from './reenvio';
 import {
 	CLAVE_DE_LA_BARRA,
@@ -88,8 +95,9 @@ defineEmits<{
 	close: [];
 }>();
 
-const preferred = usarLaPosicionDeLaBarra();
+const { barPosition: preferred, controlsStyle, controlsOrder } = useWindowPreferences();
 const barPosition = computed<PosicionDeLaBarra>(() => props.position ?? preferred.value);
+provide(WINDOW_CONTROLS_KEY, { controlsStyle, controlsOrder });
 const orientation = computed(() => orientacionDe(barPosition.value));
 const vertical = computed(() => orientation.value === 'vertical');
 
@@ -108,7 +116,7 @@ const DIRECTION: Record<PosicionDeLaBarra, string> = {
 
 <template>
   <div
-    class="flex h-screen w-screen overflow-hidden rounded-corner-window border border-ui-line bg-ui-bg/80 text-tx-main"
+    class="flex h-screen w-screen overflow-hidden rounded-corner-window window-border bg-ui-bg/80 text-tx-main"
     :class="DIRECTION[barPosition]">
     <AppBar
       v-if="!hideBar"

@@ -50,6 +50,12 @@ const categories = [
       <WindowControls :controls="['minimize', 'maximize', 'close']" class="is-hover" />
       <WindowControls :controls="['close']" />
     </div>
+    <!-- 2.16.0: estilo macOS, al final y invertido. -->
+    <div class="flex items-center gap-4">
+      <WindowControls variant="macos" />
+      <WindowControls variant="macos" order="reversed" />
+      <WindowControls order="reversed" />
+    </div>
   </div>
 
   <div v-else-if="section === 'media'" class="flex flex-col gap-4">

@@ -1,5 +1,31 @@
 # Cambios de vue-libvasak
 
+## 2.16.0
+
+El borde de afuera y los botones de ventana, a elección de quien usa el sistema.
+
+### Agregado
+
+- La utilidad `window-border` y el color `ui-window-border`: el canto de
+  **afuera** —la ventana entera, el panel, el centro de control y los
+  emergentes del escritorio—. Es el `ui-line` de 1 px de siempre salvo que en
+  Configuración se elija el grueso (2 px) o el color de acento; lo escribe
+  `@vasakgroup/plugin-config-manager` ≥ 2.11 en `--window-border-width` y
+  `--ui-window-border`. Los bordes de adentro no lo siguen.
+- Los botones de ventana estilo macOS: tres círculos en el rojo, el amarillo y
+  el verde del esquema, con el signo al pasar por encima. Y el orden invertido,
+  al principio de la barra y con cerrar primero. Salen de `window.controlsStyle`
+  (`default` | `macos`) y `window.controlsOrder` (`default` | `reversed`) de
+  `vasak.conf`, y cambian en las ventanas abiertas. `WindowControls` acepta
+  `variant` y `order` para fijarlos a mano.
+- `useWindowPreferences`, `useWindowControlsPreference`, `controlsStyleFrom`,
+  `controlsOrderFrom`, `orderControls` y `WINDOW_CONTROLS_KEY`.
+
+### Cambiado
+
+- `WindowFrame` dibuja su canto con `window-border` y lee una sola vez la
+  posición de la barra y las preferencias de los botones.
+
 ## 2.14.0
 
 Una línea que se desliza, el mosaico parejo y los deslizadores compactos, para

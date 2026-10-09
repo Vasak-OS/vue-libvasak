@@ -76,6 +76,10 @@
   );
   --use-ui-data: var(--ui-data, oklch(from var(--use-primary) min(l, 0.52) c h));
   --use-shadow-ink: var(--use-text-main);
+  --use-ui-window-border: var(
+    --ui-window-border,
+    color-mix(in srgb, var(--use-text-main) 16%, transparent)
+  );
 }
 
 .dark {
@@ -85,6 +89,10 @@
   );
   --use-ui-data: var(--ui-data-dark, oklch(from var(--use-primary) max(l, 0.7) c h));
   --use-shadow-ink: var(--use-ui-border);
+  --use-ui-window-border: var(
+    --ui-window-border,
+    color-mix(in srgb, var(--use-text-main) 16%, transparent)
+  );
 }
 
 @theme {
@@ -141,6 +149,17 @@
        un control que tiene que percibirse: campos, selects, vías. */
   --color-ui-line-weak: color-mix(in srgb, var(--use-text-main) 10%, transparent);
   --color-ui-line: color-mix(in srgb, var(--use-text-main) 16%, transparent);
+  /* - `ui-window-border`: el canto de **afuera** —la ventana entera, el panel,
+       el centro de control y los emergentes del escritorio—. Es `ui-line`
+       salvo que la persona elija en Configuración el color de acento
+       (`style.border.color`), y entonces el config-manager escribe
+       `--ui-window-border`. Va con la utilidad `window-border`, que le suma el
+       grosor elegido. Lo de adentro de una ventana sigue en `ui-line`. */
+  --color-ui-window-border: var(--use-ui-window-border);
+  /* El signo dentro de los botones de ventana estilo macOS (`×`, `−`, `+`):
+     la tinta de las sombras, que es oscura en los dos modos, sobre el rojo, el
+     amarillo y el verde del esquema. */
+  --color-ui-control-glyph: color-mix(in srgb, var(--use-shadow-ink) 75%, transparent);
 
   /* ── Rellenos de estado: neutros, no de acento ──────────────────────────
      Pasar por encima deja un velo gris muy leve con el texto de siempre, en
@@ -311,6 +330,26 @@
     var(--color-ui-overlay) 50%,
     transparent 100%
   );
+}
+
+/*
+ * El borde de afuera (2.16.0): la ventana entera (`WindowFrame`), el panel, el
+ * centro de control y los emergentes del escritorio.
+ *
+ * Grosor y color los elige la persona en Configuración (`style.border` de
+ * `vasak.conf`) y los escribe el config-manager: `--window-border-width`
+ * (1 px o 2 px) y `--ui-window-border` (el primario, o nada para el color del
+ * esquema). Sin config-manager —pruebas, vista previa, un plugin viejo— queda
+ * el de siempre: 1 px de `ui-line`.
+ *
+ * **Sólo** para lo de afuera. Las tarjetas, los paneles y los separadores de
+ * adentro de una aplicación siguen en `border border-ui-line`: el grosor y el
+ * acento son del marco, no de cada caja.
+ */
+@utility window-border {
+  border-style: solid;
+  border-width: var(--window-border-width, 1px);
+  border-color: var(--color-ui-window-border);
 }
 
 /*

@@ -45,11 +45,29 @@
  *
  * Con la barra vertical se apilan, que es lo único que entra en cuarenta y ocho
  * píxeles de ancho.
+ *
+ * # Estilo macOS y orden invertido (2.16.0)
+ *
+ * La persona elige en Configuración (`window.controlsStyle` y
+ * `window.controlsOrder` de `vasak.conf`) entre los botones planos y los tres
+ * círculos de macOS, y entre tenerlos al final o invertidos al principio
+ * —cerrar, minimizar, maximizar—. Los colores de los círculos son los del
+ * esquema: cerrar en `status-error`, minimizar en `status-warning` y maximizar
+ * en `status-success`, que salen de la paleta de la terminal del esquema. El
+ * signo de cada uno aparece al pasar por encima del grupo, como en macOS, y
+ * siempre que el teclado esté en alguno. Las propiedades `variant` y `order`
+ * fijan uno a mano para una ventana que no deba seguir la preferencia.
  */
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed, getCurrentInstance } from 'vue';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 import { type ControlDeVentana, LOS_TRES_CONTROLES, usarLaBarra } from './tipos';
+import {
+	orderControls,
+	useWindowControlsPreference,
+	type WindowControlsOrder,
+	type WindowControlsStyle,
+} from './window-preferences';
 import { useI18n } from '@vasakgroup/tauri-plugin-i18n';
 
 const props = withDefaults(
@@ -67,9 +85,15 @@ const props = withDefaults(
 		minimizeLabel?: string;
 		maximizeLabel?: string;
 		closeLabel?: string;
+		/** Fija el estilo, ignorando la preferencia del escritorio. */
+		variant?: WindowControlsStyle | null;
+		/** Fija el orden, ignorando la preferencia del escritorio. */
+		order?: WindowControlsOrder | null;
 	}>(),
 	{
 		controls: () => LOS_TRES_CONTROLES,
+		variant: null,
+		order: null,
 	}
 );
 
@@ -94,11 +118,9 @@ const emit = defineEmits<{
 
 const { vertical } = usarLaBarra();
 
-const has = computed(() => ({
-	minimize: props.controls.includes('minimize'),
-	maximize: props.controls.includes('maximize'),
-	close: props.controls.includes('close'),
-}));
+const preference = useWindowControlsPreference();
+const style = computed<WindowControlsStyle>(() => props.variant ?? preference.controlsStyle.value);
+const ordered = computed(() => orderControls(props.controls, props.order ?? preference.controlsOrder.value));
 
 /**
  * La ventana se pide al usarla y no al montar.
@@ -149,40 +171,93 @@ function close() {
  */
 const CLASSES =
 	'flex size-8 items-center justify-center rounded-corner-m text-tx-main transition-colors duration-200 ease-ui active:duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus';
+
+/**
+ * Los círculos de macOS: el blanco del clic es de 20 px aunque el círculo
+ * mida 14, para que apuntarles no sea un ejercicio de puntería.
+ */
+const MACOS_CLASSES =
+	'group/control flex size-5 items-center justify-center rounded-corner-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ui-focus';
+
+interface ControlButton {
+	icon: string;
+	label: string;
+	action: () => void;
+	/** El velo al pasar en el estilo plano. */
+	flat: string;
+	/** El relleno del círculo en el estilo macOS. */
+	dot: string;
+}
+
+const buttons = computed<Record<ControlDeVentana, ControlButton>>(() => ({
+	minimize: {
+		icon: 'window-minimize',
+		label: minimizeText.value,
+		action: minimize,
+		flat: 'hover:bg-ui-hover active:bg-ui-pressed',
+		dot: 'bg-status-warning',
+	},
+	maximize: {
+		icon: 'window-maximize',
+		label: maximizeText.value,
+		action: maximize,
+		flat: 'hover:bg-ui-hover active:bg-ui-pressed',
+		dot: 'bg-status-success',
+	},
+	close: {
+		icon: 'window-close',
+		label: closeText.value,
+		action: close,
+		flat: 'hover:bg-status-error/15 active:bg-status-error/25',
+		dot: 'bg-status-error',
+	},
+}));
 </script>
 
 <template>
   <div
-    v-if="controls.length"
-    class="flex shrink-0 gap-1"
-    :class="vertical ? 'flex-col' : ''"
+    v-if="ordered.length"
+    class="group/controls flex shrink-0"
+    :class="[vertical ? 'flex-col' : '', style === 'macos' ? 'gap-0.5 px-1' : 'gap-1']"
+    :data-controls-style="style"
     data-tauri-drag-region>
-    <button
-      v-if="has.minimize"
-      type="button"
-      :class="[CLASSES, 'hover:bg-ui-hover active:bg-ui-pressed']"
-      :title="minimizeText"
-      :aria-label="minimizeText"
-      @click="minimize()">
-      <ThemeIcon name="window-minimize" type="symbol" :size="16" />
-    </button>
-    <button
-      v-if="has.maximize"
-      type="button"
-      :class="[CLASSES, 'hover:bg-ui-hover active:bg-ui-pressed']"
-      :title="maximizeText"
-      :aria-label="maximizeText"
-      @click="maximize()">
-      <ThemeIcon name="window-maximize" type="symbol" :size="16" />
-    </button>
-    <button
-      v-if="has.close"
-      type="button"
-      :class="[CLASSES, 'hover:bg-status-error/15 active:bg-status-error/25']"
-      :title="closeText"
-      :aria-label="closeText"
-      @click="close()">
-      <ThemeIcon name="window-close" type="symbol" :size="16" />
-    </button>
+    <template v-if="style === 'macos'">
+      <button
+        v-for="control in ordered"
+        :key="control"
+        type="button"
+        :class="MACOS_CLASSES"
+        :title="buttons[control].label"
+        :aria-label="buttons[control].label"
+        :data-control="control"
+        @click="buttons[control].action()">
+        <span
+          class="flex size-3.5 items-center justify-center rounded-corner-full text-ui-control-glyph transition-opacity duration-100 ease-ui group-active/control:opacity-80"
+          :class="buttons[control].dot">
+          <!-- El signo es el icono simbólico del tema, teñido con el color del
+               texto. Aparece al pasar por encima del grupo o con el teclado
+               en un botón. -->
+          <ThemeIcon
+            :name="buttons[control].icon"
+            type="symbol"
+            tint
+            :size="10"
+            class="opacity-0 transition-opacity duration-100 ease-ui group-hover/controls:opacity-100 group-focus-within/controls:opacity-100" />
+        </span>
+      </button>
+    </template>
+    <template v-else>
+      <button
+        v-for="control in ordered"
+        :key="control"
+        type="button"
+        :class="[CLASSES, buttons[control].flat]"
+        :title="buttons[control].label"
+        :aria-label="buttons[control].label"
+        :data-control="control"
+        @click="buttons[control].action()">
+        <ThemeIcon :name="buttons[control].icon" type="symbol" :size="16" />
+      </button>
+    </template>
   </div>
 </template>
