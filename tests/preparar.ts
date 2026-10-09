@@ -21,6 +21,7 @@ import {
 	getIconSource,
 	getSymbolSource,
 	listen,
+	readConfig,
 	useI18n,
 } from './dobles';
 
@@ -37,6 +38,11 @@ mock.module('@vasakgroup/tauri-plugin-i18n', () => ({ useI18n }));
 // Sin esto `getCurrentWindow()` lanza —no hay ventana de Tauri— y la única
 // forma de probar los botones sería no apretarlos.
 mock.module('@tauri-apps/api/window', () => ({ getCurrentWindow }));
+// Las preferencias de ventana salen de `readConfig`: sin este doble no hay forma
+// de decir desde la prueba qué eligió la persona. Encima del módulo de verdad,
+// y tomado después del registro del DOM porque arrastra a Vue.
+const configManager = await import('@vasakgroup/plugin-config-manager');
+mock.module('@vasakgroup/plugin-config-manager', () => ({ ...configManager, readConfig }));
 
 // La memoria de los iconos vive en el módulo y el módulo se comparte entre
 // archivos de prueba, así que `olvidarTodo()` tiene que poder vaciarla. Se

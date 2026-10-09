@@ -211,6 +211,15 @@ const PUBLIC_SURFACE = [
 	'WindowControls',
 	'WindowFrame',
 	'WorkspaceSwitcher',
+	// 2.16.0: las preferencias de ventana (estilo y orden de los botones).
+	'controlsOrderFrom',
+	'controlsStyleFrom',
+	'orderControls',
+	'useWindowControlsPreference',
+	'useWindowPreferences',
+	'WINDOW_CONTROLS_KEY',
+	'WINDOW_CONTROLS_ORDERS',
+	'WINDOW_CONTROLS_STYLES',
 ];
 
 describe('la superficie pública', () => {

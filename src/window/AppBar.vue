@@ -15,7 +15,9 @@
  * `centro` va **encima** de la barra, centrado respecto de la ventana entera.
  * `acciones` es lo de la aplicación que va junto a los controles de ventana.
  *
- * Los controles van siempre y al final, que es donde la gente los busca.
+ * Los controles van al final, que es donde la gente los busca, salvo que la
+ * persona los pida invertidos como en macOS (`window.controlsOrder`): entonces
+ * van primero, antes del icono.
  *
  * # `data-tauri-drag-region`
  *
@@ -54,6 +56,7 @@ import {
 	usarLaBarra,
 } from './tipos';
 import { reenviarSiEscuchan } from './reenvio';
+import { useWindowControlsPreference } from './window-preferences';
 import WindowControls from './WindowControls.vue';
 
 const props = withDefaults(
@@ -87,6 +90,8 @@ defineEmits<{
 }>();
 
 const fromFrame = usarLaBarra();
+const { controlsOrder } = useWindowControlsPreference();
+const controlsFirst = computed(() => controlsOrder.value === 'reversed');
 const barPosition = computed<PosicionDeLaBarra>(() => props.position ?? fromFrame.posicion.value);
 const vertical = computed(() => barPosition.value === 'left' || barPosition.value === 'right');
 
@@ -210,6 +215,15 @@ defineExpose({ centerMode });
     class="relative flex shrink-0 items-center gap-2 p-1 font-title"
     :class="[vertical ? 'h-full flex-col' : 'w-full', centerMode === 'below' && !vertical ? 'flex-wrap' : '']"
     data-tauri-drag-region>
+    <!-- Invertidos, como en macOS: primero, antes del icono. -->
+    <WindowControls
+      v-if="controlsFirst"
+      :controls="controls"
+      :minimize-label="minimizeLabel"
+      :maximize-label="maximizeLabel"
+      :close-label="closeLabel"
+      v-on="reenviarSiEscuchan(['minimize', 'maximize', 'close'])" />
+
     <div v-if="$slots.identidad" class="flex shrink-0 items-center" data-tauri-drag-region>
       <slot name="identidad" />
     </div>
@@ -249,6 +263,7 @@ defineExpose({ centerMode });
     </div>
 
     <WindowControls
+      v-if="!controlsFirst"
       :controls="controls"
       :minimize-label="minimizeLabel"
       :maximize-label="maximizeLabel"

@@ -462,6 +462,22 @@ export {
   usarLaBarra,
 } from "./window/tipos";
 export { posicionDe, usarLaPosicionDeLaBarra } from "./window/preferencia";
+export type {
+  WindowControlsOrder,
+  WindowControlsPreference,
+  WindowControlsStyle,
+  WindowPreferences,
+} from "./window/window-preferences";
+export {
+  controlsOrderFrom,
+  controlsStyleFrom,
+  orderControls,
+  useWindowControlsPreference,
+  useWindowPreferences,
+  WINDOW_CONTROLS_KEY,
+  WINDOW_CONTROLS_ORDERS,
+  WINDOW_CONTROLS_STYLES,
+} from "./window/window-preferences";
 
 /**
  * Vaciar la memoria de iconos del tema.
