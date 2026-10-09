@@ -1,5 +1,14 @@
 # Cambios de vue-libvasak
 
+## 2.17.0
+
+### Agregado
+
+- `WorkspaceSwitcher` acepta `flat`, como `PanelPill`: sobre un panel con
+  superficie propia (flotante, barra, dock) la píldora de los espacios de
+  trabajo deja de pintar un doble fondo. El actual sigue en el primario y el
+  velo al pasar sigue respondiendo (#99).
+
 ## 2.16.0
 
 El borde de afuera y los botones de ventana, a elección de quien usa el sistema.

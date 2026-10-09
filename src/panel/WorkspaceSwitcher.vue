@@ -26,6 +26,11 @@
  * costado (`orientation="vertical"`) se apilan. La píldora no se encoge
  * (`shrink-0`): en un panel angosto se cortan los textos de las demás, no los
  * números.
+ *
+ * `flat` se le pasa a la píldora, igual que a las demás del panel: cuando el
+ * panel ya tiene su propia superficie (flotante, barra, dock) la píldora no
+ * dibuja la suya y no queda un doble fondo. El actual sigue en el primario y
+ * el velo al pasar sigue respondiendo, porque viven en el círculo de adentro.
  */
 import { computed, nextTick, ref } from 'vue';
 import { arrowTarget, useIndexGroup } from '../shared/roving-index';
@@ -43,8 +48,17 @@ const props = withDefaults(
 		labels?: readonly string[];
 		orientation?: 'horizontal' | 'vertical';
 		disabled?: boolean;
+		/** Sin fondo ni canto propios: el panel ya tiene una superficie detrás. */
+		flat?: boolean;
 	}>(),
-	{ modelValue: 0, label: undefined, labels: () => [], orientation: 'horizontal', disabled: false }
+	{
+		modelValue: 0,
+		label: undefined,
+		labels: () => [],
+		orientation: 'horizontal',
+		disabled: false,
+		flat: false,
+	}
 );
 
 const emit = defineEmits<{
@@ -105,6 +119,7 @@ function onFocusout(event: FocusEvent): void {
   <PanelPill
     :interactive="false"
     :orientation="orientation"
+    :flat="flat"
     role="group"
     :accessible-label="groupName"
     flush

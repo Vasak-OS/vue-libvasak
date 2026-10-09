@@ -1090,7 +1090,9 @@ minor: no cambia nada de lo que ya había.
   `bg-primary`, los demás en `tx-muted` con el velo al pasar. `aria-current` en
   el actual, nombre por botón (`labels`, o «Workspace N» del catálogo), un solo
   Tab y las flechas para mover el foco; cambiar de espacio pide Enter, Espacio o
-  el clic, porque mueve todas las ventanas.
+  el clic, porque mueve todas las ventanas. `flat` se reenvía a la `PanelPill`,
+  como en las demás píldoras del panel: sobre un panel con superficie no hay
+  doble fondo.
 - **`ThemeIcon` con `tint`**: el icono se dibuja con `currentColor` (el
   archivo del tema va de `mask-image` sobre `bg-current`), para los simbólicos
   sobre un fondo que no es el de la ventana. Medido con el esquema por
