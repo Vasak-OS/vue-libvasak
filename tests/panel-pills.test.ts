@@ -319,6 +319,40 @@ describe('los espacios de trabajo', () => {
 		await view.findAll('[data-workspace]')[1]?.trigger('click');
 		expect(view.emitted('change')).toBeUndefined();
 	});
+
+	// vue-libvasak#99: sobre un panel con superficie propia (flotante, barra,
+	// dock) la píldora de los espacios dibujaba un doble fondo, porque `flat`
+	// no llegaba a la PanelPill de afuera.
+	test('con flat la píldora no dibuja fondo ni canto: no hay doble fondo sobre el panel', () => {
+		const view = render(WorkspaceSwitcher, { props: { count: 3, flat: true } });
+		const classes = view.find('[data-workspace-switcher] [data-panel-pill]').classes();
+
+		expect(classes).not.toContain('bg-ui-shell');
+		expect(classes).not.toContain('border-ui-line');
+		expect(classes).toEqual(expect.arrayContaining(['bg-transparent', 'border-transparent']));
+		expect(classes.join(' ')).not.toMatch(/backdrop-blur/);
+	});
+
+	test('sin flat (por omisión) la píldora conserva su superficie translúcida y su canto', () => {
+		const view = render(WorkspaceSwitcher, { props: { count: 3 } });
+		const classes = view.find('[data-workspace-switcher] [data-panel-pill]').classes();
+
+		expect(classes).toEqual(expect.arrayContaining(['bg-ui-shell', 'border-ui-line']));
+		expect(classes).not.toContain('bg-transparent');
+	});
+
+	test('con flat el actual sigue en el primario y los demás conservan el velo al pasar', () => {
+		const view = render(WorkspaceSwitcher, { props: { count: 3, modelValue: 1, flat: true } });
+		const marks = view.findAll('[data-workspace-mark]');
+
+		// La prueba sólo vale si la píldora de verdad quedó plana.
+		expect(view.find('[data-panel-pill]').classes()).toContain('bg-transparent');
+		expect(marks[1]?.classes()).toEqual(expect.arrayContaining(['bg-primary', 'text-tx-on-primary']));
+		for (const index of [0, 2]) {
+			expect(marks[index]?.classes()).toEqual(expect.arrayContaining(['group-hover:bg-ui-hover', 'text-tx-muted']));
+			expect(marks[index]?.classes()).not.toContain('bg-primary');
+		}
+	});
 });
 
 describe('las cuentas del recorrido con flechas', () => {
