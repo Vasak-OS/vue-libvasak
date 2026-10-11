@@ -51,6 +51,26 @@ describe('el texto del botón se lee sobre su fondo', () => {
 			expect(texto).toBe(`text-tx-on-${color}`);
 		});
 	}
+
+	test('el danger se pinta con el texto calculado para el rojo, no con el del primario', () => {
+		// Hasta la 2.17.0 el botón de peligro llevaba `text-tx-on-primary`, y
+		// `#1e1e2e` sobre `#d20f39` da 3,02:1 en claro: no llegaba. Tampoco
+		// servía `text-tx-on-secondary`, aunque hoy dé 4,80:1 sobre ese rojo:
+		// funciona por casualidad, porque en el esquema por omisión vale
+		// `#eff1f5`, y con un esquema donde el error y el secundario tengan
+		// distinta claridad deja de llegar sin avisar. Desde la 2.9.0 el
+		// config-manager calcula `--text-on-error` contra el rojo del esquema, y
+		// la librería lo expone como `text-tx-on-status-error`. El contraste de
+		// verdad lo mide `tests/el-texto-sobre-el-error.test.ts`.
+		const clases = mount(ActionButton, {
+			props: { label: 'Borrar', variant: 'danger' },
+		})
+			.get('button')
+			.classes();
+
+		expect(fondos(clases)).toContain('bg-status-error');
+		expect(clases.filter((c) => c.startsWith('text-tx-on-'))).toEqual(['text-tx-on-status-error']);
+	});
 });
 
 describe('las variantes sin relleno', () => {
@@ -121,32 +141,5 @@ describe('la forma', () => {
 		const vista = mount(ActionButton, { props: { label: '', icon: 'edit-delete', iconAlt: 'Borrar' } });
 
 		expect(vista.get('button').attributes('aria-label')).toBe('Borrar');
-	});
-});
-
-describe('lo que este archivo todavía no arregla', () => {
-	// Marcada como `failing` a propósito, y no con una prueba que falla:
-	// una prueba roja permanente entrena a ignorar el rojo y traba el CI de
-	// todos los demás. `failing` dice lo mismo —esto está roto— y deja la suite
-	// en verde. El día que exista `--text-on-danger` y se escriba el token, esta
-	// prueba pasa sola y **el CI se pone rojo solo**, que es justo el aviso de
-	// que hay que sacarle el marcador.
-	test.failing('`danger` se lee mal en claro, y necesita un token que no existe', () => {
-		// `#1e1e2e` sobre `#d20f39` da 3.02:1, así que el botón de peligro tampoco
-		// llega. No se puede cambiar a `text-tx-on-secondary` aunque hoy dé 4.80:1
-		// sobre `#d20f39`: funciona por casualidad, porque en el esquema por
-		// omisión ese token vale `#eff1f5` en claro, y con un esquema donde el
-		// error y el secundario tengan distinta claridad deja de funcionar sin
-		// avisar. Lo que hace falta es `--text-on-danger`, y eso viene con el
-		// trabajo de los esquemas: `--status-error` está a mano en cada
-		// `main.css` y no sale de `vasak-default.json`, así que el config-manager
-		// no tiene de dónde derivarlo.
-		const clases = mount(ActionButton, {
-			props: { label: 'Borrar', variant: 'danger' },
-		})
-			.get('button')
-			.classes();
-
-		expect(clases).toContain('text-tx-on-status-error');
 	});
 });

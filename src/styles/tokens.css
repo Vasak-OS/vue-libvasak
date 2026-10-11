@@ -46,6 +46,13 @@
  * `tests/surface-contrast.test.ts`. Sigue teñido de la marca y sale del
  * esquema.
  *
+ * `--use-text-on-error` es el texto sobre el rojo lleno (`bg-status-error`, el
+ * botón `danger`). Lo calcula el config-manager contra WCAG desde la 2.9.0 y lo
+ * escribe en `--text-on-error` / `--text-on-error-dark`; sin él, el respaldo es
+ * el texto sobre el primario, que es lo que el botón usaba hasta ahora. Con el
+ * esquema por omisión ese respaldo da 3,02:1 en claro (`#1e1e2e` sobre
+ * `#d20f39`); el calculado llega a 4,5:1.
+ *
  * `--use-shadow-ink` es la tinta de las sombras. Once UI usa negro; negro es un
  * color fijo, y acá no hay colores fijos. En claro la tinta es el texto
  * principal, que es lo más oscuro que tiene un esquema claro; en oscuro es el
@@ -75,6 +82,7 @@
     color-mix(in srgb, var(--use-primary) 40%, var(--use-text-main))
   );
   --use-ui-data: var(--ui-data, oklch(from var(--use-primary) min(l, 0.52) c h));
+  --use-text-on-error: var(--text-on-error, var(--use-text-on-primary));
   --use-shadow-ink: var(--use-text-main);
   --use-ui-window-border: var(
     --ui-window-border,
@@ -88,6 +96,7 @@
     color-mix(in srgb, var(--use-primary) 40%, var(--use-text-main))
   );
   --use-ui-data: var(--ui-data-dark, oklch(from var(--use-primary) max(l, 0.7) c h));
+  --use-text-on-error: var(--text-on-error-dark, var(--use-text-on-primary));
   --use-shadow-ink: var(--use-ui-border);
   --use-ui-window-border: var(
     --ui-window-border,
@@ -112,6 +121,7 @@
   --color-tx-muted: var(--use-text-muted);
   --color-tx-on-primary: var(--use-text-on-primary);
   --color-tx-on-secondary: var(--use-text-on-secondary);
+  --color-tx-on-status-error: var(--use-text-on-error);
   --color-status-error: var(--use-status-error);
   --color-status-success: var(--use-status-success);
   --color-status-warning: var(--use-status-warning);
