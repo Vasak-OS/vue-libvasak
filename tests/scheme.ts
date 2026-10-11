@@ -114,6 +114,8 @@ export interface ResolvedPalette {
 	'text-muted': string;
 	'text-on-primary': string;
 	'text-on-secondary': string;
+	/** El texto sobre el rojo lleno (`bg-status-error`): config-manager 2.9.0. */
+	'text-on-error': string;
 	'status-error': string;
 	'status-success': string;
 	'status-warning': string;
@@ -134,6 +136,7 @@ export function resolvePalette(variant: SchemeVariant): ResolvedPalette {
 		'text-muted': ui.text.muted,
 		'text-on-primary': textOn(ui.color.primary, ui.text['on-primary'], ui),
 		'text-on-secondary': textOn(ui.color.secondary, undefined, ui),
+		'text-on-error': textOn(variant.terminal.ansi.red, undefined, ui),
 		'status-error': variant.terminal.ansi.red,
 		'status-success': variant.terminal.ansi.green,
 		'status-warning': variant.terminal.ansi.yellow,

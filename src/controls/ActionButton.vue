@@ -23,10 +23,9 @@
  *
  * Cada relleno lleva el token de texto que corresponde a **su** fondo: el
  * `primary` va con `text-tx-on-primary`, que calcula el config-manager contra
- * WCAG. `danger` todavía no tiene el suyo: `#1e1e2e` sobre `#d20f39` da 3,02:1
- * en claro. Hace falta `--text-on-danger`, y el config-manager no puede
- * derivarlo mientras el esquema no declare los colores de estado. Hay una
- * prueba marcada como `failing` que lo recuerda.
+ * WCAG. `danger` va con `text-tx-on-status-error`, el texto que el
+ * config-manager calcula para el rojo del esquema (`--text-on-error`); antes
+ * usaba el del primario, y `#1e1e2e` sobre `#d20f39` daba 3,02:1 en claro.
  *
  * # Tamaños
  *
@@ -126,7 +125,7 @@ const variantClasses: Record<Variant, string> = {
 	secondary:
 		'border-ui-line bg-transparent text-tx-main hover:border-ui-border-strong hover:bg-ui-hover active:bg-ui-pressed',
 	ghost: 'border-transparent bg-transparent text-tx-main hover:bg-ui-hover active:bg-ui-pressed',
-	danger: 'border-transparent bg-status-error text-tx-on-primary hover:bg-status-error/90 active:bg-status-error/80',
+	danger: 'border-transparent bg-status-error text-tx-on-status-error hover:bg-status-error/90 active:bg-status-error/80',
 	overlay:
 		'border-transparent bg-ui-overlay text-tx-main hover:bg-linear-to-r hover:from-ui-hover hover:to-ui-hover active:from-ui-pressed active:to-ui-pressed',
 };

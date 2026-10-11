@@ -1,5 +1,14 @@
 # Cambios de vue-libvasak
 
+## 2.18.0
+
+### Cambiado
+
+- El botón `danger` lleva el texto que el config-manager calcula para el rojo
+  del esquema (`--text-on-error`, utilidad `text-tx-on-status-error`), y no el
+  del primario. Con el esquema por omisión se leía a 3,02:1 en claro; ahora
+  llega a 4,5:1. Sin el plugin al día, el respaldo es el de antes.
+
 ## 2.17.0
 
 ### Agregado
