@@ -20,7 +20,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { contrast, rootProperties, type SchemeDocument, TEXT_MINIMUM } from './scheme';
+import { contrast, parseHex, type Rgb, rootProperties, type SchemeDocument, TEXT_MINIMUM, toHex } from './scheme';
 
 const FIXTURES = fileURLToPath(new URL('./fixtures/schemes/', import.meta.url));
 const TOKENS_CSS = fileURLToPath(new URL('../src/styles/tokens.css', import.meta.url));
@@ -193,4 +193,195 @@ describe('el botón de peligro llega a 4,5:1', () => {
 		expect(inline['--status-error']).toBe('#d20f39');
 		expect(contrast(inline['--text-on-primary'] as string, '#d20f39')).toBeCloseTo(3.02, 2);
 	});
+});
+
+/*
+ * Al pasar y al apretar.
+ *
+ * El texto se calcula contra el rojo lleno. Hasta la 2.18.0 el `danger`
+ * pasaba a `bg-status-error/90` y `/80`: un rojo traslúcido que se mezcla con
+ * lo que haya detrás del botón, y en claro se aclara hasta que el texto claro
+ * deja de leerse (4,42:1 y 3,93:1 con el esquema por omisión). Ahora el rojo
+ * queda opaco y encima va el velo de `overlay`, `from-ui-hover` /
+ * `from-ui-pressed`, que es el texto principal al 7 % y al 12 %.
+ *
+ * Como el reposo, la prueba no escribe los estados a mano: lee las clases
+ * `hover:` y `active:` del componente, sigue sus colores por la cascada
+ * —incluidos los `color-mix(…, transparent)` y el `/NN` de Tailwind— y pinta
+ * las capas como el navegador: lo de atrás del botón, el color de fondo, y
+ * encima la imagen de fondo. Lo de atrás es el fondo de la ventana o una
+ * superficie, que son las dos cosas sobre las que se dibuja un botón.
+ */
+
+type Rgba = [number, number, number, number];
+
+const isTransparent = (value: string) => value.trim() === 'transparent';
+
+/** Corta los argumentos de una función CSS por las comas de primer nivel. */
+function splitArguments(inner: string): string[] {
+	const parts: string[] = [];
+	let depth = 0;
+	let current = '';
+	for (const char of inner) {
+		if (char === '(') depth++;
+		if (char === ')') depth--;
+		if (char === ',' && depth === 0) {
+			parts.push(current.trim());
+			current = '';
+		} else {
+			current += char;
+		}
+	}
+	parts.push(current.trim());
+	return parts;
+}
+
+/**
+ * Como `resolve`, pero hasta un color con alfa: entiende además `transparent`
+ * y `color-mix(in <espacio>, a p%, b)`. La mezcla es premultiplicada, como la
+ * pide CSS Color 5; con `transparent` de un lado el espacio no importa, y con
+ * dos colores opacos sólo se acepta sRGB, que es lo único que sabe mezclar.
+ */
+function resolveRgba(value: string, inline: Record<string, string>, sheet: Declarations, seen: string[] = []): Rgba {
+	const trimmed = value.trim();
+	if (isTransparent(trimmed)) return [0, 0, 0, 0];
+	if (/^#[0-9a-f]{6}$/i.test(trimmed) || /^#[0-9a-f]{3}$/i.test(trimmed)) return [...parseHex(trimmed), 1];
+	const mixMatch = trimmed.match(/^color-mix\(([\s\S]*)\)$/);
+	if (mixMatch) {
+		const [space, first, second] = splitArguments(mixMatch[1] as string);
+		const left = (first ?? '').match(/^([\s\S]+?)\s+([0-9.]+)%$/);
+		if (!space || !left || second === undefined) throw new Error(`no sé mezclar «${trimmed}»`);
+		const p = Number(left[2]) / 100;
+		const a = resolveRgba(left[1] as string, inline, sheet, seen);
+		const b = resolveRgba(second, inline, sheet, seen);
+		if (space !== 'in srgb' && a[3] > 0 && b[3] > 0) throw new Error(`mezcla de dos colores ${space}: «${trimmed}»`);
+		const alpha = a[3] * p + b[3] * (1 - p);
+		if (alpha === 0) return [0, 0, 0, 0];
+		const channel = (i: number) => ((a[i] as number) * a[3] * p + (b[i] as number) * b[3] * (1 - p)) / alpha;
+		return [channel(0), channel(1), channel(2), alpha];
+	}
+	const parts = splitVar(trimmed);
+	if (!parts) throw new Error(`no sé resolver «${trimmed}» (${seen.join(' → ')})`);
+	if (seen.includes(parts.name)) throw new Error(`ciclo en ${seen.join(' → ')}`);
+	const defined = inline[parts.name] ?? sheet.get(parts.name);
+	if (defined !== undefined) return resolveRgba(defined, inline, sheet, [...seen, parts.name]);
+	if (parts.fallback !== null) return resolveRgba(parts.fallback, inline, sheet, [...seen, `${parts.name} (respaldo)`]);
+	throw new Error(`${parts.name} no está definida (${seen.join(' → ')})`);
+}
+
+/** Pinta `top` sobre `bottom`, que es opaco. */
+function over(top: Rgba, bottom: Rgb): Rgb {
+	return [0, 1, 2].map((i) => (top[i] as number) * top[3] + (bottom[i] as number) * (1 - top[3])) as Rgb;
+}
+
+/**
+ * La utilidad de color de Tailwind a lo que emite: `bg-x` es
+ * `var(--color-x)`, y `bg-x/90` es `color-mix(in oklab, var(--color-x) 90%,
+ * transparent)`.
+ */
+function utilityColor(utility: string, prefix: string): string {
+	const [name, opacity] = utility.slice(prefix.length).split('/');
+	const color = `var(--color-${name})`;
+	return opacity === undefined ? color : `color-mix(in oklab, ${color} ${opacity}%, transparent)`;
+}
+
+type State = 'hover' | 'active';
+
+/**
+ * Las clases que valen en un estado. Al apretar el puntero también está
+ * encima, así que `active` suma lo de `hover` y lo pisa (Tailwind ordena
+ * `active:` después de `hover:`).
+ */
+async function dangerClassesIn(state: State): Promise<string[]> {
+	const source = await Bun.file(ACTION_BUTTON).text();
+	const all = (source.match(/^\s*danger:\s*'([^']+)'/m)?.[1] ?? '').split(/\s+/).filter(Boolean);
+	const variants = state === 'hover' ? ['hover:'] : ['hover:', 'active:'];
+	const applied = all.filter((c) => !c.includes(':'));
+	for (const variant of variants) {
+		applied.push(...all.filter((c) => c.startsWith(variant)).map((c) => c.slice(variant.length)));
+	}
+	return applied;
+}
+
+/** La última clase que cae en un grupo: la que gana en la cascada. */
+function last(classes: string[], belongs: (c: string) => boolean): string | undefined {
+	return classes.filter(belongs).at(-1);
+}
+
+const isGradient = (c: string) => /^bg-(linear|radial|conic)-/.test(c);
+const isBackgroundColor = (c: string) => c.startsWith('bg-') && !isGradient(c);
+
+/** Lo que se ve detrás del texto en un estado, puesto sobre `backdrop`. */
+function paintedBackground(classes: string[], backdrop: Rgb, inline: Record<string, string>, sheet: Declarations) {
+	const colorClass = last(classes, isBackgroundColor);
+	if (!colorClass) throw new Error('el botón no tiene color de fondo');
+	let painted = over(resolveRgba(utilityColor(colorClass, 'bg-'), inline, sheet), backdrop);
+	const layers = [colorClass];
+
+	const gradient = last(classes, isGradient);
+	if (gradient) {
+		const from = last(classes, (c) => c.startsWith('from-'));
+		const to = last(classes, (c) => c.startsWith('to-'));
+		const via = last(classes, (c) => c.startsWith('via-'));
+		if (!from || !to || via || from.slice(5) !== to.slice(3)) {
+			throw new Error(`la prueba sólo sabe pintar un degradado parejo: ${gradient} ${from} ${via ?? ''} ${to}`);
+		}
+		painted = over(resolveRgba(utilityColor(from, 'from-'), inline, sheet), painted);
+		layers.push(`${gradient} ${from} ${to}`);
+	}
+	return { painted, layers };
+}
+
+const STATES: Array<[State, string]> = [
+	['hover', 'al pasar'],
+	['active', 'al apretar'],
+];
+const BACKDROPS: Array<[string, string]> = [
+	['var(--color-ui-bg)', 'el fondo de la ventana'],
+	['var(--color-ui-surface)', 'una superficie'],
+];
+const statesClasses: Record<State, string[]> = {
+	hover: await dangerClassesIn('hover'),
+	active: await dangerClassesIn('active'),
+};
+
+describe('al pasar y al apretar, el botón de peligro sigue en 4,5:1', () => {
+	test('lee los estados del componente', () => {
+		// Si el componente deja de declarar estados, o cambia de forma la línea,
+		// las pruebas de abajo medirían el reposo y pasarían sin mirar nada.
+		for (const state of ['hover', 'active'] as const) {
+			expect(statesClasses[state].length).toBeGreaterThan(classes.length);
+			expect(last(statesClasses[state], isBackgroundColor)).toBeDefined();
+			expect(last(statesClasses[state], (c) => c.startsWith('text-'))).toBeDefined();
+		}
+	});
+
+	for (const scheme of schemes) {
+		for (const mode of ['light', 'dark'] as const) {
+			for (const [state, stateLabel] of STATES) {
+				for (const [backdropColor, backdropLabel] of BACKDROPS) {
+					const label = `${scheme.id}, ${mode === 'light' ? 'claro' : 'oscuro'}`;
+
+					test(`${label}: ${stateLabel}, sobre ${backdropLabel}, el texto de danger se lee`, () => {
+						const inline = rootProperties(scheme);
+						const sheet = cascade[mode];
+						const stateClasses = statesClasses[state];
+						const backdrop = over(resolveRgba(backdropColor, inline, sheet), [1, 1, 1]);
+						const { painted, layers } = paintedBackground(stateClasses, backdrop, inline, sheet);
+						const textUtility = last(stateClasses, (c) => c.startsWith('text-')) ?? '';
+						const text = resolveRgba(utilityColor(textUtility, 'text-'), inline, sheet);
+						expect(text[3]).toBe(1);
+
+						const ratio = contrast([text[0], text[1], text[2]], painted);
+						const short =
+							ratio < TEXT_MINIMUM
+								? [`${textUtility} sobre ${layers.join(' + ')} (${toHex(painted)}): ${ratio.toFixed(2)}`]
+								: [];
+
+						expect(short).toEqual([]);
+					});
+				}
+			}
+		}
+	}
 });

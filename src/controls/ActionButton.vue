@@ -125,7 +125,13 @@ const variantClasses: Record<Variant, string> = {
 	secondary:
 		'border-ui-line bg-transparent text-tx-main hover:border-ui-border-strong hover:bg-ui-hover active:bg-ui-pressed',
 	ghost: 'border-transparent bg-transparent text-tx-main hover:bg-ui-hover active:bg-ui-pressed',
-	danger: 'border-transparent bg-status-error text-tx-on-status-error hover:bg-status-error/90 active:bg-status-error/80',
+	// El rojo queda opaco y el velo va encima, como en `overlay`: el texto se
+	// calculó contra el rojo lleno, y un rojo al 90 % o al 80 % se mezcla con lo
+	// que haya detrás —en claro se aclara y el texto bajaba a 4,4:1 y 3,9:1—.
+	// El velo es el texto principal, así que en claro oscurece y en oscuro
+	// aclara: en los dos sube el contraste.
+	danger:
+		'border-transparent bg-status-error text-tx-on-status-error hover:bg-linear-to-r hover:from-ui-hover hover:to-ui-hover active:from-ui-pressed active:to-ui-pressed',
 	overlay:
 		'border-transparent bg-ui-overlay text-tx-main hover:bg-linear-to-r hover:from-ui-hover hover:to-ui-hover active:from-ui-pressed active:to-ui-pressed',
 };
