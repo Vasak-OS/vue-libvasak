@@ -218,22 +218,37 @@ describe('la barra de progreso', () => {
 });
 
 describe('el select', () => {
-	test('las opciones como lista, en objetos o en cadenas', () => {
+	// Desde la 2.19.0 la lista es la de `SearchSelect`, no `<option>` nativos:
+	// se abre y se miran sus opciones.
+	async function abiertas(vista: VueWrapper) {
+		await vista.get('button').trigger('click');
+		await nextTick();
+		return vista.findAll('[role="option"]');
+	}
+
+	test('las opciones como lista, en objetos o en cadenas', async () => {
 		const objetos = montar(SelectField, {
 			props: { modelValue: 'es', options: [{ label: 'Español', value: 'es' }, { label: 'Inglés', value: 'en', disabled: true }] },
+			attachTo: document.body,
 		});
-		const cadenas = montar(SelectField, { props: { modelValue: 'top', options: ['top', 'bottom'] } });
+		const cadenas = montar(SelectField, { props: { modelValue: 'top', options: ['top', 'bottom'] }, attachTo: document.body });
 
-		const opciones = objetos.findAll('option');
+		const opciones = await abiertas(objetos);
 		expect(opciones.map((o) => o.text())).toEqual(['Español', 'Inglés']);
-		expect(opciones[1]?.attributes('disabled')).toBeDefined();
-		expect(cadenas.findAll('option').map((o) => o.attributes('value'))).toEqual(['top', 'bottom']);
+		expect(opciones[1]?.attributes('aria-disabled')).toBe('true');
+
+		await (await abiertas(cadenas))[1]?.trigger('click');
+		expect(cadenas.emitted('update:modelValue')).toEqual([['bottom']]);
 	});
 
-	test('sin lista, la ranura como siempre', () => {
-		const vista = montar(SelectField, { props: { modelValue: 'a' }, slots: { default: '<option value="a">A</option>' } });
+	test('sin lista, la ranura como siempre', async () => {
+		const vista = montar(SelectField, {
+			props: { modelValue: 'a' },
+			slots: { default: '<option value="a">A</option>' },
+			attachTo: document.body,
+		});
 
-		expect(vista.findAll('option')).toHaveLength(1);
+		expect(await abiertas(vista)).toHaveLength(1);
 	});
 });
 

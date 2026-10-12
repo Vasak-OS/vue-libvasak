@@ -29,6 +29,13 @@ export interface OpcionDeBusqueda {
 	etiqueta: string;
 	/** Segunda línea, para desambiguar («Argentina» debajo de «Buenos Aires»). */
 	detalle?: string;
+	/**
+	 * Se ve pero no se puede elegir (2.19.0), como un `<option disabled>`: el
+	 * teclado la saltea y el clic no hace nada. En inglés aunque el resto del
+	 * tipo esté en español: los demás campos se renombran en su propio cambio,
+	 * porque son API pública de las aplicaciones.
+	 */
+	disabled?: boolean;
 }
 
 /**

@@ -1,12 +1,19 @@
 <script lang="ts" setup generic="T extends string | number">
 /**
- * Un `select` que respeta el tema.
+ * Un desplegable con el estilo de VasakOS.
  *
- * El `select` nativo de WebKit se dibuja solo: pinta su propio fondo blanco y
- * su propio texto, y las clases de color no lo tocan — en una ventana en modo
- * oscuro eso deja texto claro sobre blanco, ilegible. `appearance-none` apaga
- * ese dibujo, y entonces la flecha hay que ponerla a mano porque se va con el
- * resto.
+ * # Sin `<select>` nativo (vue-libvasak#103, 2.19.0)
+ *
+ * La lista que se abre en un `<select>` **la dibuja el sistema**, no la página:
+ * `appearance-none` arregla el control cerrado, pero la lista abierta sigue
+ * siendo la de GTK/WebKitGTK, con sus colores, su radio y su tipografía. Era el
+ * único lugar de la librería donde el escritorio dejaba de parecer VasakOS.
+ *
+ * Ahora es `SearchSelect` sin búsqueda: el panel `ui-float` con el teclado
+ * completo (flechas, Inicio/Fin, Enter, Escape, la letra inicial) que ya usaba
+ * el inicio de sesión. La API no cambia: `v-model` con el tipo que sea (y
+ * `.number`), `options` o los `<option>` de siempre en la ranura, `label`,
+ * `id`, `disabled` y `change`.
  *
  * Estaba copiado en vasak-monitor y en vasak-settings con dos nombres
  * distintos.
@@ -42,31 +49,114 @@
  * Configuración los pasaba por `v-bind` de un objeto en nueve lugares, que no
  * se comprueba. Apagado, la etiqueta también se atenúa.
  */
-import { computed, useAttrs, useId } from 'vue';
-import ThemeIcon from '../icons/ThemeIcon.vue';
+import { Comment, computed, Fragment, Text, useAttrs, useId, useSlots, type VNode } from 'vue';
+import type { OpcionDeBusqueda } from '../search/buscar';
+import SearchSelect from '../search/SearchSelect.vue';
 import type { SelectOption } from './types';
 
-// Los atributos van al `select` y no al contenedor: si no, un `@change` o un
-// `aria-label` quedan colgados de un `div` y no hacen nada.
+// Los atributos se reparten a mano: `class` y `style` al contenedor y el resto
+// al botón, que es el control (ver `buttonAttrs`).
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
 	label?: string;
-	/** El `id` del `select`. Sin esto se genera uno, que es el que nombra la etiqueta. */
+	/** El `id` del control. Sin esto se genera uno, que es el que nombra la etiqueta. */
 	id?: string;
 	disabled?: boolean;
 	/** Las opciones, en vez de la ranura. Una cadena es etiqueta y valor a la vez. */
 	options?: Array<SelectOption<T> | (T & string)>;
 }>();
 
-const normalized = computed<SelectOption<T>[] | null>(() =>
-	props.options
-		? props.options.map((option) =>
-				typeof option === 'object' ? option : { label: String(option), value: option as T }
-			)
-		: null
-);
+const slots = useSlots();
 const attrs = useAttrs();
+
+/** El texto de un vnode, juntando los hijos. */
+function textOf(children: unknown): string {
+	if (typeof children === 'string') return children;
+	if (Array.isArray(children)) return children.map((child) => textOf((child as VNode).children ?? child)).join('');
+	return '';
+}
+
+/**
+ * Los `<option>` escritos en la ranura, como opciones.
+ *
+ * La ranura no se dibuja: se lee. Un `v-for` llega como un `Fragment` con los
+ * `<option>` adentro, y los comentarios de un `v-if` falso, como `Comment`; se
+ * aplanan y se quedan sólo las opciones. Sin `value`, el valor es el texto,
+ * como en el `<option>` nativo.
+ */
+function optionsFromSlot(nodes: VNode[]): SelectOption<T>[] {
+	const out: SelectOption<T>[] = [];
+	for (const node of nodes) {
+		if (node.type === Fragment && Array.isArray(node.children)) {
+			out.push(...optionsFromSlot(node.children as VNode[]));
+		} else if (node.type === 'option') {
+			const attrsOf = (node.props ?? {}) as Record<string, unknown>;
+			const label = textOf(node.children).trim();
+			const disabled = attrsOf.disabled !== undefined && attrsOf.disabled !== false;
+			out.push({ label, value: ('value' in attrsOf ? attrsOf.value : label) as T, disabled });
+		} else if (node.type !== Comment && node.type !== Text) {
+			// Otra cosa en la ranura (un `<optgroup>`, un componente) no tiene
+			// lugar en la lista; se avisa en vez de perderla en silencio.
+			console.warn('[SelectField] en la ranura sólo van <option>:', node.type);
+		}
+	}
+	return out;
+}
+
+const normalized = computed<SelectOption<T>[]>(() => {
+	if (props.options) {
+		return props.options.map((option) =>
+			typeof option === 'object' ? option : { label: String(option), value: option as T }
+		);
+	}
+	return optionsFromSlot(slots.default?.() ?? []);
+});
+
+/**
+ * Lo que recibe `SearchSelect`, que trabaja con cadenas: el valor de cada
+ * opción es su posición, y así un modelo numérico vuelve numérico y no como
+ * texto. Se compara por texto porque un `<option value="3">` estático llega
+ * como `"3"` y el modelo puede ser `3`.
+ */
+const listOptions = computed<OpcionDeBusqueda[]>(() =>
+	normalized.value.map((option, index) => ({
+		valor: String(index),
+		etiqueta: option.label,
+		disabled: option.disabled,
+	}))
+);
+const selectedIndex = computed(() =>
+	String(normalized.value.findIndex((option) => String(option.value) === String(model.value)))
+);
+
+/** El nombre accesible: la etiqueta dibujada o el `aria-label` de quien lo usa. */
+const accessibleName = computed(() => (attrs['aria-label'] as string | undefined) ?? props.label ?? '');
+
+/** Lo que va al contenedor: `class` y `style`, que dan el tamaño y el lugar. */
+const rootAttrs = computed(() => ({ class: attrs.class, style: attrs.style }));
+
+/**
+ * Todo lo demás va al botón, que es el control: el `aria-describedby` de un
+ * `FormGroup`, `title`, `data-*`. Antes iba al `select` y no se puede perder en
+ * el camino. `id` y `aria-label` ya se resuelven aparte.
+ */
+const buttonAttrs = computed(() => {
+	const { class: _class, style: _style, id: _id, 'aria-label': _name, ...rest } = attrs;
+	return rest;
+});
+
+function onChoose(value: string) {
+	const option = normalized.value[Number(value)];
+	if (!option) return;
+	// Elegir la que ya estaba no es un cambio: el `select` nativo no daba
+	// `change` en ese caso, y quien recarga algo en `@change` lo haría de más.
+	if (String(option.value) === String(model.value)) return;
+	model.value = option.value;
+	// El `change` que daba el `select` nativo. Quien lo usa recarga algo, no lee
+	// el evento: se manda uno sin destino útil, con el valor ya en el modelo.
+	emit('change', new Event('change'));
+}
 
 // El `id` propio sólo si hace falta uno y quien lo usa no trajo el suyo.
 const generatedId = useId();
@@ -107,28 +197,17 @@ const [model, modifiers] = defineModel<T>({
 </script>
 
 <template>
-  <div class="flex min-w-0 flex-col gap-1">
+  <div class="flex min-w-0 flex-col gap-1" v-bind="rootAttrs">
     <label v-if="props.label" :for="id" class="text-label-s text-tx-muted" :class="props.disabled ? 'opacity-50' : ''">{{ props.label }}</label>
-    <div class="relative flex min-w-0 items-center">
-      <select
-        :id="id"
-        v-model="model"
-        class="h-8 min-w-0 flex-1 appearance-none truncate rounded-corner-m border border-ui-border-strong bg-ui-surface/70 pr-8 pl-3 text-label-m text-tx-main transition-colors duration-200 ease-ui hover:border-tx-main focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-focus disabled:cursor-not-allowed disabled:opacity-50"
-        v-bind="attrs"
-        :disabled="props.disabled"
-        @change="emit('change', $event)">
-        <template v-if="normalized">
-          <option v-for="option in normalized" :key="option.value" :value="option.value" :disabled="option.disabled">
-            {{ option.label }}
-          </option>
-        </template>
-        <slot v-else />
-      </select>
-      <ThemeIcon
-        name="pan-down-symbolic"
-        type="symbol"
-        :size="16"
-        class="pointer-events-none absolute right-2" />
-    </div>
+    <SearchSelect
+      :button-id="id"
+      :model-value="selectedIndex"
+      :options="listOptions"
+      :label="accessibleName"
+      :disabled="props.disabled"
+      :searchable="false"
+      :button-attrs="buttonAttrs"
+      class="min-w-0"
+      @update:model-value="onChoose" />
   </div>
 </template>

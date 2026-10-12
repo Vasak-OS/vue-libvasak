@@ -1,5 +1,22 @@
 # Cambios de vue-libvasak
 
+## 2.19.0
+
+### Cambiado
+
+- **`SelectField` deja el `<select>` nativo** (#103). La lista que se abría la
+  dibujaba el sistema —los colores, el radio y la tipografía de GTK—, y era el
+  único lugar donde el escritorio dejaba de parecer VasakOS. Ahora es
+  `SearchSelect` sin búsqueda: el panel `ui-float` con teclado completo. La API
+  no cambia: `v-model` (también `.number`), `options` o los `<option>` de la
+  ranura, `label`, `id`, `disabled` y `change`.
+
+### Agregado
+
+- `SearchSelect`: opciones deshabilitadas (`disabled` en `OpcionDeBusqueda`),
+  `buttonId` para que una `<label for>` nombre el botón, salto por letra inicial
+  sin búsqueda, y la lista se abre hacia arriba sola cuando abajo no entra.
+
 ## 2.18.0
 
 ### Cambiado
