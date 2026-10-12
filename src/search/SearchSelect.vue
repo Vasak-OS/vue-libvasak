@@ -153,12 +153,14 @@ function choose(value: string) {
 
 /**
  * Si se abre hacia arriba: porque se pidió (`up`) o porque abajo no entra
- * (2.19.0). La lista mide hasta 224 px (`max-h-56`) más su relleno; si debajo
- * del botón no queda eso y arriba sí hay más lugar, se da vuelta sola, en vez
- * de cortarse contra el borde de la ventana.
+ * (2.19.0). La lista mide hasta 224 px (`max-h-56`) más su relleno, y con
+ * búsqueda se le suma el encabezado del campo (32 px, su relleno y el canto).
+ * Si debajo del botón no queda eso y arriba sí hay más lugar, se da vuelta
+ * sola, en vez de cortarse contra el borde de la ventana.
  */
 const openUp = ref(false);
 const LIST_HEIGHT = 240;
+const SEARCH_HEADER_HEIGHT = 52;
 
 /**
  * Si la lista se abre hacia la izquierda: un botón pegado al borde derecho
@@ -174,7 +176,8 @@ async function open() {
 	}
 	const below = rect && window.innerHeight > 0 ? window.innerHeight - rect.bottom : Infinity;
 	const above = rect ? rect.top : 0;
-	openUp.value = props.up || (below < LIST_HEIGHT && above > below);
+	const needed = LIST_HEIGHT + (props.searchable ? SEARCH_HEADER_HEIGHT : 0);
+	openUp.value = props.up || (below < needed && above > below);
 	isOpen.value = true;
 	// Arranca sobre la que está elegida, no sobre la primera: así bajar una vez
 	// lleva a la siguiente de la que se tiene, que es lo que se espera.

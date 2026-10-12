@@ -312,6 +312,26 @@ describe('hacia dónde se abre', () => {
 		expect(panel(vista).className).not.toContain('bottom-full');
 	});
 
+	test('con búsqueda, el encabezado cuenta: con 260 px abajo se abre hacia arriba', async () => {
+		// El campo de búsqueda suma unos 52 px arriba de la lista: con 260 libres
+		// entra la lista sola pero no la lista con su campo, y hacia abajo se
+		// cortaría contra el borde (lo marcó la revisión de vue-libvasak#104).
+		botonEn(476, 768);
+		const vista = armar({ options: UNA, searchable: true });
+		await abrir(vista);
+
+		expect(panel(vista).className).toContain('bottom-full');
+	});
+
+	test('sin búsqueda, los mismos 260 px alcanzan y se abre hacia abajo', async () => {
+		botonEn(476, 768);
+		const vista = armar({ options: UNA, searchable: false });
+		await abrir(vista);
+
+		expect(panel(vista).className).toContain('mt-1');
+		expect(panel(vista).className).not.toContain('bottom-full');
+	});
+
 	test('`up` la sigue forzando hacia arriba, aunque abajo sobre lugar', async () => {
 		botonEn(8, 768);
 		const vista = armar({ options: UNA, up: true });
@@ -335,7 +355,14 @@ describe('la guarda', () => {
 			if (ruta.endsWith('.vue')) {
 				const inicio = fuente.indexOf('<template');
 				const fin = fuente.lastIndexOf('</template>');
-				const plantilla = inicio >= 0 ? fuente.slice(inicio, fin).replace(/<!--[\s\S]*?-->/g, '') : '';
+				// Los comentarios se sacan hasta que no quede ninguno: una sola pasada
+				// puede armar un `<!--` nuevo con los pedazos de alrededor.
+				let plantilla = inicio >= 0 ? fuente.slice(inicio, fin) : '';
+				let anterior: string;
+				do {
+					anterior = plantilla;
+					plantilla = plantilla.replace(/<!--[\s\S]*?-->/g, '');
+				} while (plantilla !== anterior);
 				if (/<select[\s>/]/i.test(plantilla)) culpables.push(`${ruta} (plantilla)`);
 			}
 			if (/\b(?:h|createElement|createVNode)\(\s*['"]select['"]/.test(fuente)) culpables.push(`${ruta} (dibujo)`);
