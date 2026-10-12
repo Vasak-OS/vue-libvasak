@@ -344,20 +344,20 @@ describe('la sección de configuración sin título', () => {
 });
 
 describe('el select', () => {
-	test('id y disabled declarados llegan al select, y la etiqueta lo nombra', () => {
+	test('id y disabled declarados llegan al control, y la etiqueta lo nombra', () => {
 		const view = render(SelectField, { props: { modelValue: 'a', options: ['a', 'b'], label: 'Idioma', id: 'idioma', disabled: true } });
-		const select = view.get('select');
+		const control = view.get('button');
 
-		expect(select.attributes('id')).toBe('idioma');
-		expect(select.attributes('disabled')).toBeDefined();
+		expect(control.attributes('id')).toBe('idioma');
+		expect(control.attributes('disabled')).toBeDefined();
 		expect(view.get('label').attributes('for')).toBe('idioma');
 		expect(view.get('label').classes()).toContain('opacity-50');
 	});
 
 	test('sin disabled no queda apagado', () => {
-		const select = render(SelectField, { props: { modelValue: 'a', options: ['a'] } }).get('select');
+		const control = render(SelectField, { props: { modelValue: 'a', options: ['a'] } }).get('button');
 
-		expect(select.attributes('disabled')).toBeUndefined();
+		expect(control.attributes('disabled')).toBeUndefined();
 	});
 });
 

@@ -433,7 +433,9 @@ el problema del texto (hace falta `--text-on-danger`, anotado en el componente).
 ### 4.2 Formularios
 
 **`SelectField`** — como `TextInput`: `h-8 rounded-corner-m border-ui-border-strong`;
-etiqueta `text-label-s text-tx-muted`. **`SearchSelect`** — su lista toma el panel
+etiqueta `text-label-s text-tx-muted`. Desde la 2.19.0 (#103) no hay `<select>`
+nativo en la librería: la lista abierta la dibujaba el sistema y no seguía el
+esquema. Es `SearchSelect` sin búsqueda, con el mismo panel. **`SearchSelect`** — su lista toma el panel
 y las opciones de `DropdownMenuContent`/`Item` (hoy dibuja la suya).
 **`FormGroup`** — etiqueta `text-label-s font-semibold`, ayuda y error
 `text-body-xs`, `gap-1.5` → `gap-1`/`gap-2`. **`SwitchTrack` / `SwitchToggle` /

@@ -84,6 +84,19 @@ const props = withDefaults(
 		up?: boolean;
 		/** El campo de búsqueda arriba de la lista. En `false`, la lista sola. */
 		searchable?: boolean;
+		/**
+		 * El `id` del botón (2.19.0), para que una `<label for>` lo nombre y al
+		 * hacer clic en ella se abra la lista. Va al botón y no al contenedor:
+		 * una etiqueta sólo puede nombrar a un control.
+		 */
+		buttonId?: string;
+		/**
+		 * Atributos para el botón (2.19.0): los `aria-*`, `title` o `data-*` de
+		 * quien lo envuelve. El `aria-describedby` de un `FormGroup` tiene que
+		 * llegar al control, no a un contenedor que un lector de pantalla no
+		 * anuncia.
+		 */
+		buttonAttrs?: Record<string, unknown>;
 	}>(),
 	{
 		label: '',
@@ -94,6 +107,8 @@ const props = withDefaults(
 		limit: 60,
 		up: false,
 		searchable: true,
+		buttonId: undefined,
+		buttonAttrs: () => ({}),
 	}
 );
 
@@ -131,9 +146,21 @@ const activeId = computed(() =>
 );
 
 function choose(value: string) {
+	if (props.options.find((o) => o.valor === value)?.disabled) return;
 	emit('update:modelValue', value);
 	close();
 }
+
+/**
+ * Si se abre hacia arriba: porque se pidió (`up`) o porque abajo no entra
+ * (2.19.0). La lista mide hasta 224 px (`max-h-56`) más su relleno, y con
+ * búsqueda se le suma el encabezado del campo (32 px, su relleno y el canto).
+ * Si debajo del botón no queda eso y arriba sí hay más lugar, se da vuelta
+ * sola, en vez de cortarse contra el borde de la ventana.
+ */
+const openUp = ref(false);
+const LIST_HEIGHT = 240;
+const SEARCH_HEADER_HEIGHT = 52;
 
 /**
  * Si la lista se abre hacia la izquierda: un botón pegado al borde derecho
@@ -147,11 +174,15 @@ async function open() {
 		const width = Math.max(rect.width, Math.min(256, window.innerWidth - 16));
 		alignEnd.value = rect.left + width > window.innerWidth - 8;
 	}
+	const below = rect && window.innerHeight > 0 ? window.innerHeight - rect.bottom : Infinity;
+	const above = rect ? rect.top : 0;
+	const needed = LIST_HEIGHT + (props.searchable ? SEARCH_HEADER_HEIGHT : 0);
+	openUp.value = props.up || (below < needed && above > below);
 	isOpen.value = true;
 	// Arranca sobre la que está elegida, no sobre la primera: así bajar una vez
 	// lleva a la siguiente de la que se tiene, que es lo que se espera.
 	const where = matches.value.findIndex((o) => o.valor === props.modelValue);
-	active.value = where >= 0 ? where : 0;
+	active.value = where >= 0 ? where : Math.max(0, nextEnabled(-1, 1));
 
 	await nextTick();
 	if (props.searchable) field.value?.focus();
@@ -169,18 +200,66 @@ function close(returnFocus = true) {
 	if (returnFocus) nextTick(() => button.value?.focus());
 }
 
-function move(step: number) {
+/**
+ * La próxima opción que se puede elegir yendo de a `step` desde `from`, dando
+ * la vuelta, o -1 si no queda ninguna. Las deshabilitadas se saltean, como en
+ * un `<select>`.
+ */
+function nextEnabled(from: number, step: number): number {
 	const total = matches.value.length;
-	if (total === 0) return;
+	for (let i = 1; i <= total; i++) {
+		const index = (((from + step * i) % total) + total) % total;
+		if (!matches.value[index]?.disabled) return index;
+	}
+	return -1;
+}
+
+function move(step: number) {
 	// Da la vuelta: bajar desde la última lleva a la primera, que es lo que hace
 	// cualquier menú.
-	active.value = (active.value + step + total) % total;
+	const index = nextEnabled(active.value, step);
+	if (index < 0) return;
+	active.value = index;
 	scrollToActive();
 }
 
 function goTo(index: number) {
-	active.value = index;
+	// Inicio y Fin van a la primera y la última que se pueden elegir.
+	const target = matches.value[index]?.disabled ? nextEnabled(index, index === 0 ? 1 : -1) : index;
+	if (target < 0) return;
+	active.value = target;
 	scrollToActive();
+}
+
+/**
+ * Escribir con la lista abierta y sin búsqueda salta a la opción que empieza
+ * con lo escrito (2.19.0), como hace un `<select>`. Las letras se juntan si
+ * llegan seguidas —«ar» va a «Arriba» y no a la primera con «r»—, y una sola
+ * letra repetida recorre las que empiezan con ella.
+ */
+let typed = '';
+let typedAt = 0;
+const TYPEAHEAD_MS = 600;
+
+function onTypeahead(event: KeyboardEvent) {
+	if (props.searchable || event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
+	if (event.key === ' ' && typed === '') return;
+	const now = Date.now();
+	typed = now - typedAt > TYPEAHEAD_MS ? event.key : typed + event.key;
+	typedAt = now;
+	const repeat = typed.length > 1 && [...typed].every((c) => c === typed[0]);
+	const prefix = (repeat ? typed[0] : typed).toLocaleLowerCase();
+	const total = matches.value.length;
+	const start = repeat || typed.length === 1 ? active.value + 1 : active.value;
+	for (let i = 0; i < total; i++) {
+		const index = (start + i) % total;
+		const option = matches.value[index];
+		if (option && !option.disabled && option.etiqueta.toLocaleLowerCase().startsWith(prefix)) {
+			event.preventDefault();
+			goTo(index);
+			return;
+		}
+	}
 }
 
 /**
@@ -201,12 +280,12 @@ function indexUnderPointer(event: Event): number | null {
 function onClick(event: MouseEvent) {
 	const index = indexUnderPointer(event);
 	const option = index === null ? undefined : matches.value[index];
-	if (option) choose(option.valor);
+	if (option && !option.disabled) choose(option.valor);
 }
 
 function onPointerMove(event: MouseEvent) {
 	const index = indexUnderPointer(event);
-	if (index !== null) active.value = index;
+	if (index !== null && !matches.value[index]?.disabled) active.value = index;
 }
 
 function scrollToActive() {
@@ -219,7 +298,7 @@ function scrollToActive() {
 
 function chooseActive() {
 	const option = matches.value[active.value];
-	if (option) choose(option.valor);
+	if (option && !option.disabled) choose(option.valor);
 }
 
 /**
@@ -279,6 +358,8 @@ function onFocusout(event: FocusEvent) {
 <template>
   <div class="relative" @focusout="onFocusout">
     <button
+      v-bind="buttonAttrs"
+      :id="buttonId"
       ref="button"
       type="button"
       :disabled="disabled"
@@ -308,7 +389,7 @@ function onFocusout(event: FocusEvent) {
     <div
       v-if="isOpen"
       class="absolute z-20 w-full min-w-[min(16rem,calc(100vw-16px))] max-w-[calc(100vw-16px)] rounded-corner-l border border-ui-line bg-ui-float text-tx-main shadow-surface-m"
-      :class="[up ? 'bottom-full mb-1' : 'mt-1', alignEnd ? 'right-0' : 'left-0']"
+      :class="[openUp ? 'bottom-full mb-1' : 'mt-1', alignEnd ? 'right-0' : 'left-0']"
       @keydown.escape.prevent="close()"
       @keydown.down.prevent="move(1)"
       @keydown.up.prevent="move(-1)"
@@ -316,6 +397,7 @@ function onFocusout(event: FocusEvent) {
       @keydown.end.prevent="goTo(matches.length - 1)"
       @keydown.enter.prevent="chooseActive()"
       @keydown.tab="close(false)"
+      @keydown="onTypeahead"
       @click="onClick"
       @mousemove="onPointerMove">
       <div v-if="searchable" class="border-ui-line-weak border-b p-2">
@@ -347,8 +429,11 @@ function onFocusout(event: FocusEvent) {
           :data-index="index"
           role="option"
           :aria-selected="option.valor === modelValue"
-          class="flex min-h-8 cursor-pointer items-center gap-2 rounded-corner-m px-3 py-1 text-label-m text-tx-main transition-colors duration-200 ease-ui"
+          :aria-disabled="option.disabled ? 'true' : undefined"
+          :data-disabled="option.disabled ? '' : undefined"
+          class="flex min-h-8 items-center gap-2 rounded-corner-m px-3 py-1 text-label-m text-tx-main transition-colors duration-200 ease-ui"
           :class="[
+            option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             option.valor === modelValue ? 'bg-ui-selected-accent font-semibold' : index === active ? 'bg-ui-hover' : '',
             (option.valor === modelValue || !searchable) && index === active ? 'outline-2 -outline-offset-2 outline-ui-focus' : '',
           ]">
