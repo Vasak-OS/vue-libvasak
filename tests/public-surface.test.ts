@@ -220,6 +220,8 @@ const PUBLIC_SURFACE = [
 	'WINDOW_CONTROLS_KEY',
 	'WINDOW_CONTROLS_ORDERS',
 	'WINDOW_CONTROLS_STYLES',
+	// 2.20.0: la lista que se reordena arrastrando y con el teclado.
+	'SortableList',
 ];
 
 describe('la superficie pública', () => {

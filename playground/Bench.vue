@@ -41,6 +41,7 @@ import BenchFeedback from './BenchFeedback.vue';
 import BenchForms from './BenchForms.vue';
 import BenchRows from './BenchRows.vue';
 import BenchSelection from './BenchSelection.vue';
+import BenchSortable from './BenchSortable.vue';
 import BenchWindow from './BenchWindow.vue';
 import VerticalTabs from './VerticalTabs.vue';
 
@@ -89,6 +90,7 @@ const sections = [
 	'charts-28',
 	'tiles-213',
 	'tiles-2131',
+	'sortable',
 ] as const;
 const WINDOW = ['window', 'media', 'frame'];
 const FORMS = ['forms', 'devices'];
@@ -315,6 +317,7 @@ onMounted(async () => {
           <BenchForms v-else-if="FORMS.includes(section)" :section="section" :width="width" />
           <BenchSelection v-else-if="SELECTION.includes(section)" :section="section" :width="width" />
           <BenchRows v-else-if="ROWS.includes(section)" :section="section" :width="width" />
+          <BenchSortable v-else-if="section === 'sortable'" :section="section" :width="width" />
           <BenchExtras v-else-if="EXTRAS.includes(section)" :section="section" :width="width" />
           <BenchOrbit v-else-if="section === 'orbit'" :section="section" :width="width" />
           <Bench28
