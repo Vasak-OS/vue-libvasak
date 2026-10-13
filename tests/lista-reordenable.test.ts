@@ -15,7 +15,7 @@
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mount, type VueWrapper } from '@vue/test-utils';
-import { h } from 'vue';
+import { h, nextTick } from 'vue';
 import SortableList from '../src/list/SortableList.vue';
 import { olvidarTodo, traducir, vaciarElCatalogo } from './dobles';
 
@@ -64,6 +64,21 @@ function asas(vista: VueWrapper) {
 
 function ids(lista: unknown): string[] {
 	return (lista as Item[]).map((item) => item.id);
+}
+
+/** Junta lo que Vue avisa por consola mientras corre `fn`. */
+function avisosDe(fn: () => void): string[] {
+	const avisos: string[] = [];
+	const original = console.warn;
+	console.warn = (...partes: unknown[]) => {
+		avisos.push(partes.map(String).join(' '));
+	};
+	try {
+		fn();
+	} finally {
+		console.warn = original;
+	}
+	return avisos;
 }
 
 describe('el asa', () => {
@@ -194,6 +209,94 @@ describe('la identidad de cada ítem', () => {
 
 		const emitida = vista.emitted('update:modelValue')?.[0]?.[0] as Array<{ tag: number }>;
 		expect(emitida.map((item) => item.tag)).toEqual([1, 0, 2]);
+	});
+});
+
+describe('la clave por campo (itemKey)', () => {
+	/**
+	 * La identidad de cada fila sale del valor del campo que nombra `itemKey`, no
+	 * de la identidad del objeto. Se ve al reemplazar el modelo por objetos nuevos
+	 * con los mismos valores: con clave por campo la clave no cambia y Vue
+	 * reutiliza el nodo de la fila —acá lo delata una marca puesta a mano en el
+	 * nodo—, mientras que la identidad de objeto de fábrica les da a los objetos
+	 * nuevos claves nuevas y rehace la fila. Es lo que distingue «resolver
+	 * `item[clave]`» de la identidad por omisión.
+	 */
+	async function reutilizaLaFila(clave: unknown, lista: unknown[], otra: unknown[]) {
+		const vista = mount(SortableList, {
+			attachTo: document.body,
+			props: { modelValue: lista, itemKey: clave },
+			slots: { item: (scope: { item: { name: string } }) => h('span', { class: 'row-name' }, scope.item.name) },
+		});
+		mounted = vista;
+
+		const antes = vista.findAll('li')[0]?.element as (HTMLElement & { marca?: string }) | undefined;
+		if (antes) antes.marca = 'la-misma';
+
+		await vista.setProps({ modelValue: otra });
+		await nextTick();
+
+		const despues = vista.findAll('li')[0]?.element as (HTMLElement & { marca?: string }) | undefined;
+		return despues?.marca === 'la-misma';
+	}
+
+	test('una cadena resuelve el campo y no emite aviso de prop inválida', () => {
+		// La forma documentada: `item-key="id"`. El tipo publicado la permite, así
+		// que pasarla no puede disparar un «Invalid prop» de Vue.
+		const avisos = avisosDe(() => {
+			montar({ itemKey: 'id' }).unmount();
+			mounted = null;
+		});
+		expect(avisos.join('\n')).not.toContain('Invalid prop');
+		expect(avisos.join('\n')).not.toContain('itemKey');
+	});
+
+	test('la cadena identifica por el valor del campo, no por el objeto', async () => {
+		const reutiliza = await reutilizaLaFila(
+			'id',
+			[
+				{ id: 'a', name: 'Uno' },
+				{ id: 'b', name: 'Dos' },
+			],
+			[
+				{ id: 'a', name: 'Uno' },
+				{ id: 'b', name: 'Dos' },
+			]
+		);
+		expect(reutiliza).toBe(true);
+	});
+
+	test('un número también resuelve el campo, no cae en la identidad de objeto', async () => {
+		// `keyof T` admite una clave numérica. Tiene que resolver `item[clave]`
+		// igual que una cadena; antes del arreglo caía en la identidad de objeto, y
+		// a objetos nuevos les daba claves nuevas (la fila no se reutilizaba).
+		const reutiliza = await reutilizaLaFila(
+			7,
+			[
+				{ 7: 'a', name: 'Uno' },
+				{ 7: 'b', name: 'Dos' },
+			],
+			[
+				{ 7: 'a', name: 'Uno' },
+				{ 7: 'b', name: 'Dos' },
+			]
+		);
+		expect(reutiliza).toBe(true);
+	});
+
+	test('una función sigue resolviendo la clave que devuelve', async () => {
+		const reutiliza = await reutilizaLaFila(
+			(item: unknown) => (item as Item).id,
+			[
+				{ id: 'a', name: 'Uno' },
+				{ id: 'b', name: 'Dos' },
+			],
+			[
+				{ id: 'a', name: 'Uno' },
+				{ id: 'b', name: 'Dos' },
+			]
+		);
+		expect(reutiliza).toBe(true);
 	});
 });
 

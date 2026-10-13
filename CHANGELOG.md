@@ -1,5 +1,32 @@
 # Cambios de vue-libvasak
 
+## 2.20.1
+
+### Arreglado
+
+- **`SortableList` resuelve `itemKey` cuando es un nombre de campo**, no sólo
+  cuando es una función (#114). El tipo publicado ya lo permitía
+  (`keyof T | ((item, index) => string | number)`), pero la resolución de la
+  clave sólo contemplaba la cadena y la función: una clave numérica —`keyof T`
+  también la admite— caía en la identidad de objeto en vez de resolver
+  `item[itemKey]`, y a objetos nuevos con el mismo valor les cambiaba la clave.
+  Ahora la forma documentada `item-key="id"` y una clave numérica resuelven el
+  campo igual que una función. La validación de la prop no cambia: la unión
+  genérica se compila con `skipCheck`, así que pasar una cadena nunca disparó un
+  `[Vue warn]`.
+
+## 2.20.0
+
+### Agregado
+
+- **`SortableList`** (#113): una lista que se reordena arrastrando desde un asa y
+  con el teclado (flechas e Inicio/Fin mueven al toque; Espacio/Enter la agarra y
+  mueve en borrador, Escape cancela). No dibuja la fila —eso va por la ranura
+  `item`—: pone el asa, el arrastre con puntero y captura, y emite la lista ya
+  reordenada (`update:modelValue`) junto con el movimiento (`reorder`). La clave
+  de cada ítem es por omisión la identidad del objeto, o un campo o función vía
+  `itemKey`.
+
 ## 2.19.0
 
 ### Cambiado
