@@ -1,6 +1,6 @@
 {
 	"name": "@vasakgroup/vue-libvasak",
-	"version": "2.19.0",
+	"version": "2.20.0",
 	"description": "Vue componenets for VSK Applications",
 	"main": "./dist/vue-libvasak.umd.js",
 	"module": "./dist/vue-libvasak.es.js",
@@ -58,7 +58,7 @@
 		"@tailwindcss/vite": "^4.3.3",
 		"@tauri-apps/api": "^2.12.3",
 		"@types/bun": "^1.4.2",
-		"@vasakgroup/plugin-config-manager": "^2.11.0",
+		"@vasakgroup/plugin-config-manager": "^2.12.1",
 		"@vasakgroup/plugin-vicons": "^2.2.1",
 		"@vasakgroup/tauri-plugin-i18n": "^2.3.0",
 		"@vitejs/plugin-vue": "^6.0.10",

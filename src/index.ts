@@ -102,7 +102,9 @@ import MonthCalendar from "./calendar/MonthCalendar.vue";
 import EventList from "./calendar/EventList.vue";
 import HourlyForecast from "./data/HourlyForecast.vue";
 import ProgressRing from "./data/ProgressRing.vue";
-import type { App } from "vue";
+/* 2.20.0: la lista que se reordena arrastrando y con el teclado. */
+import SortableList from "./list/SortableList.vue";
+import type { App, Component } from "vue";
 
 const components = [
   SideBar,
@@ -203,6 +205,10 @@ const components = [
   EventList,
   HourlyForecast,
   ProgressRing,
+  // Genérico (`<script setup generic>`): como componente funcional no encaja en
+  // el arreglo de instalación, así que se registra con el tipo ancho. El export
+  // de abajo conserva el tipo genérico para la plantilla de quien lo usa.
+  SortableList as Component,
 ];
 
 export default {
@@ -312,6 +318,7 @@ export {
   EventList,
   HourlyForecast,
   ProgressRing,
+  SortableList,
 };
 
 export type { PlaybackState } from "./media/playback";

@@ -149,6 +149,9 @@ describe('la compilación publica tokens.css tal cual', () => {
 
 		expect(manifest.exports['./tokens.css']).toBe('./dist/tokens.css');
 		expect(manifest.exports['./scrollbar.css']).toBe('./dist/scrollbar.css');
-		expect(manifest.version).toBe('2.19.0');
+		// La versión sube en cada merge, así que se comprueba la forma y no un
+		// número fijo: anclar el valor rompía esta prueba —que es sobre exportar
+		// tokens.css— en cada release.
+		expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
 	});
 });
