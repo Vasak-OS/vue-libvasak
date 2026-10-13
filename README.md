@@ -1,227 +1,346 @@
-# vue-libvasak
+# Vue libvasak
 
-Librería de componentes VueJS reutilizables.
+Components for Applications
+
+---
+
+## Tecnología
+
+Uso: generate-readme-badges.sh <tipo>
+
+Tipos válidos:
+  tauri-vue       Apps Tauri + Vue 3 (Rust, Tauri, Vue 3, TypeScript)
+  rust-service    Servicios Rust systemd/D-Bus (Rust, systemd, D-Bus)
+  cpp-plugin      Plugins C++ Wayfire (C++, Meson, Wayfire)
+  meson-c         Módulos C WirePlumber (C, Meson, WirePlumber)
+  meson-cpp       Plugins C++ genéricos Meson (C++, Meson)
+
+Ejemplos:
+  ./generate-readme-badges.sh tauri-vue
+  ./generate-readme-badges.sh rust-service > tech-badges.md
+
+## Estado
+
+[![CI](https://github.com/Vasak-OS/vue-libvasak/actions/workflows/ci.yml/badge.svg)](https://github.com/Vasak-OS/vue-libvasak/actions/workflows/ci.yml)
+[![Versión](https://img.shields.io/github/v/release/Vasak-OS/vue-libvasak?style=flat&label=Versi%C3%B3n)](https://github.com/Vasak-OS/vue-libvasak/releases)
+[![Licencia](https://img.shields.io/github/license/Vasak-OS/vue-libvasak?style=flat)](LICENSE)
+[![Cobertura](https://sonarcloud.io/api/project_badges/measure?project=Vasak-OS_vue-libvasak&metric=coverage&style=flat)](https://sonarcloud.io/summary/new_code?id=Vasak-OS_vue-libvasak)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Vasak-OS_vue-libvasak&metric=alert_status&style=flat)](https://sonarcloud.io/summary/new_code?id=Vasak-OS_vue-libvasak)
+[![Tamaño repo](https://img.shields.io/github/repo-size/Vasak-OS/vue-libvasak?style=flat)](https://github.com/Vasak-OS/vue-libvasak)
+
+---
+
+## Descripción
+
+Components for Applications
+
+**Para el usuario:** Components for Applications
+
+**Integración VasakOS:** Integra con el ecosistema VasakOS vía D-Bus y configuración compartida.
+
+---
+
+## Arquitectura (diagramas)
+
+> Copia y pega la plantilla que necesites, descomenta y adapta.
+
+### Flujo de datos
+
+```mermaid
+graph TD
+    A[Entrada: Teclado / Ratón / D-Bus / Sistema] --> B[Procesamiento: Core Rust + Tauri Commands]
+    B --> C[Salida: UI actualizada / Acciones del sistema]
+    style A fill:#e1f5fe
+    style C fill:#e8f5e9
+```
+
+### Componentes internos
+
+```mermaid
+flowchart LR
+    subgraph App[Vue libvasak]
+        UI[Componentes Vue 3 + Composables + Utils]
+        Core[(biblioteca — sin backend Rust)]
+        IPC[(biblioteca — sin IPC)]
+    end
+    UI --> IPC
+    IPC --> Core
+    Core --> DBus[(D-Bus / zbus)]
+    Core --> System[(biblioteca — se usa en apps Tauri+Vue)]
+    style UI fill:#f3e5f5
+    style Core fill:#e3f2fd
+    style DBus fill:#fff3e0
+    style System fill:#fce4ec
+```
+
+### Integración en el sistema VasakOS
+
+```mermaid
+C4Context
+    title Vue libvasak en VasakOS
+    Person(usuario, "Usuario", "Persona que usa el sistema")
+    System_Boundary(c1, "VasakOS") {
+        System(app, "Vue libvasak", "Librería de componentes Vue 3 para VasakOS")
+        System_Ext(settings, "vasak-settings", "Esquemas de color, iconos")
+    }
+    
+    Rel(usuario, app, "Usa")
+    Rel(app, settings, "Lee esquemas de color/tema")
+```
+
+---
 
 ## Instalación
 
-Primero, construye la librería:
+### Desde npm (recomendado)
 
 ```bash
-npm install
-npm run build
-```
-
-Esto generará los archivos en la carpeta `dist/`.
-
-Luego, en tu proyecto Vue:
-
-```bash
-npm install /ruta/a/vue-libvasak/dist
-```
-
-O desde el registro, que es como la usan las aplicaciones del escritorio:
-
-```bash
+# Con bun (recomendado para proyectos VasakOS)
 bun add @vasakgroup/vue-libvasak
+
+# Con npm
+npm install @vasakgroup/vue-libvasak
+
+# Con pnpm
+pnpm add @vasakgroup/vue-libvasak
 ```
 
-## Versionado
+### Desde fuente (desarrollo de la librería)
 
-Desde la **1.0.0** esta librería sigue versionado semántico de verdad, y eso
-cambia lo que significa el rango que declara cada aplicación.
+```bash
+git clone https://github.com/Vasak-OS/vue-libvasak.git
+cd vue-libvasak
 
-Mientras estuvo en `0.x`, el acento **fijaba la minor**: `^0.7.2` aceptaba la
-0.7.9 y **no** aceptaba la 0.8.0. Como un candado que ya satisface el rango no
-se mueve solo, las aplicaciones se quedaban atrás sin que nada fallara —
-compilaban, pasaban sus pruebas y se empaquetaban con los componentes de hacía
-ocho versiones, y lo que se arreglaba acá no les llegaba. Pasó dos veces, y la
-segunda dejó dieciséis de diecisiete aplicaciones repartidas en siete rangos
-distintos.
+# Instalar dependencias
+bun install
 
-Con `^1.x` el acento hace lo que todo el mundo cree que hace: **una minor llega
-sola**. Declarar `^1.0.0` alcanza.
-
-Qué se compromete a partir de acá:
-
-- **Lo que se exporta desde `src/index.ts` no desaparece ni cambia de nombre en
-  una minor.** Hay una prueba que lo fija: sacar un componente de la lista
-  pública falla, así que dejar de exportar algo tiene que ser un acto
-  deliberado y va en una mayor.
-- Sumar componentes, propiedades opcionales o eventos nuevos es una minor.
-- Sacar o renombrar lo público, o cambiar el significado de una propiedad
-  existente, es una mayor.
-
-El `0.` de antes no estaba diciendo nada cierto sobre la estabilidad: la
-librería ya tenía diecisiete consumidores y una API que no se movía.
-
-## Uso
-
-Importa los componentes que necesites:
-
-```js
-import { SideBar, SideButton, WindowFrame } from 'vue-libvasak';
+# Build biblioteca
+bun run build
 ```
 
-O registra toda la librería globalmente:
+---
 
-```js
-import * as VasakLib from 'vue-libvasak';
+## Uso rápido
 
-app.use(VasakLib);
+```typescript
+import { Button, Card, Dialog, useTheme, useConfig, useI18n } from '@vasakgroup/vue-libvasak';
+import '@vasakgroup/vue-libvasak/style.css'; // Estilos base (Once UI + VasakOS)
+
+// Registrar componentes globalmente
+const app = createApp(App);
+app.use(Button);
+app.use(Card);
+app.use(Dialog);
+// ... registra los que necesites
+
+// Usar composables
+const { theme, toggleTheme, colorScheme } = useTheme();
+const { config, updateConfig } = useConfig();
+const { t, locale, setLocale } = useI18n();
 ```
 
-## La forma: `tokens.css`
+### Atajos / flags principales
 
-Desde la 2.0.0 los componentes se dibujan con los tokens de
-`@vasakgroup/vue-libvasak/tokens.css` (radios, bordes, velos de estado,
-superficies, sombras, roles de texto y curvas, con el criterio de Once UI; ver
-`docs/once-ui.md`). La aplicación lo importa en su `main.css` **después** de
-Tailwind, y le dice a Tailwind que mire las clases de la librería:
+| Acción | Código |\n|--------|--------|\n| Instalar | `bun add @vasakgroup/vue-libvasak` |\n| Importar componentes | `import { Button } from '@vasakgroup/vue-libvasak'` |\n| Importar estilos | `import '@vasakgroup/vue-libvasak/style.css'` |\n| Usar composables | `const { theme } = useTheme()` |
 
-```css
-@import "tailwindcss";
-@import "@vasakgroup/vue-libvasak/tokens.css";
-/* opcional (2.1.0): la barra de desplazamiento con los tokens, en lugar de la copia propia */
-@import "@vasakgroup/vue-libvasak/scrollbar.css";
+> **Captura:** `assets/demo.gif` *(placeholder — sustituir por GIF real)*
 
-@source "../../node_modules/@vasakgroup/vue-libvasak/dist";
-```
+---
 
-Los colores no viven ahí: `tokens.css` los deriva con `color-mix` de las
-variables `--use-*` que ya declara el piso de cada aplicación y pisa el
-config-manager con el esquema elegido, así que cambiar de esquema cambia todo
-sin tocar nada. El radio sale de `--corner-radius` (el que se elige en
-Configuración) y la escala `rounded-corner-xs…xl` se deriva de él. Los nombres
-de siempre (`rounded-corner`, `-sm`, `-window`, los colores `primary`,
-`ui-bg`, `tx-main`…) siguen valiendo.
+## Configuración
 
-Hay un banco con cada componente en todos sus estados, en claro y en oscuro y a
-240, 360, 600 y 1200 px: `bun run bench` (puerto 5174), y
-`playground/capture.sh <carpeta>` para sacar las capturas con Chrome sin
-pantalla.
+(biblioteca — la configuración la hace la app que la consume vía `tauri-plugin-config-manager`)
 
-## Textos
+### Variables de entorno
 
-Los textos entran por propiedad. Sin pasarlos salen del catálogo de la
-aplicación, y si la clave no está, del respaldo de la librería:
+| Variable | Descripción | Por defecto |
+|----------|-------------|-------------|
+| `VASAK_DEBUG` | Activa logs de depuración en consola | `false` |
+| `VASAK_PROFILE` | Perfil de rendimiento: balanced, performance, power-save | `balanced` |
 
-| clave | dónde | respaldo |
-|---|---|---|
-| `search.clear` | la cruz de `SearchField` | «Vaciar» |
-| `search.label` | la lupa de `BarSearch` | «Search» |
-| `tabs.close` | el botón de cerrar de `TabItem` | «Close» |
-| `tabs.unsaved` | la pestaña con cambios sin guardar | «Unsaved changes» |
-| `sidebar.collapse` / `sidebar.expand` | el botón de plegar de `SideBar` | «Collapse» / «Expand» |
-| `ventana.minimizar` / `ventana.maximizar` / `ventana.cerrar` | `WindowControls` | la clave |
-| `media.*` | el reproductor | la clave |
-| `alert.close` | la cruz de `AlertMessage` con `dismissible` | «Cerrar» |
-| `dialog.close` | el cerrar de `DialogHeader` con `closable` | «Cerrar» |
-| `dialog.body` | el nombre de `DialogBody` cuando desplaza | «Contenido» |
-| `numberField.decrement` / `numberField.increment` | los botones de `NumberField` con `stepper` | «Restar» / «Sumar» |
-| `avatar.edit` | el botón de `Avatar` con `editable` | «Change picture» |
-| `media.progress` | el aro de `SpinningCover` con `progress` | «Progress» |
-| `tray.progress` | la línea de `TrayIconButton` con `progress` | «Progress» |
-| `dropZone.label` / `dropZone.locked` | el texto de `DropZone` | «Drop files here» / «Can't drop here» |
-| `password.show` / `password.hide` | el ojo de `PasswordField` | «Show password» / «Hide password» |
-| `password.capsLock` | el aviso de Bloq Mayús de `PasswordField` | «Caps Lock is on» |
-| `power.title` | el nombre del grupo de `PowerActions` | «Power» |
-| `power.suspend` / `power.hibernate` / `power.reboot` / `power.poweroff` / `power.logout` / `power.lock` | los botones de `PowerActions` | «Suspend» / «Hibernate» / «Restart» / «Power off» / «Log out» / «Lock» |
-| `pager.label` / `pager.item` | el grupo y cada punto de `PageDots` sin `label` / `labels` (`{0}` es el número y `{1}` el total) | «Pages» / «{0} of {1}» |
-| `workspaces.label` / `workspaces.item` | el grupo y cada botón de `WorkspaceSwitcher` sin `label` / `labels` (`{0}` es el número) | «Workspaces» / «Workspace {0}» |
-| `equalizer.title` / `equalizer.saved` / `equalizer.unsaved` / `equalizer.unavailable` / `equalizer.presets` / `equalizer.custom` | los textos de `Equalizer` sin sus propiedades | «Equalizer» / «Saved» / «Not saved» / «The equalizer is not available» / «Presets» / «Custom» |
-| `textMenu.copy` / `textMenu.cut` / `textMenu.paste` / `textMenu.selectAll` | el menú de `TextContextMenu` | «Copy» / «Cut» / «Paste» / «Select all» |
+### Integración con `tauri-plugin-config-manager`
 
-## Qué componente para qué (2.1.0)
+- Provee componentes que respetan `--ui-primary`, `--ui-surface`, `--ui-focus`, etc.\n- Usa `vicon` para iconos del tema del sistema\n- Radio de bordes vía `--ui-radius`\n- La app host debe proveer el tema vía config-manager
 
-Los de formularios, selección y listas que suman la 2.1.0, y de qué copias
-salen, están en `docs/components-inventory.md` (§2 y §3). En corto:
-
-- elegir una de varias: `OptionGroup` (lista o tarjetas) o `SegmentedControl`
-  (pocas, lado a lado; con `href`, una navegación);
-- sí o no que se aplica después: `Checkbox`; que se aplica al tocar:
-  `SwitchToggle`;
-- una fila «texto a la izquierda, control a la derecha»: `SettingRow`; una
-  fila de lista: `ListRow` dentro de un `ListGroup`;
-- la columna de una vista: `Panel`; la cabecera de una página: `PageHeader`;
-  el título de un tramo: `SectionHeading`;
-- un campo con su etiqueta, ayuda y error: `FormGroup`, cuya ranura recibe
-  `id`, `describedBy` e `invalid` para pasárselos al campo.
-
-## Qué componente para qué (2.2.0)
-
-- algo que cuelga de un botón y no es un menú (un formulario chico, un
-  selector): `Popover`; colgado de otro elemento que no es el disparador:
-  `PopoverAnchor`;
-- un atajo: `Kbd`; en un menú, la propiedad `shortcut` del ítem;
-- una persona: `Avatar`, o `IdentityBlock` con el nombre al lado;
-- un icono en un recuadro con estado: `IconTile`;
-- lo que todavía carga: `Skeleton` (decoración; lo que carga lo dice la región
-  con `aria-busy` o un `LoadingState`);
-- una portada: `CoverArt`; girando, con aro o como botón: `SpinningCover`;
-- pares de nombre y valor: `PropertyList`; un número con su nombre:
-  `StatTile`; texto de máquina o un registro: `CodeBlock`;
-- algo que se despliega: `Disclosure`; dónde soltar lo que se arrastra:
-  `DropZone`.
-
-## Qué componente para qué (2.12.0)
-
-- una píldora del panel sobre el escritorio —un botón redondo, un dato con
-  icono y renglón chico debajo, o un grupo de botones—: `PanelPill`
-  (`active` la rellena en el primario, `interactive` para que sea botón,
-  `flush` para un grupo);
-- los espacios de trabajo, con el actual en el primario: `WorkspaceSwitcher`.
-
-## Qué componente para qué (2.11.0)
-
-- un ecualizador de bandas con perfiles: `Equalizer` (la aplicación le da las
-  ganancias y limita cuántas veces por segundo manda lo que emite).
-
-## Qué componente para qué (2.5.0)
-
-- un dato chico con icono debajo de un título —la salida de audio, «vía
-  Firefox»—, que se toca o sólo informa: `Chip` (`interactive` para que sea
-  botón, `caption` para la etiqueta atenuada);
-- pasar de una página a otra con puntos —varios reproductores, un carrusel—:
-  `PageDots`, que con una sola página no dibuja nada.
-
-## Qué componente para qué (2.4.0)
-
-- una contraseña, con el ojo y el aviso de Bloq Mayús: `PasswordField`;
-- la hora grande (inicio de sesión, bloqueo, un reloj): `ClockDisplay`;
-- suspender, reiniciar, apagar, cerrar la sesión, bloquear: `PowerActions`
-  (fila de iconos o círculos con nombre);
-- elegir una cuenta: `OptionGroup` con `avatar` en cada opción;
-- un desplegable corto dibujado por la página y no por el sistema (la sesión,
-  el idioma): `SearchSelect` con `:searchable="false"`;
-- copiar, cortar, pegar y seleccionar todo con el clic derecho en los campos:
-  `TextContextMenu`, una vez por ventana, con `:show` del complemento del menú
-  contextual;
-- un número sobre un icono: `Badge counter` (con `max` para «99+»);
-- el pie de una foto o los controles de un vídeo: `overlay-fade-up` /
-  `overlay-fade-down`;
-- el desenfoque del inicio de sesión y del bloqueo, y **sólo ahí**:
-  `bg-ui-shell shell-blur`.
-
-## Qué componente para qué (2.6.0)
-
-- el dispositivo o la red conectada, con sus datos alrededor (la vista
-  radial del Bluetooth y de la red): `DeviceOrbit`; para elegir entre varios
-  sigue siendo una lista de `DeviceCard`.
-
-## Reproductor
-
-`NowPlayingCard`, `SpinningCover` y `SeekBar` dibujan lo que suena sin saber de
-dónde sale: reciben los datos por propiedad y emiten lo que se tocó (`previous`,
-`toggle`, `next`, `seek`). La unidad de `position` y `duration` es la de quien
-los usa —MPRIS cuenta en microsegundos—, y `format` es lo único que tiene que
-conocerla.
-
-Los textos entran por propiedad; sin pasarlos salen del catálogo de la
-aplicación con estas claves: `media.previous`, `media.play`, `media.pause`,
-`media.next`, `media.seek`, `media.nothingPlaying` y `media.byArtist` (con `{0}`
-donde va el artista).
+---
 
 ## Desarrollo
 
-- Construir la librería: `npm run build`
-- Servir para desarrollo: `npm run dev`
+### Requisitos
+
+- **Rust:** `rustup` toolchain estable (`rust-toolchain.toml` fija la versión)
+- **Node / bun:** `bun` ≥ 1.1 (nunca npm/yarn/pnpm para apps Tauri)
+- **Sistema:** `pkg-config`, `libgtk-3-dev`, `libwebkit2gtk-4.1-dev`, `libssl-dev`
+- *Ninguna adicional (solo bun)*
+
+### Dependencias de desarrollo
+
+#### Sistema (paquetes Arch / Debian / Fedora)
+
+`base-devel`, `pkgconf`, `libssl-dev`, `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `gstreamer1.0-plugins-base`, `gstreamer1.0-plugins-good`, `libpipewire-0.3-dev`, `libwireplumber-0.5-dev`, `libdbus-1-dev`, `libudev-dev`, `libxkbcommon-dev`, `libwayland-dev`, `meson`, `ninja`, `clang`, `lld`
+
+#### Rust
+
+`rustup` → `stable` + `rustfmt` + `clippy`
+
+#### Node
+
+**Solo `bun`** (nunca npm/yarn/pnpm para apps Tauri). `bun --version` ≥ 1.1
+
+#### Herramientas CLI
+
+`just` (command runner), `cargo-binstall` (opcional), `cargo-llvm-cov` (para cobertura)
+
+### Correr en desarrollo
+
+```bash
+# Dev server (Storybook / VitePress para documentar)
+bun run dev
+
+# Build
+bun run build
+
+# Tests
+bun test
+```
+
+### Compilar / Build de release
+
+```bash
+# Build producción (genera dist/)
+bun run build
+
+# Publicar a npm
+npm publish
+```
+
+### Targets principales
+
+```bash
+# Desarrollo
+bun run dev
+
+# Build producción
+bun run build
+
+# Solo frontend
+bun run build
+
+# Solo backend Rust
+(no aplica — solo TypeScript/Vue)
+
+# Lint + tipos (pre-commit / CI)
+bunx --bun biome check .\nbunx vue-tsc --noEmit
+```
+
+### Pruebas
+
+```bash
+# Suite completa
+bun test
+
+# Tipos
+bunx vue-tsc --noEmit
+
+# Lint
+bunx --bun biome check .
+```
+
+### Convención de commits
+
+[Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/):
+
+```
+<tipo>(<ámbito>): <descripción corta>
+
+[cuerpo opcional]
+
+[pie opcional: Closes #N]
+```
+
+Tipos habituales: `feat`, `fix`, `bugfix`, `docs`, `ci`, `chore`, `security`, `refactor`, `perf`, `test`.
+
+### Cómo abrir PR
+
+1. Rama desde `origin/main`:
+   ```bash
+   git worktree add -b feat/{{TEMA}} ~/wt/vue-libvasak-{{TEMA}} origin/main
+   ```
+2. Prefijos de rama: `fix/`, `feat/`, `bugfix/`, `docs/`, `ci/`, `chore/`, `security/`
+3. Escribe el fix → **`qa` escribe las pruebas** (fallan sin el fix) → suite verde → abre PR
+4. Al abrir PR, **cuatro cosas obligatorias**:
+   - Asignado a `JoaquinDecima`
+   - Etiqueta `enhancement` o `bug` (+ `ci` / `dependencies` si aplica)
+   - Añadido al proyecto «VasakOS Roadmap»
+   - Status **In Progress**
+
+---
+
+## Arquitectura (texto)
+
+### Crates / módulos principales
+
+| Paquete | Responsabilidad |\n|---------|-----------------|\n| `@vasakgroup/vue-libvasak` | Componentes Vue 3 + composables + utils |
+
+### Interfaces D-Bus / zbus expuestas
+
+(no aplica — biblioteca frontend)
+
+### Puntos de extensión
+
+- **Plugins:** Sistema de plugins modular
+- **Hooks:** Hooks de ciclo de vida
+- **API pública Rust:** API pública del crate principal
+
+### Features / Cargo features
+
+| Export | Descripción |\n|--------|-------------|\n| `components` | Componentes Vue (Button, Card, Dialog, Form, etc.) |\n| `composables` | Composables (useTheme, useConfig, useI18n, etc.) |\n| `utils` | Utilidades (iconos, formateo, validación, a11y) |
+
+
+
+---
+
+## Pruebas y calidad
+
+- **Cobertura objetivo:** ≥ 80 % del código nuevo (SonarCloud Quality Gate)
+- **Informes:** GitHub Actions → pestaña *SonarCloud Code Analysis* → enlace a SonarCloud
+- **Añadir pruebas:** ver `AGENTS.md` sección 9 (mapa de repos y comandos de prueba)
+- **Regla:** toda corrección lleva prueba escrita por `qa` que falla sin el fix
+
+---
+
+## Contribuir
+
+- **Guía:** [`.github/CONTRIBUTING.md`](https://github.com/Vasak-OS/.github/blob/main/CONTRIBUTING.md)
+- **Plantillas de issue:** [`.github/ISSUE_TEMPLATE/`](https://github.com/Vasak-OS/.github/tree/main/ISSUE_TEMPLATE)
+- **Código de conducta:** [`CODE_OF_CONDUCT.md`](https://github.com/Vasak-OS/.github/blob/main/CODE_OF_CONDUCT.md)
+
+---
+
+## Contribuidores
+
+> **Actualizado automáticamente en CI** — muestra los avatares de quienes han aportado código a este repo.
+
+<div align="center">
+  <a href="https://github.com/JoaquinDecima" target="_blank"><img src="https://avatars.githubusercontent.com/u/11674229?v=4&s=40" width="40" height="40" alt="JoaquinDecima" style="border-radius: 50%; margin: 2px;" title="JoaquinDecima (275 contribuciones)"></a>
+</div>
+
+[Ver todos los contribuidores](https://github.com/Vasak-OS/vue-libvasak/graphs/contributors)
+
+---
+
+## Donadores / Sponsors
+
+[![Sponsors](https://img.shields.io/github/sponsors/Vasak-OS?style=flat&label=Sponsors)](https://github.com/sponsors/Vasak-OS)
+
+> **Backers:** *Actualizado automáticamente en CI desde GitHub Sponsors / OpenCollective / Polar.*
+
+[💖 Donar al proyecto](https://github.com/sponsors/Vasak-OS)
+
+---
+
+## Licencia
+
+`GPL-3.0` — Copyright © 2026 **Vasak-OS Contributors**
+
+[Ver licencia completa](LICENSE)
