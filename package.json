@@ -1,6 +1,6 @@
 {
 	"name": "@vasakgroup/vue-libvasak",
-	"version": "2.20.0",
+	"version": "2.20.1",
 	"description": "Vue componenets for VSK Applications",
 	"main": "./dist/vue-libvasak.umd.js",
 	"module": "./dist/vue-libvasak.es.js",
@@ -57,7 +57,7 @@
 		"@happy-dom/global-registrator": "^20.14.6",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tauri-apps/api": "^2.12.3",
-		"@types/bun": "^1.4.2",
+		"@types/bun": "^1.4.3",
 		"@vasakgroup/plugin-config-manager": "^2.12.1",
 		"@vasakgroup/plugin-vicons": "^2.2.1",
 		"@vasakgroup/tauri-plugin-i18n": "^2.3.0",
@@ -67,7 +67,7 @@
 		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3",
 		"vite": "^8.3.4",
-		"vue": "^3.5.43",
+		"vue": "^3.5.44",
 		"vue-router": "^5.4.0",
 		"vue-tsc": "^3.3.13"
 	},
@@ -82,7 +82,8 @@
 	},
 	"vasak": {
 		"bibliotecasAtrasadas": {
-			"typescript": "La 7 (el compilador reescrito) no trae `typescript/lib/tsc` y vue-tsc 3.3 lo busca ahí: el chequeo de tipos y la generación de `dist/types` se caen antes de mirar un archivo. El rango ^5.9.3 no la alcanza. Se sube cuando vue-tsc publique una versión que soporte TypeScript 7."
+			"typescript": "La 7 (el compilador reescrito) no trae `typescript/lib/tsc` y vue-tsc 3.3 lo busca ahí: el chequeo de tipos y la generación de `dist/types` se caen antes de mirar un archivo. El rango ^5.9.3 no la alcanza. Se sube cuando vue-tsc publique una versión que soporte TypeScript 7.",
+			"happy-dom": "La 21 es un salto mayor del andamiaje de pruebas: lo usan los 1240 tests de la suite y un cambio de maquetado o de API suya no lo verifica ninguna prueba automática, así que va en su propio PR (con @happy-dom/global-registrator, que acompaña su versión). El rango ^20.14.6 no la alcanza."
 		}
 	}
 }

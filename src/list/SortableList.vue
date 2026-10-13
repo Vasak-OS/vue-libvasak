@@ -120,7 +120,15 @@ let nextId = 0;
 function keyOf(item: T, index: number): ItemKey {
 	const spec = props.itemKey;
 	if (typeof spec === 'function') return spec(item, index);
-	if (typeof spec === 'string') return (item as Record<string, unknown>)[spec] as ItemKey;
+	// `keyof T` llega como el nombre del campo —una cadena, o un número en una
+	// clave numérica—, no como la función. El tipo publicado lo permite, así que
+	// se resuelve `item[spec]`; sólo hay dónde buscarlo si el ítem es un objeto.
+	if (typeof spec === 'string' || typeof spec === 'number') {
+		if (item !== null && typeof item === 'object') {
+			return (item as Record<PropertyKey, unknown>)[spec] as ItemKey;
+		}
+		return item as unknown as ItemKey;
+	}
 	if (item !== null && typeof item === 'object') {
 		let id = identity.get(item as object);
 		if (id === undefined) {
