@@ -4,6 +4,10 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.21.0 se sumaron las transiciones compartidas: `RevealTransition`
+ * (aparición y cierre, con escala y desplazamiento opcionales) y
+ * `SlideTransition` (deslizamiento direccional entre secciones).
+ *
  * En la 2.13.0 se sumó el mosaico de ajuste rápido del centro de control
  * del escritorio (`QuickSettingsTile`, vasak-desktop#174).
  *
@@ -222,6 +226,9 @@ const PUBLIC_SURFACE = [
 	'WINDOW_CONTROLS_STYLES',
 	// 2.20.0: la lista que se reordena arrastrando y con el teclado.
 	'SortableList',
+	// 2.21.0: las transiciones compartidas (aparición y deslizamiento entre secciones).
+	'RevealTransition',
+	'SlideTransition',
 ];
 
 describe('la superficie pública', () => {

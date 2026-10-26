@@ -77,7 +77,7 @@ manda.
   iconos de 40–56 px y el widget del clima a la derecha.
 - **Los applets anclados** (`anchored_applet.rs` + `AppletPopover.vue`) ya cuelgan
   del botón, a `PANEL_GAP = 8` px del panel, con entrada de 180 ms desde el botón
-  (`transform-origin` que manda el backend) y salida de 120 ms. Su página es
+  (`transform-origin` que manda el backend) y salida de 150 ms. Su página es
   `h-screen w-screen`: **la sombra no tiene dónde dibujarse** y el
   `backdrop-blur-md` que declaran no desenfoca nada (ver §7).
 
@@ -577,7 +577,8 @@ orden según el panel es uno que no se aprende. Abierto sin botón (Super, D-Bus
 - Entrada: 200 ms, `ease-ui-out`, opacidad 0→1, `scale(.96)→1` y los 6 px de
   deslizamiento desde el panel. Todo `transform` + `opacity`: se compone, no
   rehace el maquetado.
-- Salida: 120 ms, `ease-in`, opacidad →0 y `scale(.98)`. Sin deslizamiento (salir
+- Salida: 150 ms (`macro-short`, la salida de un desplegable de §2.8), `ease-in`,
+  opacidad →0 y `scale(.98)`. Sin deslizamiento (salir
   hacia el panel se lee como «se guardó», que es lo que pasa; con escala alcanza).
 - La lista **no** anima sus filas al entrar (hoy el `transition-group` de las
   píldoras escala cada una en 400 ms): una sola animación, la del panel.
