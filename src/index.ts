@@ -68,6 +68,8 @@ import WorkspaceSwitcher from "./panel/WorkspaceSwitcher.vue";
 import SectionHeading from "./layout/SectionHeading.vue";
 import PageHeader from "./layout/PageHeader.vue";
 import Panel from "./layout/Panel.vue";
+import RevealTransition from "./transition/RevealTransition.vue";
+import SlideTransition from "./transition/SlideTransition.vue";
 import DialogBody from "./dialog/DialogBody.vue";
 /* 2.2.0: globos, teclas, identidad, carátulas, datos, plegables y soltar. */
 import Popover from "./popover/Popover.vue";
@@ -176,6 +178,8 @@ const components = [
   SectionHeading,
   PageHeader,
   Panel,
+  RevealTransition,
+  SlideTransition,
   DialogBody,
   Popover,
   PopoverTrigger,
@@ -289,6 +293,8 @@ export {
   SectionHeading,
   PageHeader,
   Panel,
+  RevealTransition,
+  SlideTransition,
   DialogBody,
   Popover,
   PopoverTrigger,
@@ -321,6 +327,7 @@ export {
   SortableList,
 };
 
+export type { TransitionSide } from "./transition/types";
 export type { PlaybackState } from "./media/playback";
 export type { OptionGroupOption, SegmentedOption, SelectOption } from "./forms/types";
 export type { BadgeTone } from "./indicators/Badge.vue";
