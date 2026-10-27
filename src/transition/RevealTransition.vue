@@ -25,12 +25,16 @@
  * la guardia de diseño sólo acepta 100/150/200/300 (§2.8).
  *
  * `mode="out-in"` es para lo que se reemplaza en el mismo lugar —una búsqueda,
- * un cambio de sección—: sale lo viejo y recién después entra lo nuevo. Lo demás
- * (`appear`, los eventos `@after-leave`…) va directo al `<Transition>`.
+ * un cambio de sección—: sale lo viejo y recién después entra lo nuevo.
+ *
+ * Se declaran y se reenvían al `<Transition>` `appear` y los hooks de entrada y
+ * salida (`@before-enter`, `@enter`, `@after-enter`, `@enter-cancelled` y los de
+ * `leave`), para que `vue-tsc` los acepte. Los hooks de `appear` no se declaran:
+ * siguen cayendo al `<Transition>` por `$attrs`.
  */
 import type { TransitionSide } from './types';
 
-withDefaults(
+const props = withDefaults(
 	defineProps<{
 		/** Crecer de 0,96 a 1 al entrar y a 0,98 al salir. */
 		scale?: boolean;
@@ -38,9 +42,31 @@ withDefaults(
 		from?: TransitionSide;
 		/** `out-in` para lo que se reemplaza en el mismo lugar. */
 		mode?: 'out-in' | 'in-out';
+		/** Pone la transición en marcha también en el primer montaje. */
+		appear?: boolean;
+		/** Hook de entrada; si recibe `done` tiene que llamarlo. */
+		onEnter?: (el: Element, done: () => void) => void;
+		/** Hook de salida; si recibe `done` tiene que llamarlo. */
+		onLeave?: (el: Element, done: () => void) => void;
 	}>(),
-	{ scale: false, from: undefined, mode: undefined }
+	{ scale: false, from: undefined, mode: undefined, appear: undefined, onEnter: undefined, onLeave: undefined }
 );
+
+/**
+ * Los hooks de JS de `<Transition>`. `enter` y `leave` son props `onEnter` y
+ * `onLeave`, no emits: el `<Transition>` mira cuántos parámetros declara la
+ * función (`length > 1` = «avisaré con `done`») y un reenvío propio de dos
+ * parámetros lo dejaría esperando para siempre aunque nadie lo escuche. Pasada
+ * tal cual, la función de quien usa el componente conserva su aridad.
+ */
+const emit = defineEmits<{
+	beforeEnter: [el: Element];
+	afterEnter: [el: Element];
+	enterCancelled: [el: Element];
+	beforeLeave: [el: Element];
+	afterLeave: [el: Element];
+	leaveCancelled: [el: Element];
+}>();
 
 // Clases completas, no armadas por pedazos: Tailwind sólo emite las que lee
 // escritas. `motion-reduce:` las deja sin movimiento.
@@ -55,6 +81,15 @@ const OFFSET: Record<TransitionSide, string> = {
 <template>
   <Transition
     :mode="mode"
+    :appear="props.appear"
+    @before-enter="(el: Element) => emit('beforeEnter', el)"
+    @enter="props.onEnter"
+    @after-enter="(el: Element) => emit('afterEnter', el)"
+    @enter-cancelled="(el: Element) => emit('enterCancelled', el)"
+    @before-leave="(el: Element) => emit('beforeLeave', el)"
+    @leave="props.onLeave"
+    @after-leave="(el: Element) => emit('afterLeave', el)"
+    @leave-cancelled="(el: Element) => emit('leaveCancelled', el)"
     enter-active-class="transition-[opacity,scale,translate] duration-200 ease-ui-out"
     leave-active-class="transition-[opacity,scale,translate] duration-150 ease-in"
     :enter-from-class="['opacity-0', scale ? 'scale-96 motion-reduce:scale-100' : '', from ? OFFSET[from] : ''].join(' ')"
