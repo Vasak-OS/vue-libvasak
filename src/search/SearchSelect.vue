@@ -197,7 +197,7 @@ function close(returnFocus = true) {
 	// El foco vuelve al botón: si se quedara en un campo que ya no existe, el
 	// navegador lo manda al principio del documento y quien usa teclado pierde
 	// el lugar.
-	if (returnFocus) nextTick(() => button.value?.focus());
+	if (returnFocus) void nextTick(() => button.value?.focus());
 }
 
 /**
@@ -306,7 +306,7 @@ function onPointerMove(event: MouseEvent) {
 }
 
 function scrollToActive() {
-	nextTick(() => {
+	void nextTick(() => {
 		list.value
 			?.querySelector(`[data-index="${active.value}"]`)
 			?.scrollIntoView({ block: 'nearest' });
