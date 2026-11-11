@@ -197,7 +197,7 @@ function close(returnFocus = true) {
 	// El foco vuelve al botón: si se quedara en un campo que ya no existe, el
 	// navegador lo manda al principio del documento y quien usa teclado pierde
 	// el lugar.
-	if (returnFocus) nextTick(() => button.value?.focus());
+	if (returnFocus) void nextTick(() => button.value?.focus());
 }
 
 /**
@@ -277,6 +277,23 @@ function indexUnderPointer(event: Event): number | null {
 	return Number.isInteger(index) ? index : null;
 }
 
+/**
+ * Apretar sobre una opción no tiene que robarle el foco a lo de arriba.
+ *
+ * El campo de búsqueda (o la lista, sin búsqueda) tiene el foco; una opción no
+ * es enfocable, así que el `mousedown` del ratón se lo saca, y eso dispara el
+ * `focusout` que cierra el desplegable **antes** de que llegue el `click`. El
+ * panel desaparece del DOM y `onClick` no corre: la opción elegida con el ratón
+ * no se aplica y sólo Enter funciona (vasak-installer#91). Con `preventDefault`
+ * el foco no se mueve, el panel sigue abierto y el `click` elige.
+ *
+ * Sólo sobre una fila de opción: el campo de búsqueda y la barra de
+ * desplazamiento siguen recibiendo su `mousedown` como siempre.
+ */
+function onPointerDown(event: MouseEvent) {
+	if (indexUnderPointer(event) !== null) event.preventDefault();
+}
+
 function onClick(event: MouseEvent) {
 	const index = indexUnderPointer(event);
 	const option = index === null ? undefined : matches.value[index];
@@ -289,7 +306,7 @@ function onPointerMove(event: MouseEvent) {
 }
 
 function scrollToActive() {
-	nextTick(() => {
+	void nextTick(() => {
 		list.value
 			?.querySelector(`[data-index="${active.value}"]`)
 			?.scrollIntoView({ block: 'nearest' });
@@ -398,6 +415,7 @@ function onFocusout(event: FocusEvent) {
       @keydown.enter.prevent="chooseActive()"
       @keydown.tab="close(false)"
       @keydown="onTypeahead"
+      @mousedown="onPointerDown"
       @click="onClick"
       @mousemove="onPointerMove">
       <div v-if="searchable" class="border-ui-line-weak border-b p-2">
