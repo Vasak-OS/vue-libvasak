@@ -9,9 +9,10 @@
  * siendo la de GTK/WebKitGTK, con sus colores, su radio y su tipografía. Era el
  * único lugar de la librería donde el escritorio dejaba de parecer VasakOS.
  *
- * Ahora es `SearchSelect` sin búsqueda: el panel `ui-float` con el teclado
- * completo (flechas, Inicio/Fin, Enter, Escape, la letra inicial) que ya usaba
- * el inicio de sesión. La API no cambia: `v-model` con el tipo que sea (y
+ * Ahora es `SearchSelect`: el panel `ui-float` con el teclado completo (flechas,
+ * Inicio/Fin, Enter, Escape, la letra inicial) que ya usaba el inicio de sesión.
+ * El filtro al escribir aparece solo cuando la lista es larga (ver
+ * `UMBRAL_DE_FILTRO`, vue-libvasak#115). La API no cambia: `v-model` con el tipo que sea (y
  * `.number`), `options` o los `<option>` de siempre en la ranura, `label`,
  * `id`, `disabled` y `change`.
  *
@@ -130,6 +131,18 @@ const selectedIndex = computed(() =>
 	String(normalized.value.findIndex((option) => String(option.value) === String(model.value)))
 );
 
+/**
+ * El filtro aparece solo cuando la lista es larga (vue-libvasak#115).
+ *
+ * En una lista corta el campo de búsqueda es ruido: se tarda menos barriéndola
+ * con las flechas o con la letra inicial. A partir de ocho opciones empieza a
+ * costar encontrarla de un vistazo, y ahí el filtro ayuda más de lo que molesta.
+ * Es automático a propósito: quien usa el desplegable no tiene que acordarse de
+ * prenderlo.
+ */
+const UMBRAL_DE_FILTRO = 8;
+const searchable = computed(() => normalized.value.length >= UMBRAL_DE_FILTRO);
+
 /** El nombre accesible: la etiqueta dibujada o el `aria-label` de quien lo usa. */
 const accessibleName = computed(() => (attrs['aria-label'] as string | undefined) ?? props.label ?? '');
 
@@ -205,7 +218,7 @@ const [model, modifiers] = defineModel<T>({
       :options="listOptions"
       :label="accessibleName"
       :disabled="props.disabled"
-      :searchable="false"
+      :searchable="searchable"
       :button-attrs="buttonAttrs"
       class="min-w-0"
       @update:model-value="onChoose" />
