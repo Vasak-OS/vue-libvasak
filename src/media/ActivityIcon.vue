@@ -31,6 +31,10 @@ import { computed } from 'vue';
 import { useLabels } from '../shared/labels';
 import ThemeIcon from '../icons/ThemeIcon.vue';
 
+// El instalador global registra por `component.name`, que `<script setup>` no
+// pone solo: sin esto, `app.use()` no expone la clave `ActivityIcon`.
+defineOptions({ name: 'ActivityIcon' });
+
 const props = withDefaults(
 	defineProps<{
 		/** El icono del tema. */
