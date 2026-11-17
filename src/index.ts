@@ -47,6 +47,7 @@ import TrayIconButton from "./tray/TrayIconButton.vue";
 import NowPlayingCard from "./media/NowPlayingCard.vue";
 import SeekBar from "./media/SeekBar.vue";
 import SpinningCover from "./media/SpinningCover.vue";
+import ActivityIcon from "./media/ActivityIcon.vue";
 import Equalizer from "./media/Equalizer.vue";
 /* 2.1.0: formularios, selección, listas, cabeceras y el cuerpo del diálogo. */
 import OptionGroup from "./forms/OptionGroup.vue";
@@ -158,6 +159,7 @@ const components = [
   NowPlayingCard,
   SeekBar,
   SpinningCover,
+  ActivityIcon,
   Equalizer,
   OptionGroup,
   SegmentedControl,
@@ -273,6 +275,7 @@ export {
   NowPlayingCard,
   SeekBar,
   SpinningCover,
+  ActivityIcon,
   Equalizer,
   OptionGroup,
   SegmentedControl,

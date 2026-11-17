@@ -4,6 +4,10 @@ import * as library from '../src/index';
 /**
  * Lo que la librería exporta es lo que se comprometió a no romper.
  *
+ * En la 2.23.0 se sumó el icono de una actividad del panel con su avance en un
+ * aro (`ActivityIcon`), cada ítem de la fila de la cápsula de actividad del
+ * escritorio cuando hay más de una cosa a la vez.
+ *
  * En la 2.21.0 se sumaron las transiciones compartidas: `RevealTransition`
  * (aparición y cierre, con escala y desplazamiento opcionales) y
  * `SlideTransition` (deslizamiento direccional entre secciones).
@@ -229,6 +233,8 @@ const PUBLIC_SURFACE = [
 	// 2.21.0: las transiciones compartidas (aparición y deslizamiento entre secciones).
 	'RevealTransition',
 	'SlideTransition',
+	// 2.23.0: el icono de una actividad del panel, con su avance en un aro.
+	'ActivityIcon',
 ];
 
 describe('la superficie pública', () => {
